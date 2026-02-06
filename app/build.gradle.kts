@@ -126,6 +126,9 @@ dependencies {
     implementation(libs.coil.gif)
     implementation(libs.arsclib)
     compileOnly(libs.bcprov.jdk18on)
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20231013")
 }
 
 tasks.register("setupLSPatch") {
