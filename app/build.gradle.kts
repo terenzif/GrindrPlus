@@ -126,6 +126,14 @@ dependencies {
     implementation(libs.coil.gif)
     implementation(libs.arsclib)
     compileOnly(libs.bcprov.jdk18on)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.test.runner)
+    testImplementation(libs.androidx.test.ext.junit)
+    testImplementation(libs.androidx.room.testing)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
 }
 
 tasks.register("setupLSPatch") {
