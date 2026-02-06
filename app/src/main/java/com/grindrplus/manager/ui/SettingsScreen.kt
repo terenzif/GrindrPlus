@@ -195,10 +195,9 @@ fun SettingsScreen(
                                         FileOperationHandler.importFile(
                                             arrayOf("application/json")
                                         ) {
-                                            Config.writeRemoteConfig(JSONObject(it))
-                                            viewModel.loadSettings()
-
                                             scope.launch {
+                                                Config.writeRemoteConfig(JSONObject(it))
+                                                viewModel.loadSettings()
                                                 snackbarHostState.showSnackbar("Settings imported successfully")
                                             }
                                         }

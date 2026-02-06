@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.grindrplus.core.Config
 import com.grindrplus.core.Constants
 import com.grindrplus.manager.utils.AppCloneUtils
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,13 +23,13 @@ fun PackageSelector(
     onPackageSelected: (String) -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var expanded by remember { mutableStateOf(false) }
 
-    var packages by remember(Config.readRemoteConfig()) {
-        mutableStateOf(Config.getAvailablePackages(context))
-    }
+    var packages by remember { mutableStateOf(Config.getAvailablePackages(context)) }
 
     LaunchedEffect(Unit) {
+        Config.readRemoteConfig()
         packages = Config.getAvailablePackages(context)
     }
 
@@ -124,8 +125,10 @@ fun PackageSelector(
                     onClick = {
                         selectedPackage = packageName
                         expanded = false
-                        Config.setCurrentPackage(packageName)
-                        onPackageSelected(packageName)
+                        scope.launch {
+                            Config.setCurrentPackage(packageName)
+                            onPackageSelected(packageName)
+                        }
                     }
                 )
             }

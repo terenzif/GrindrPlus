@@ -54,7 +54,7 @@ class TaskManager(private val scheduler: TaskScheduler? = null) {
         return tasks[taskClass] as? T
     }
 
-    fun toggleTask(taskId: String, enabled: Boolean) {
+    suspend fun toggleTask(taskId: String, enabled: Boolean) {
         val task = tasks.values.find { it.id == taskId } ?: return
 
         Config.setTaskEnabled(taskId, enabled)

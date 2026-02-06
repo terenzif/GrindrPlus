@@ -11,7 +11,7 @@ object Config {
     private var currentPackageName = Constants.GRINDR_PACKAGE_NAME
     private val GLOBAL_SETTINGS = listOf("first_launch", "analytics", "discreet_icon", "material_you", "debug_mode", "disable_permission_checks", "custom_manifest", "maps_api_key")
 
-    fun initialize(packageName: String? = null) {
+    suspend fun initialize(packageName: String? = null) {
         if (packageName != null) {
             Logger.d("Initializing config for package: $packageName", LogSource.MANAGER)
         }
@@ -29,7 +29,7 @@ object Config {
         return name in GLOBAL_SETTINGS
     }
 
-    private fun migrateToMultiCloneFormat() {
+    private suspend fun migrateToMultiCloneFormat() {
         if (!localConfig.has("clones")) {
             Logger.d("Migrating to multi-clone format", LogSource.MANAGER)
             val cloneSettings = JSONObject()
@@ -60,7 +60,7 @@ object Config {
         ensurePackageExists(currentPackageName)
     }
 
-    fun setCurrentPackage(packageName: String) {
+    suspend fun setCurrentPackage(packageName: String) {
         Logger.d("Setting current package to $packageName", LogSource.MANAGER)
         currentPackageName = packageName
         ensurePackageExists(packageName)
@@ -70,7 +70,7 @@ object Config {
         return currentPackageName
     }
 
-    private fun ensurePackageExists(packageName: String) {
+    private suspend fun ensurePackageExists(packageName: String) {
         Logger.d("Ensuring package $packageName exists in config", LogSource.MANAGER)
         val clones = localConfig.optJSONObject("clones") ?: JSONObject().also {
             localConfig.put("clones", it)
@@ -92,7 +92,7 @@ object Config {
         }
     }
 
-    fun readRemoteConfig(): JSONObject {
+    suspend fun readRemoteConfig(): JSONObject {
         return try {
             GrindrPlus.bridgeClient.getConfig()
         } catch (e: Exception) {
@@ -105,7 +105,7 @@ object Config {
         }
     }
 
-    fun writeRemoteConfig(json: JSONObject) {
+    suspend fun writeRemoteConfig(json: JSONObject) {
         try {
             GrindrPlus.bridgeClient.setConfig(json)
         } catch (e: IOException) {
@@ -122,7 +122,7 @@ object Config {
             ?: JSONObject().also { clones.put(currentPackageName, it) }
     }
 
-    fun put(name: String, value: Any) {
+    suspend fun put(name: String, value: Any) {
         Logger.d("Setting $name to $value", LogSource.MANAGER)
         if (isGlobalSetting(name)) {
             localConfig.put(name, value)
@@ -143,7 +143,11 @@ object Config {
         }
 
         if (rawValue == null) {
-            if (autoPut) put(name, default)
+            if (autoPut) {
+                GrindrPlus.executeAsync {
+                    put(name, default)
+                }
+            }
             return default
         }
 
@@ -167,7 +171,7 @@ object Config {
         }
     }
 
-    fun setHookEnabled(hookName: String, enabled: Boolean) {
+    suspend fun setHookEnabled(hookName: String, enabled: Boolean) {
         Logger.d("Setting hook $hookName to $enabled", LogSource.MANAGER)
         val packageConfig = getCurrentPackageConfig()
         val hooks = packageConfig.optJSONObject("hooks")
@@ -184,7 +188,7 @@ object Config {
         return hooks.optJSONObject(hookName)?.getBoolean("enabled") == true
     }
 
-    fun setTaskEnabled(taskId: String, enabled: Boolean) {
+    suspend fun setTaskEnabled(taskId: String, enabled: Boolean) {
         Logger.d("Setting task $taskId to $enabled", LogSource.MANAGER)
         val packageConfig = getCurrentPackageConfig()
         val tasks = packageConfig.optJSONObject("tasks")
@@ -217,7 +221,7 @@ object Config {
         return map
     }
 
-    fun initTaskSettings(taskId: String, description: String, state: Boolean) {
+    suspend fun initTaskSettings(taskId: String, description: String, state: Boolean) {
         Logger.d("Initializing task settings for $taskId", LogSource.MANAGER)
         val packageConfig = getCurrentPackageConfig()
         val tasks = packageConfig.optJSONObject("tasks")
@@ -233,7 +237,7 @@ object Config {
         }
     }
 
-    fun initHookSettings(name: String, description: String, state: Boolean) {
+    suspend fun initHookSettings(name: String, description: String, state: Boolean) {
         Logger.d("Initializing hook settings for $name", LogSource.MANAGER)
         val packageConfig = getCurrentPackageConfig()
         val hooks = packageConfig.optJSONObject("hooks")

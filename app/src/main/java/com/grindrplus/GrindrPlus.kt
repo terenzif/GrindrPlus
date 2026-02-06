@@ -144,8 +144,9 @@ object GrindrPlus {
         Logger.i("Initializing GrindrPlus...", LogSource.MODULE)
 
         checkVersionCodes(versionCodes, versionNames)
-        val connected = runBlocking {
-            try {
+
+        runBlocking {
+            val connected = try {
                 withTimeout(10000) {
                     bridgeClient.connectWithRetry(5, 1000)
                 }
@@ -153,14 +154,15 @@ object GrindrPlus {
                 Logger.e("Connection timeout: ${e.message}", LogSource.MODULE)
                 false
             }
+
+            if (!connected) {
+                Logger.e("Failed to connect to the bridge service", LogSource.MODULE)
+                shouldShowBridgeConnectionError = true
+            }
+
+            Config.initialize(application.packageName)
         }
 
-        if (!connected) {
-            Logger.e("Failed to connect to the bridge service", LogSource.MODULE)
-            shouldShowBridgeConnectionError = true
-        }
-
-        Config.initialize(application.packageName)
         val newModule = File(context.filesDir, "grindrplus.dex")
         File(modulePath).copyTo(newModule, true)
         newModule.setReadOnly()
@@ -172,30 +174,32 @@ object GrindrPlus {
         this.instanceManager = InstanceManager(classLoader)
         this.packageName = context.packageName
 
-        if (bridgeClient.shouldRegenAndroidId(packageName)) {
-            Logger.i("Generating new Android device ID", LogSource.MODULE)
-            val androidId = java.util.UUID.randomUUID()
-                .toString().replace("-", "").lowercase().take(16)
-            Config.put("android_device_id", androidId)
-        }
-
-        val forcedCoordinates = bridgeClient.getForcedLocation(packageName)
-
-        if (forcedCoordinates.isNotEmpty()) {
-            val parts = forcedCoordinates.split(",").map { it.trim() }
-            if (parts.size != 2 || parts.any { it.toDoubleOrNull() == null }) {
-                Logger.w("Invalid forced coordinates format: $forcedCoordinates", LogSource.MODULE)
-            } else {
-                if (parts[0] == "0.0" && parts[1] == "0.0") {
-                    Logger.w("Ignoring forced coordinates: $forcedCoordinates", LogSource.MODULE)
-                } else {
-                    Logger.i("Using forced coordinates: $forcedCoordinates", LogSource.MODULE)
-                    Config.put("forced_coordinates", forcedCoordinates)
-                }
+        runBlocking {
+            if (bridgeClient.shouldRegenAndroidId(packageName)) {
+                Logger.i("Generating new Android device ID", LogSource.MODULE)
+                val androidId = java.util.UUID.randomUUID()
+                    .toString().replace("-", "").lowercase().take(16)
+                Config.put("android_device_id", androidId)
             }
-        } else if (Config.get("forced_coordinates", "") != "") {
-            Logger.i("Clearing previously set forced coordinates", LogSource.MODULE)
-            Config.put("forced_coordinates", "")
+
+            val forcedCoordinates = bridgeClient.getForcedLocation(packageName)
+
+            if (forcedCoordinates.isNotEmpty()) {
+                val parts = forcedCoordinates.split(",").map { it.trim() }
+                if (parts.size != 2 || parts.any { it.toDoubleOrNull() == null }) {
+                    Logger.w("Invalid forced coordinates format: $forcedCoordinates", LogSource.MODULE)
+                } else {
+                    if (parts[0] == "0.0" && parts[1] == "0.0") {
+                        Logger.w("Ignoring forced coordinates: $forcedCoordinates", LogSource.MODULE)
+                    } else {
+                        Logger.i("Using forced coordinates: $forcedCoordinates", LogSource.MODULE)
+                        Config.put("forced_coordinates", forcedCoordinates)
+                    }
+                }
+            } else if (Config.get("forced_coordinates", "") != "") {
+                Logger.i("Clearing previously set forced coordinates", LogSource.MODULE)
+                Config.put("forced_coordinates", "")
+            }
         }
 
         registerActivityLifecycleCallbacks(application)
@@ -221,8 +225,10 @@ object GrindrPlus {
         }
 
         try {
-            val initTime = measureTimeMillis { initializeCore() }
-            Logger.i("Initialization completed in $initTime ms", LogSource.MODULE)
+            runBlocking {
+                val initTime = measureTimeMillis { initializeCore() }
+                Logger.i("Initialization completed in $initTime ms", LogSource.MODULE)
+            }
             isInitialized = true
         } catch (t: Throwable) {
             Logger.e("Failed to initialize: ${t.message}", LogSource.MODULE)
@@ -263,8 +269,10 @@ object GrindrPlus {
                     }
                     activity.javaClass.name == browseExploreActivity -> {
                         if ((Config.get("maps_api_key", "") as String).isEmpty()) {
-                            if (!bridgeClient.isLSPosed()) {
-                                showMapsApiKeyDialog(activity)
+                            runBlocking {
+                                if (!bridgeClient.isLSPosed()) {
+                                    showMapsApiKeyDialog(activity)
+                                }
                             }
                         }
                     }
@@ -335,7 +343,7 @@ object GrindrPlus {
         isInstanceManagerInitialized = true
     }
 
-    private fun initializeCore() {
+    private suspend fun initializeCore() {
         if (isMainInitialized) {
             Logger.d("Core already initialized, skipping", LogSource.MODULE)
             return

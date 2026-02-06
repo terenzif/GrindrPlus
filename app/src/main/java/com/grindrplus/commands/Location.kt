@@ -37,12 +37,14 @@ class Location(recipient: String, sender: String) : CommandModule("Location", re
                     )
                     .setPositiveButton("OK", null)
                     .setNegativeButton("Disable") { _, _ ->
-                        Config.put("forced_coordinates", "")
-                        GrindrPlus.bridgeClient.deleteForcedLocation(packageName)
-                        GrindrPlus.showToast(
-                            Toast.LENGTH_LONG,
-                            "Forced coordinates disabled"
-                        )
+                        coroutineScope.launch {
+                            Config.put("forced_coordinates", "")
+                            GrindrPlus.bridgeClient.deleteForcedLocation(packageName)
+                            GrindrPlus.showToast(
+                                Toast.LENGTH_LONG,
+                                "Forced coordinates disabled"
+                            )
+                        }
                     }
                     .show()
             }
@@ -57,8 +59,11 @@ class Location(recipient: String, sender: String) : CommandModule("Location", re
         if (args.isEmpty()) {
             val status = (Config.get("current_location", "") as String).isEmpty()
             if (!status) {
-                Config.put("current_location", "")
-                return GrindrPlus.showToast(Toast.LENGTH_LONG, "Teleportation disabled")
+                coroutineScope.launch {
+                    Config.put("current_location", "")
+                    GrindrPlus.showToast(Toast.LENGTH_LONG, "Teleportation disabled")
+                }
+                return
             }
 
             return GrindrPlus.showToast(Toast.LENGTH_LONG, "Please provide a location")
@@ -72,25 +77,25 @@ class Location(recipient: String, sender: String) : CommandModule("Location", re
          * - "lat lon" (e.g. "37.7749 -122.4194") for latitude and longitude.
          * - "city, country" (e.g. "San Francisco, United States") for city and country.
          */
-        when {
-            args.size == 1 && args[0] == "off" -> {
-                Config.put("current_location", "")
-                return GrindrPlus.showToast(Toast.LENGTH_LONG, "Teleportation disabled")
-            }
-            args.size == 1 && args[0].contains(",") -> {
-                val (lat, lon) = args[0].split(",").map { it.toDouble() }
-                teleportToCoordinates(lat, lon)
-            }
-            args.size == 2 && args.all { arg -> arg.toDoubleOrNull() != null } -> {
-                val (lat, lon) = args.map { it.toDouble() }
-                teleportToCoordinates(lat, lon)
-            }
-            else -> {
-                /**
-                 * If we reached this point, the user has provided a name of a city. In this case,
-                 * it could be either a saved location or an actual city.
-                 */
-                coroutineScope.launch {
+        coroutineScope.launch {
+            when {
+                args.size == 1 && args[0] == "off" -> {
+                    Config.put("current_location", "")
+                    GrindrPlus.showToast(Toast.LENGTH_LONG, "Teleportation disabled")
+                }
+                args.size == 1 && args[0].contains(",") -> {
+                    val (lat, lon) = args[0].split(",").map { it.toDouble() }
+                    teleportToCoordinates(lat, lon)
+                }
+                args.size == 2 && args.all { arg -> arg.toDoubleOrNull() != null } -> {
+                    val (lat, lon) = args.map { it.toDouble() }
+                    teleportToCoordinates(lat, lon)
+                }
+                else -> {
+                    /**
+                     * If we reached this point, the user has provided a name of a city. In this case,
+                     * it could be either a saved location or an actual city.
+                     */
                     val location = getLocation(args.joinToString(" "))
                     if (location != null) {
                         teleportToCoordinates(location.first, location.second)
@@ -107,7 +112,6 @@ class Location(recipient: String, sender: String) : CommandModule("Location", re
                         }
                     }
                 }
-                return
             }
         }
     }
@@ -274,7 +278,7 @@ class Location(recipient: String, sender: String) : CommandModule("Location", re
         }
     }
 
-    private fun teleportToCoordinates(lat: Double, lon: Double, silent: Boolean = false) {
+    private suspend fun teleportToCoordinates(lat: Double, lon: Double, silent: Boolean = false) {
         Config.put("current_location", "$lat,$lon")
         val geohash = coordsToGeoHash(lat, lon)
 

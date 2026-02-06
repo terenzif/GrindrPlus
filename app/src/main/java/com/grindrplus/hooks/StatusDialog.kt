@@ -44,81 +44,89 @@ class StatusDialog : Hook(
 
     private fun showGrindrPlusDialog(context: Context) {
         GrindrPlus.currentActivity?.runOnUiThread {
-            try {
-                val packageManager = context.packageManager
-                val packageInfo = packageManager.getPackageInfo(context.packageName, 0)
+            GrindrPlus.executeAsync {
+                try {
+                    val packageManager = context.packageManager
+                    val packageInfo = packageManager.getPackageInfo(context.packageName, 0)
 
-                val appVersionName = packageInfo.versionName
-                val appVersionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    packageInfo.longVersionCode
-                } else {
-                    @Suppress("DEPRECATION")
-                    packageInfo.versionCode.toLong()
-                }
+                    val appVersionName = packageInfo.versionName
+                    val appVersionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        packageInfo.longVersionCode
+                    } else {
+                        @Suppress("DEPRECATION")
+                        packageInfo.versionCode.toLong()
+                    }
 
-                val packageName = context.packageName
-                val deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}"
-                val androidVersion = "${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})"
-                val moduleVersion = try {
-                    BuildConfig.VERSION_NAME
-                } catch (e: Exception) {
-                    "Unknown"
-                }
+                    val packageName = context.packageName
+                    val deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}"
+                    val androidVersion = "${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})"
+                    val moduleVersion = try {
+                        BuildConfig.VERSION_NAME
+                    } catch (e: Exception) {
+                        "Unknown"
+                    }
 
-                val bridgeStatus = if (GrindrPlus.bridgeClient.isConnected()) {
-                    "Connected"
-                } else {
-                    "Disconnected"
-                }
+                    val bridgeStatus = if (GrindrPlus.bridgeClient.isConnected()) {
+                        "Connected"
+                    } else {
+                        "Disconnected"
+                    }
 
-                val androidDeviceIdStatus = (Config.get("android_device_id", "") as String)
-                    .let { id -> if (id.isNotEmpty()) "Spoofing ($id)" else "Not Spoofing (stock)" }
+                    val androidDeviceIdStatus = (Config.get("android_device_id", "") as String)
+                        .let { id -> if (id.isNotEmpty()) "Spoofing ($id)" else "Not Spoofing (stock)" }
 
-                if (GrindrPlus.bridgeClient.isConnected()) {
-                    val isLSPosed = GrindrPlus.bridgeClient.isLSPosed()
-                    val isRooted = GrindrPlus.bridgeClient.isRooted()
-                }
-
-                val message = buildString {
-                    appendLine("GrindrPlus is active and running")
-                    appendLine()
-                    appendLine("App Information:")
-                    appendLine("• Version: $appVersionName ($appVersionCode)")
-                    appendLine("• Package: $packageName")
-                    appendLine("• Android ID: $androidDeviceIdStatus")
-                    appendLine()
-                    appendLine("Module Information:")
-                    appendLine("• GrindrPlus: $moduleVersion")
-                    appendLine("• Bridge Status: $bridgeStatus")
+                    var isLSPosed = false
+                    var isRooted = false
                     if (GrindrPlus.bridgeClient.isConnected()) {
-                        appendLine("• LSPosed: ${GrindrPlus.bridgeClient.isLSPosed()}")
-                        appendLine("• Rooted: ${GrindrPlus.bridgeClient.isRooted()}")
+                        isLSPosed = GrindrPlus.bridgeClient.isLSPosed()
+                        isRooted = GrindrPlus.bridgeClient.isRooted()
                     }
-                    appendLine()
-                    appendLine("Device Information:")
-                    appendLine("• Device: $deviceModel")
-                    appendLine("• Android: $androidVersion")
-                    appendLine()
-                    appendLine("Long press this tab to show this dialog")
+
+                    val message = buildString {
+                        appendLine("GrindrPlus is active and running")
+                        appendLine()
+                        appendLine("App Information:")
+                        appendLine("• Version: $appVersionName ($appVersionCode)")
+                        appendLine("• Package: $packageName")
+                        appendLine("• Android ID: $androidDeviceIdStatus")
+                        appendLine()
+                        appendLine("Module Information:")
+                        appendLine("• GrindrPlus: $moduleVersion")
+                        appendLine("• Bridge Status: $bridgeStatus")
+                        if (GrindrPlus.bridgeClient.isConnected()) {
+                            appendLine("• LSPosed: $isLSPosed")
+                            appendLine("• Rooted: $isRooted")
+                        }
+                        appendLine()
+                        appendLine("Device Information:")
+                        appendLine("• Device: $deviceModel")
+                        appendLine("• Android: $androidVersion")
+                        appendLine()
+                        appendLine("Long press this tab to show this dialog")
+                    }
+
+                    GrindrPlus.runOnMainThread {
+                        AlertDialog.Builder(context)
+                            .setTitle("GrindrPlus")
+                            .setMessage(message)
+                            .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+                            .setNegativeButton("Restart") { dialog, _ ->
+                                dialog.dismiss()
+                                performCacheClearOperation(context)
+                            }
+                            .setIcon(android.R.drawable.ic_dialog_info)
+                            .show()
+                    }
+
+                } catch (e: Exception) {
+                    GrindrPlus.runOnMainThread {
+                        AlertDialog.Builder(context)
+                            .setTitle("GrindrPlus")
+                            .setMessage("GrindrPlus is active and running\n\nError retrieving details: ${e.message}")
+                            .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+                            .show()
+                    }
                 }
-
-                AlertDialog.Builder(context)
-                    .setTitle("GrindrPlus")
-                    .setMessage(message)
-                    .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
-                    .setNegativeButton("Restart") { dialog, _ ->
-                        dialog.dismiss()
-                        performCacheClearOperation(context)
-                    }
-                    .setIcon(android.R.drawable.ic_dialog_info)
-                    .show()
-
-            } catch (e: Exception) {
-                AlertDialog.Builder(context)
-                    .setTitle("GrindrPlus")
-                    .setMessage("GrindrPlus is active and running\n\nError retrieving details: ${e.message}")
-                    .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
-                    .show()
             }
         }
     }

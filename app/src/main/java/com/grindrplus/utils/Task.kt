@@ -69,7 +69,7 @@ abstract class Task(
     /**
      * Called when task is first registered
      */
-    open fun register() {
+    open suspend fun register() {
         Config.initTaskSettings(
             id,
             description,
