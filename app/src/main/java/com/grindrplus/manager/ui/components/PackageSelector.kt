@@ -29,7 +29,6 @@ fun PackageSelector(
     var packages by remember { mutableStateOf(Config.getAvailablePackages(context)) }
 
     LaunchedEffect(Unit) {
-        Config.readRemoteConfig()
         packages = Config.getAvailablePackages(context)
     }
 

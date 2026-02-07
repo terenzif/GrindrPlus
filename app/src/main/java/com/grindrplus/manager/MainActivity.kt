@@ -92,6 +92,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import timber.log.Timber.DebugTree
 
@@ -244,17 +245,22 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(Unit) {
                 GrindrPlus.bridgeClient = BridgeClient(this@MainActivity)
                 GrindrPlus.bridgeClient.connectAsync { connected ->
-                    activityScope.launch {
+                    activityScope.launch(Dispatchers.IO) {
                         Logger.initialize(this@MainActivity, GrindrPlus.bridgeClient, false)
                         Config.initialize()
                         HookManager().registerHooks(false)
                         TaskManager().registerTasks(false)
-                        calculatorScreen.value = Config.get("discreet_icon", false) as Boolean
-                        serviceBound = true
+                        
+                        withContext(Dispatchers.Main) {
+                            calculatorScreen.value = Config.get("discreet_icon", false) as Boolean
+                            serviceBound = true
+                        }
 
                         if (!(Config.get("disable_permission_checks", false) as Boolean)) {
-                            checkNotificationPermission()
-                            checkUnknownSourcesPermission()
+                            withContext(Dispatchers.Main) {
+                                checkNotificationPermission()
+                                checkUnknownSourcesPermission()
+                            }
                         }
 
                         if (Config.get("analytics", true) as Boolean) {
@@ -264,9 +270,11 @@ class MainActivity : ComponentActivity() {
                                 it.enable = true
                             }
 
-                            plausible = Plausible(
-                                config = config,
-                                client = NetworkFirstPlausibleClient(config)
+                            withContext(Dispatchers.Main) {
+                                plausible = Plausible(
+                                    config = config,
+                                    client = NetworkFirstPlausibleClient(config)
+                                )
                             )
 
                             plausible?.enable(true)

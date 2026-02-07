@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
 import android.os.Looper
+import android.os.Process
 import com.grindrplus.BuildConfig
 import com.grindrplus.core.LogSource
 import com.grindrplus.core.Logger
@@ -259,8 +260,10 @@ class BridgeClient(private val context: Context) {
         if (isBound.get()) return true
         Logger.d("Attempting to connect to bridge service (suspend)", LogSource.BRIDGE)
         return try {
-            withTimeout(timeoutMs) {
-                connect()
+            withContext(Dispatchers.IO) {
+                withTimeout(timeoutMs) {
+                    connect()
+                }
             }
         } catch (e: Exception) {
             Logger.w("Connection timeout in ensureConnection", LogSource.BRIDGE)
@@ -312,7 +315,7 @@ class BridgeClient(private val context: Context) {
         }
     }
 
-    private fun startService() {
+    private suspend fun startService() {
         try {
             val serviceIntent = Intent().apply {
                 setClassName(
@@ -329,7 +332,7 @@ class BridgeClient(private val context: Context) {
                     context.startService(serviceIntent)
                     Logger.d("Service start attempt via startService", LogSource.BRIDGE)
                 }
-                Thread.sleep(100)
+                delay(100)
             } catch (e: Exception) {
                 Logger.w("Failed to start service directly: ${e.message}", LogSource.BRIDGE)
 
@@ -337,7 +340,7 @@ class BridgeClient(private val context: Context) {
                     val forceStartIntent = ForceStartActivity.createIntent(context)
                     context.startActivity(forceStartIntent)
                     Logger.d("Service start attempt via ForceStartActivity (fallback)", LogSource.BRIDGE)
-                    Thread.sleep(50)
+                    delay(50)
                 } catch (e2: Exception) {
                     Logger.e("All service start methods failed: ${e2.message}", LogSource.BRIDGE)
                 }
@@ -369,7 +372,9 @@ class BridgeClient(private val context: Context) {
         }
 
         return try {
-            bridgeService?.config?.let { JSONObject(it) } ?: JSONObject()
+            withContext(Dispatchers.IO) {
+                bridgeService?.config?.let { JSONObject(it) } ?: JSONObject()
+            }
         } catch (e: Exception) {
             Logger.e("Error getting config: ${e.message}", LogSource.BRIDGE)
             JSONObject()
@@ -387,7 +392,9 @@ class BridgeClient(private val context: Context) {
         }
 
         try {
-            bridgeService?.setConfig(config.toString(4))
+            withContext(Dispatchers.IO) {
+                bridgeService?.setConfig(config.toString(4))
+            }
         } catch (e: Exception) {
             Logger.e("Error setting config: ${e.message}", LogSource.BRIDGE)
         }
@@ -404,7 +411,9 @@ class BridgeClient(private val context: Context) {
         }
 
         try {
-            bridgeService?.logBlockEvent(profileId, displayName, isBlock, packageName)
+            withContext(Dispatchers.IO) {
+                bridgeService?.logBlockEvent(profileId, displayName, isBlock, packageName)
+            }
         } catch (e: Exception) {
             Logger.e("Error logging block event: ${e.message}", LogSource.BRIDGE)
         }
@@ -421,7 +430,9 @@ class BridgeClient(private val context: Context) {
         }
 
         return try {
-            bridgeService?.blockEvents?.let { JSONArray(it) } ?: JSONArray()
+            withContext(Dispatchers.IO) {
+                bridgeService?.blockEvents?.let { JSONArray(it) } ?: JSONArray()
+            }
         } catch (e: Exception) {
             Logger.e("Error getting block events: ${e.message}", LogSource.BRIDGE)
             JSONArray()
@@ -439,7 +450,9 @@ class BridgeClient(private val context: Context) {
         }
 
         try {
-            bridgeService?.clearBlockEvents()
+            withContext(Dispatchers.IO) {
+                bridgeService?.clearBlockEvents()
+            }
         } catch (e: Exception) {
             Logger.e("Error clearing block events: ${e.message}", LogSource.BRIDGE)
         }
@@ -463,14 +476,16 @@ class BridgeClient(private val context: Context) {
         }
 
         try {
-            bridgeService?.sendNotification(
-                title,
-                message,
-                notificationId,
-                channelId,
-                channelName,
-                channelDescription
-            )
+            withContext(Dispatchers.IO) {
+                bridgeService?.sendNotification(
+                    title,
+                    message,
+                    notificationId,
+                    channelId,
+                    channelName,
+                    channelDescription
+                )
+            }
         } catch (e: Exception) {
             Logger.e("Error sending notification: ${e.message}", LogSource.BRIDGE)
         }
@@ -497,17 +512,19 @@ class BridgeClient(private val context: Context) {
         }
 
         try {
-            bridgeService?.sendNotificationWithActions(
-                title,
-                message,
-                notificationId,
-                channelId,
-                channelName,
-                channelDescription,
-                actionLabels.toTypedArray(),
-                actionTypes.toTypedArray(),
-                actionData.toTypedArray()
-            )
+            withContext(Dispatchers.IO) {
+                bridgeService?.sendNotificationWithActions(
+                    title,
+                    message,
+                    notificationId,
+                    channelId,
+                    channelName,
+                    channelDescription,
+                    actionLabels.toTypedArray(),
+                    actionTypes.toTypedArray(),
+                    actionData.toTypedArray()
+                )
+            }
         } catch (e: Exception) {
             Logger.e("Error sending notification with multiple actions: ${e.message}", LogSource.BRIDGE)
         }
@@ -530,7 +547,9 @@ class BridgeClient(private val context: Context) {
         }
 
         return try {
-            bridgeService?.shouldRegenAndroidId(packageName) ?: false
+            withContext(Dispatchers.IO) {
+                bridgeService?.shouldRegenAndroidId(packageName) ?: false
+            }
         } catch (e: Exception) {
             Logger.e("Error checking Android ID regeneration: ${e.message}", LogSource.BRIDGE)
             false
@@ -548,7 +567,9 @@ class BridgeClient(private val context: Context) {
         }
 
         return try {
-            bridgeService?.getForcedLocation(packageName) ?: ""
+            withContext(Dispatchers.IO) {
+                bridgeService?.getForcedLocation(packageName) ?: ""
+            }
         } catch (e: Exception) {
             Logger.e("Error getting forced location: ${e.message}", LogSource.BRIDGE)
             ""
@@ -566,7 +587,9 @@ class BridgeClient(private val context: Context) {
         }
 
         try {
-            bridgeService?.deleteForcedLocation(packageName)
+            withContext(Dispatchers.IO) {
+                bridgeService?.deleteForcedLocation(packageName)
+            }
         } catch (e: Exception) {
             Logger.e("Error deleting forced location: ${e.message}", LogSource.BRIDGE)
         }
@@ -583,7 +606,9 @@ class BridgeClient(private val context: Context) {
         }
 
         return try {
-            bridgeService?.isRooted() ?: false
+            withContext(Dispatchers.IO) {
+                bridgeService?.isRooted() ?: false
+            }
         } catch (e: Exception) {
             Logger.e("Error checking root status: ${e.message}", LogSource.BRIDGE)
             false
@@ -601,7 +626,9 @@ class BridgeClient(private val context: Context) {
         }
 
         return try {
-            bridgeService?.isLSPosed() ?: false
+            withContext(Dispatchers.IO) {
+                bridgeService?.isLSPosed() ?: false
+            }
         } catch (e: Exception) {
             Logger.e("Error checking LSPosed status: ${e.message}", LogSource.BRIDGE)
             false
