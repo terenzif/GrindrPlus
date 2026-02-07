@@ -187,8 +187,7 @@ class BridgeService : Service() {
                     val formattedLog = formatLogEntry(level, source, message, hookName)
                     appendToLog(formattedLog)
                 } catch (e: Exception) {
-                    Logger.e("Error writing log entry", LogSource.BRIDGE)
-                    Logger.writeRaw(e.stackTraceToString())
+                    Timber.tag("GrindrPlus").e(e, "Error writing log entry")
                 }
             }
         }
@@ -201,8 +200,7 @@ class BridgeService : Service() {
                     }
                     appendToLog(content + (if (!content.endsWith("\n")) "\n" else ""))
                 } catch (e: Exception) {
-                    Logger.e("Error writing raw log entry", LogSource.BRIDGE)
-                    Logger.writeRaw(e.stackTraceToString())
+                    Timber.tag("GrindrPlus").e(e, "Error writing raw log entry")
                 }
             }
         }
@@ -217,8 +215,7 @@ class BridgeService : Service() {
                     }
                 }
             } catch (e: Exception) {
-                Logger.e("Error clearing log file", LogSource.BRIDGE)
-                Logger.writeRaw(e.stackTraceToString())
+                Timber.tag("GrindrPlus").e(e, "Error clearing log file")
             }
         }
 
