@@ -50,6 +50,9 @@ abstract class GPDatabase : RoomDatabase() {
                             "`timestamp` INTEGER NOT NULL, " +
                             "`packageName` TEXT NOT NULL)"
                 )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_block_events_timestamp` ON `block_events` (`timestamp`)"
+                )
             }
         }
 
