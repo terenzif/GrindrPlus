@@ -8,6 +8,7 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import com.grindrplus.persistence.model.AlbumContentEntity
 import com.grindrplus.persistence.model.AlbumEntity
+import com.grindrplus.persistence.model.AlbumWithContent
 
 @Dao
 interface AlbumDao {
@@ -20,12 +21,29 @@ interface AlbumDao {
     suspend fun getAlbums(): List<AlbumEntity>
 
     /**
+     * Gets all albums with content from the database
+     * @return List of all albums with their content
+     */
+    @Transaction
+    @Query("SELECT * FROM AlbumEntity ORDER BY updatedAt DESC")
+    suspend fun getAlbumsWithContent(): List<AlbumWithContent>
+
+    /**
      * Gets all albums for a specific profile
      * @param profileId The profile ID to filter by
      * @return List of albums belonging to the specified profile
      */
     @Query("SELECT * FROM AlbumEntity WHERE profileId = :profileId ORDER BY updatedAt DESC")
     suspend fun getAlbums(profileId: Long): List<AlbumEntity>
+
+    /**
+     * Gets all albums with content for a specific profile
+     * @param profileId The profile ID to filter by
+     * @return List of albums with their content belonging to the specified profile
+     */
+    @Transaction
+    @Query("SELECT * FROM AlbumEntity WHERE profileId = :profileId ORDER BY updatedAt DESC")
+    suspend fun getAlbumsWithContent(profileId: Long): List<AlbumWithContent>
 
     /**
      * Gets a single album by ID
@@ -63,6 +81,14 @@ interface AlbumDao {
      */
     @Query("SELECT * FROM AlbumContentEntity WHERE albumId = :albumId")
     suspend fun getAlbumContent(albumId: Long): List<AlbumContentEntity>
+
+    /**
+     * Gets all album content for a list of albums
+     * @param albumIds The list of album IDs
+     * @return List of album content entities
+     */
+    @Query("SELECT * FROM AlbumContentEntity WHERE albumId IN (:albumIds)")
+    suspend fun getAlbumContents(albumIds: List<Long>): List<AlbumContentEntity>
 
     /**
      * Upserts an album content entity

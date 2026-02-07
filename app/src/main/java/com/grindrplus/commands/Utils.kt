@@ -94,7 +94,9 @@ class Utils(
                 "Invalid command prefix"
             )
             args[0] == "reset" || args[0] == "clear" -> {
-                Config.put("command_prefix", "/")
+                GrindrPlus.executeAsync {
+                    Config.put("command_prefix", "/")
+                }
                 GrindrPlus.showToast(
                     Toast.LENGTH_LONG,
                     "Command prefix reset to /",
@@ -113,7 +115,9 @@ class Utils(
                 "Command prefix is already set to ${args[0]}"
             )
             else -> {
-                Config.put("command_prefix", args[0])
+                GrindrPlus.executeAsync {
+                    Config.put("command_prefix", args[0])
+                }
                 GrindrPlus.showToast(
                     Toast.LENGTH_LONG,
                     "Command prefix set to ${args[0]}"

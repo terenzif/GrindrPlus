@@ -1,9 +1,14 @@
 import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 import java.net.URI
+import java.net.URL
+import java.io.FileOutputStream
+import java.nio.file.Files
+import java.nio.file.FileSystems
+import java.nio.file.Path
+import java.util.Comparator
 
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.googleKsp)
     alias(libs.plugins.compose.compiler)
 }
@@ -63,22 +68,21 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    
+    // Replacement for applicationVariants logic
+    defaultConfig {
+        // archivesBaseName set via base {} block below
+    }
+}
 
-    applicationVariants.configureEach {
-        outputs.configureEach {
-            val sanitizedVersionName = versionName.replace(Regex("[^a-zA-Z0-9._-]"), "_").trim('_')
-            (this as BaseVariantOutputImpl).outputFileName =
-                "GPlus_v${sanitizedVersionName}-${name}.apk"
-        }
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
@@ -97,7 +101,7 @@ dependencies {
     compileOnly(fileTree("libs") { include("*.jar") })
     implementation(fileTree("libs") { include("lspatch.jar") })
 
-    val composeBom = platform("androidx.compose:compose-bom:2025.02.00")
+    val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
 
     implementation(libs.androidx.material3)
@@ -126,43 +130,80 @@ dependencies {
     implementation(libs.coil.gif)
     implementation(libs.arsclib)
     compileOnly(libs.bcprov.jdk18on)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.test.runner)
+    testImplementation(libs.androidx.test.ext.junit)
+    testImplementation(libs.androidx.room.testing)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
 }
 
 tasks.register("setupLSPatch") {
     doLast {
+        val tempDir = layout.buildDirectory.get().asFile.resolve("lspatch_temp")
+        tempDir.mkdirs()
+
+        val nightlyLink = "https://nightly.link/JingMatrix/LSPatch/workflows/main/master?preview"
+        // Simple download of the nightly page to find the URL
+        val nightlyContent = URI(nightlyLink).toURL().readText()
         val jarUrl = Regex("https:\\/\\/nightly\\.link\\/JingMatrix\\/LSPatch\\/workflows\\/main\\/master\\/lspatch-debug-[^.]+\\.zip").find(
-            URI("https://nightly.link/JingMatrix/LSPatch/workflows/main/master?preview").toURL().readText()
+            nightlyContent
         )!!.value
 
-        providers.exec {
-            commandLine("mkdir", "-p", "/tmp/lspatch")
-        }.result.get()
+        val zipFile = tempDir.resolve("lspatch.zip")
+        
+        // Download zip
+        URI(jarUrl).toURL().openStream().use { input ->
+            FileOutputStream(zipFile).use { output ->
+                input.copyTo(output)
+            }
+        }
 
-        providers.exec {
-            commandLine("wget", jarUrl, "-O", "/tmp/lspatch/lspatch.zip")
-        }.result.get()
+        // Unzip
+        copy {
+            from(zipTree(zipFile))
+            into(tempDir)
+        }
 
-        providers.exec {
-            commandLine("unzip", "-o", "/tmp/lspatch/lspatch.zip", "-d", "/tmp/lspatch")
-        }.result.get()
+        val jarFile = tempDir.listFiles()?.find { it.name.contains("jar-") && it.extension == "jar" }
+            ?: throw GradleException("LSPatch jar not found in zip")
 
-        val jarPath = File("/tmp/lspatch").listFiles()?.find { it.name.contains("jar-") }?.absolutePath
+        // Extract assets/lspatch/so* to src/main/
+        copy {
+            from(zipTree(jarFile)) {
+                include("assets/lspatch/so*")
+            }
+            into(project.projectDir.resolve("src/main/"))
+        }
 
-        providers.exec {
-            commandLine("unzip", "-o", jarPath, "assets/lspatch/so*", "-d", "${project.projectDir}/src/main/")
-        }.result.get()
+        // Move/Copy jar to libs/lspatch.jar
+        val targetLib = project.projectDir.resolve("libs/lspatch.jar")
+        targetLib.parentFile.mkdirs()
+        jarFile.copyTo(targetLib, overwrite = true)
 
-        providers.exec {
-            commandLine("mv", jarPath, "${project.projectDir}/libs/lspatch.jar")
-        }.result.get()
+        // Delete specific classes/packages from the jar using ZipFileSystem
+        val jarUri = URI.create("jar:" + targetLib.toURI())
+        val env = mapOf("create" to "false")
+        
+        FileSystems.newFileSystem(jarUri, env).use { fs ->
+            // Delete com/google/common/util/concurrent/ListenableFuture.class
+            val p1 = fs.getPath("com/google/common/util/concurrent/ListenableFuture.class")
+            if (Files.exists(p1)) {
+                Files.delete(p1)
+            }
 
-        providers.exec {
-            commandLine("zip", "-d", "${project.projectDir}/libs/lspatch.jar", "com/google/common/util/concurrent/ListenableFuture.class")
-        }.result.get()
-
-        providers.exec {
-            commandLine("zip", "-d", "${project.projectDir}/libs/lspatch.jar", "com/google/errorprone/annotations/*")
-        }.result.get()
+            // Delete com/google/errorprone/annotations/*
+            val p2 = fs.getPath("com/google/errorprone/annotations")
+            if (Files.exists(p2)) {
+                 Files.walk(p2)
+                    .sorted(Comparator.reverseOrder())
+                    .forEach { p ->
+                         Files.delete(p)
+                    }
+            }
+        }
     }
 }
 
@@ -190,4 +231,10 @@ tasks.register("printVersionInfo") {
         val versionName = android.defaultConfig.versionName
         println("VERSION_INFO: GrindrPlus v$versionName")
     }
+}
+
+base {
+    val versionName = android.defaultConfig.versionName
+    val sanitizedVersionName = (versionName ?: "").replace(Regex("[^a-zA-Z0-9._-]"), "_").trim('_')
+    archivesName.set("GPlus_v${sanitizedVersionName}")
 }

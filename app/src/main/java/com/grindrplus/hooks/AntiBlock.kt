@@ -163,7 +163,7 @@ class AntiBlock : Hook(
         }
     }
 
-    private fun handleProfileResponse(profileId: Long, conversationIds: String, response: String): Boolean {
+    private suspend fun handleProfileResponse(profileId: Long, conversationIds: String, response: String): Boolean {
         try {
             val jsonResponse = JSONObject(response)
             val profilesArray = jsonResponse.optJSONArray("profiles")

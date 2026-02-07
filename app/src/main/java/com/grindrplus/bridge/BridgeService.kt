@@ -38,6 +38,8 @@ class BridgeService : Service() {
     private val ioExecutor = Executors.newSingleThreadExecutor()
     private val logLock = ReentrantLock()
     private val MAX_LOG_SIZE = 5 * 1024 * 1024
+    private val LOG_SIZE_CHECK_INTERVAL = 50
+    private var logWriteCount = 0
     private val periodicTasksExecutor = Executors.newSingleThreadScheduledExecutor()
 
     private lateinit var database: GPDatabase
@@ -211,12 +213,13 @@ class BridgeService : Service() {
         override fun log(level: String, source: String, message: String, hookName: String?) {
             ioExecutor.execute {
                 try {
-                    checkAndManageLogSize()
+                    if (logWriteCount++ % LOG_SIZE_CHECK_INTERVAL == 0) {
+                        checkAndManageLogSize()
+                    }
                     val formattedLog = formatLogEntry(level, source, message, hookName)
                     appendToLog(formattedLog)
                 } catch (e: Exception) {
-                    Logger.e("Error writing log entry", LogSource.BRIDGE)
-                    Logger.writeRaw(e.stackTraceToString())
+                    Timber.tag("GrindrPlus").e(e, "Error writing log entry")
                 }
             }
         }
@@ -224,11 +227,12 @@ class BridgeService : Service() {
         override fun writeRawLog(content: String) {
             ioExecutor.execute {
                 try {
-                    checkAndManageLogSize()
+                    if (logWriteCount++ % LOG_SIZE_CHECK_INTERVAL == 0) {
+                        checkAndManageLogSize()
+                    }
                     appendToLog(content + (if (!content.endsWith("\n")) "\n" else ""))
                 } catch (e: Exception) {
-                    Logger.e("Error writing raw log entry", LogSource.BRIDGE)
-                    Logger.writeRaw(e.stackTraceToString())
+                    Timber.tag("GrindrPlus").e(e, "Error writing raw log entry")
                 }
             }
         }
@@ -243,8 +247,7 @@ class BridgeService : Service() {
                     }
                 }
             } catch (e: Exception) {
-                Logger.e("Error clearing log file", LogSource.BRIDGE)
-                Logger.writeRaw(e.stackTraceToString())
+                Timber.tag("GrindrPlus").e(e, "Error clearing log file")
             }
         }
 
