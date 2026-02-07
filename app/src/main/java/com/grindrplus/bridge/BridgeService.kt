@@ -35,7 +35,6 @@ import kotlin.concurrent.withLock
 class BridgeService : Service() {
     private val configFile by lazy { File(getExternalFilesDir(null), "grindrplus.json") }
     private val logFile by lazy { File(getExternalFilesDir(null), "grindrplus.log") }
-    private val blockEventsFile by lazy { File(getExternalFilesDir(null), "block_events.json") }
     private val ioExecutor = Executors.newSingleThreadExecutor()
     private val logLock = ReentrantLock()
     private val MAX_LOG_SIZE = 5 * 1024 * 1024
@@ -140,6 +139,7 @@ class BridgeService : Service() {
                 }
 
                 // Migration of block events
+                val blockEventsFile = File(getExternalFilesDir(null), "block_events.json")
                 if (blockEventsFile.exists()) {
                     try {
                         val content = blockEventsFile.readText().ifBlank { "[]" }
