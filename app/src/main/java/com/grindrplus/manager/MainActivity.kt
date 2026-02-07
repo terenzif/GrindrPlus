@@ -275,7 +275,7 @@ class MainActivity : ComponentActivity() {
                                     config = config,
                                     client = NetworkFirstPlausibleClient(config)
                                 )
-                            )
+                            }
 
                             plausible?.enable(true)
                             plausible?.pageView(
