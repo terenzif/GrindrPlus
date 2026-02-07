@@ -297,8 +297,11 @@ class LocationSpoofer : Hook(
                     }
 
                     val coordinates = location.let { "${it.latitude}, ${it.longitude}" }
-                    Config.put("current_location", coordinates)
-                    GrindrPlus.showToast(Toast.LENGTH_LONG, "Teleported to $coordinates")
+
+                    coroutineScope.launch {
+                        Config.put("current_location", coordinates)
+                        GrindrPlus.showToast(Toast.LENGTH_LONG, "Teleported to $coordinates")
+                    }
                 }
             }
 
@@ -364,19 +367,21 @@ class LocationSpoofer : Hook(
             locationDialogView.addView(row2)
 
             fun teleport() {
-                val location = getSelectedLocation()
+                coroutineScope.launch {
+                    val location = getSelectedLocation()
 
-                if (location == null) {
-                    Config.put("current_location", "")
-                    Config.put("current_location_name", "")
-                    GrindrPlus.showToast(Toast.LENGTH_SHORT, "Teleporting stopped")
-                    return
+                    if (location == null) {
+                        Config.put("current_location", "")
+                        Config.put("current_location_name", "")
+                        GrindrPlus.showToast(Toast.LENGTH_SHORT, "Teleporting stopped")
+                        return@launch
+                    }
+
+                    val coordinates = location.let { "${it.latitude}, ${it.longitude}" }
+                    Config.put("current_location", coordinates)
+                    Config.put("current_location_name", location.name)
+                    GrindrPlus.showToast(Toast.LENGTH_LONG, "Teleported to ${location.name}")
                 }
-
-                val coordinates = location.let { "${it.latitude}, ${it.longitude}" }
-                Config.put("current_location", coordinates)
-                Config.put("current_location_name", location.name)
-                GrindrPlus.showToast(Toast.LENGTH_LONG, "Teleported to ${location.name}")
             }
 
             AlertDialog.Builder(context).apply {

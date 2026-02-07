@@ -218,8 +218,8 @@ fun DebugLogsScreen(
                             if (!isDebugBuild) {
                                 val newState = !debugModeEnabled
                                 debugModeEnabled = newState
-                                Config.put("debug_mode", newState)
                                 scope.launch {
+                                    Config.put("debug_mode", newState)
                                     snackbarHostState.showSnackbar(
                                         if (newState) "Verbose logging enabled" else "Verbose logging disabled"
                                     )

@@ -26,6 +26,7 @@ import coil3.compose.AsyncImage
 import coil3.gif.AnimatedImageDecoder
 import coil3.gif.GifDecoder
 import com.grindrplus.core.Config
+import kotlinx.coroutines.launch
 
 @Composable
 fun CalculatorScreen(calculatorScreen: MutableState<Boolean>) {
@@ -45,6 +46,8 @@ fun CalculatorScreen(calculatorScreen: MutableState<Boolean>) {
         666 to "https://i.imgur.com/399VOm7.jpeg"
     )
 
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(Unit) {
         showPasswordDialog = Config.get("calculator_first_launch", true) as Boolean
     }
@@ -62,8 +65,10 @@ fun CalculatorScreen(calculatorScreen: MutableState<Boolean>) {
 
         if (showPasswordDialog) {
             CalculatorPasswordDialog {
-                Config.put("calculator_first_launch", false)
-                showPasswordDialog = false
+                scope.launch {
+                    Config.put("calculator_first_launch", false)
+                    showPasswordDialog = false
+                }
             }
         }
 

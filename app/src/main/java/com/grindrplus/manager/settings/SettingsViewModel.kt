@@ -219,11 +219,13 @@ class SettingsViewModel(
                         },
                         buttons = listOf(
                             ButtonAction("Generate") {
-                                val uuid = java.util.UUID.randomUUID()
-                                val newDeviceId = uuid.toString().replace("-", "").substring(0, 16)
-                                Config.put("android_device_id", newDeviceId)
-                                loadSettings()
-                                Toast.makeText(context, "New device ID generated", Toast.LENGTH_SHORT).show()
+                                viewModelScope.launch {
+                                    val uuid = java.util.UUID.randomUUID()
+                                    val newDeviceId = uuid.toString().replace("-", "").substring(0, 16)
+                                    Config.put("android_device_id", newDeviceId)
+                                    loadSettings()
+                                    Toast.makeText(context, "New device ID generated", Toast.LENGTH_SHORT).show()
+                                }
                             }
                         )
 

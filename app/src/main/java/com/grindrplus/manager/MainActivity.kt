@@ -91,6 +91,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import timber.log.Timber.DebugTree
 
@@ -243,43 +245,51 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(Unit) {
                 GrindrPlus.bridgeClient = BridgeClient(this@MainActivity)
                 GrindrPlus.bridgeClient.connectAsync { connected ->
-                    Logger.initialize(this@MainActivity, GrindrPlus.bridgeClient, false)
-                    Config.initialize()
-                    HookManager().registerHooks(false)
-                    TaskManager().registerTasks(false)
-                    calculatorScreen.value = Config.get("discreet_icon", false) as Boolean
-                    serviceBound = true
-
-                    if (!(Config.get("disable_permission_checks", false) as Boolean)) {
-                        checkNotificationPermission()
-                        checkUnknownSourcesPermission()
-                    }
-
-                    if (Config.get("analytics", true) as Boolean) {
-                        val config = AndroidResourcePlausibleConfig(this@MainActivity).also {
-                            it.domain = "grindrplus.lol"
-                            it.host = "https://plausible.gmmz.dev/api/"
-                            it.enable = true
+                    activityScope.launch(Dispatchers.IO) {
+                        Logger.initialize(this@MainActivity, GrindrPlus.bridgeClient, false)
+                        Config.initialize()
+                        HookManager().registerHooks(false)
+                        TaskManager().registerTasks(false)
+                        
+                        withContext(Dispatchers.Main) {
+                            calculatorScreen.value = Config.get("discreet_icon", false) as Boolean
+                            serviceBound = true
                         }
 
-                        plausible = Plausible(
-                            config = config,
-                            client = NetworkFirstPlausibleClient(config)
-                        )
+                        if (!(Config.get("disable_permission_checks", false) as Boolean)) {
+                            withContext(Dispatchers.Main) {
+                                checkNotificationPermission()
+                                checkUnknownSourcesPermission()
+                            }
+                        }
 
-                        plausible?.enable(true)
-                        plausible?.pageView(
-                            "app://grindrplus/home",
-                            props = mapOf("android_version" to Build.VERSION.SDK_INT)
-                        )
-                    }
+                        if (Config.get("analytics", true) as Boolean) {
+                            val config = AndroidResourcePlausibleConfig(this@MainActivity).also {
+                                it.domain = "grindrplus.lol"
+                                it.host = "https://plausible.gmmz.dev/api/"
+                                it.enable = true
+                            }
 
-                    if (Config.get("first_launch", true) as Boolean) {
-                        firstLaunchDialog = true
-                        patchInfoDialog = true
-                        plausible?.pageView("app://grindrplus/first_launch")
-                        Config.put("first_launch", false)
+                            withContext(Dispatchers.Main) {
+                                plausible = Plausible(
+                                    config = config,
+                                    client = NetworkFirstPlausibleClient(config)
+                                )
+                            )
 
+                            plausible?.enable(true)
+                            plausible?.pageView(
+                                "app://grindrplus/home",
+                                props = mapOf("android_version" to Build.VERSION.SDK_INT)
+                            )
+                        }
+
+                        if (Config.get("first_launch", true) as Boolean) {
+                            firstLaunchDialog = true
+                            patchInfoDialog = true
+                            plausible?.pageView("app://grindrplus/first_launch")
+                            Config.put("first_launch", false)
+                        }
                     }
                 }
             }
@@ -628,4 +638,3 @@ fun NavController.navigateItem(item: MainNavItem) {
         restoreState = true
     }
 }
-
