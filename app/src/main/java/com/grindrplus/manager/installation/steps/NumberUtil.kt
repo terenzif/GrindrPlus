@@ -27,7 +27,7 @@ private val ones = arrayOf(
 private val tens =
     arrayOf("", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety")
 
-tailrec fun numberToWords(num: Int, result: String = ""): String {
+fun numberToWords(num: Int, result: String = ""): String {
     return when {
         num == 0 && result == "" -> "Zero" // base case
         num == 0 -> result.trim() // final result
