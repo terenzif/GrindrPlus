@@ -17,6 +17,8 @@ import androidx.core.app.ServiceCompat
 import com.grindrplus.core.LogSource
 import com.grindrplus.core.Logger
 import com.grindrplus.manager.fetchNotifs
+import com.grindrplus.persistence.GPDatabase
+import com.grindrplus.persistence.model.BlockEventEntity
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
@@ -33,8 +35,6 @@ import kotlin.concurrent.withLock
 class BridgeService : Service() {
     private val configFile by lazy { File(getExternalFilesDir(null), "grindrplus.json") }
     private val logFile by lazy { File(getExternalFilesDir(null), "grindrplus.log") }
-    private val blockEventsFile by lazy { File(getExternalFilesDir(null), "block_events.json") }
-    private val blockEventsLock = ReentrantLock()
     private val ioExecutor = Executors.newSingleThreadExecutor()
     private val logLock = ReentrantLock()
     private val MAX_LOG_SIZE = 5 * 1024 * 1024
@@ -42,11 +42,15 @@ class BridgeService : Service() {
     private var logWriteCount = 0
     private val periodicTasksExecutor = Executors.newSingleThreadScheduledExecutor()
 
+    private lateinit var database: GPDatabase
     private var isForegroundStarted = false
 
     override fun onCreate() {
         super.onCreate()
         Logger.i("BridgeService created", LogSource.BRIDGE)
+
+        // Init database
+        database = GPDatabase.create(this)
 
         Process.setThreadPriority(Process.THREAD_PRIORITY_FOREGROUND)
         initializeFiles()
@@ -136,9 +140,37 @@ class BridgeService : Service() {
                     logFile.createNewFile()
                 }
 
-                if (!blockEventsFile.exists()) {
-                    blockEventsFile.createNewFile()
-                    blockEventsFile.writeText("[]")
+                // Migration of block events
+                val blockEventsFile = File(getExternalFilesDir(null), "block_events.json")
+                if (blockEventsFile.exists()) {
+                    try {
+                        val content = blockEventsFile.readText().ifBlank { "[]" }
+                        val eventsArray = JSONArray(content)
+                        if (eventsArray.length() > 0) {
+                            Logger.i("Migrating ${eventsArray.length()} block events to database", LogSource.BRIDGE)
+                            for (i in 0 until eventsArray.length()) {
+                                val event = eventsArray.getJSONObject(i)
+                                val entity = BlockEventEntity(
+                                    profileId = event.getString("profileId"),
+                                    displayName = event.getString("displayName"),
+                                    eventType = event.getString("eventType"),
+                                    timestamp = event.getLong("timestamp"),
+                                    packageName = event.optString("packageName", "com.grindrapp.android")
+                                )
+                                runBlocking {
+                                    database.blockEventDao().insert(entity)
+                                }
+                            }
+                        }
+                        // Rename file after successful migration
+                        val backup = File(blockEventsFile.parent, "block_events.json.bak")
+                        if (backup.exists()) backup.delete()
+                        blockEventsFile.renameTo(backup)
+                        Logger.i("Block events migration complete", LogSource.BRIDGE)
+                    } catch (e: Exception) {
+                        Logger.e("Failed to migrate block events: ${e.message}", LogSource.BRIDGE)
+                        Logger.writeRaw(e.stackTraceToString())
+                    }
                 }
             } catch (e: Exception) {
                 Logger.e("Failed to initialize files: ${e.message}", LogSource.BRIDGE)
@@ -304,28 +336,22 @@ class BridgeService : Service() {
         ) {
             ioExecutor.execute {
                 try {
-                    blockEventsLock.withLock {
-                        if (!blockEventsFile.exists()) {
-                            blockEventsFile.createNewFile()
-                            blockEventsFile.writeText("[]")
-                        }
-
-                        val eventsArray = JSONArray(blockEventsFile.readText().ifBlank { "[]" })
-                        val event = JSONObject().apply {
-                            put("profileId", profileId)
-                            put("displayName", displayName)
-                            put("eventType", if (isBlock) "block" else "unblock")
-                            put("timestamp", System.currentTimeMillis())
-                            put("packageName", packageName)
-                        }
-                        eventsArray.put(event)
-                        blockEventsFile.writeText(eventsArray.toString(4))
-                        Logger.d(
-                            "Logged ${if (isBlock) "block" else "unblock"} event " +
-                                    "for profile ${profileId.take(profileId.length - 4) + "****"}",
-                            LogSource.BRIDGE
-                        )
+                    val event = BlockEventEntity(
+                        profileId = profileId,
+                        displayName = displayName,
+                        eventType = if (isBlock) "block" else "unblock",
+                        timestamp = System.currentTimeMillis(),
+                        packageName = packageName
+                    )
+                    runBlocking {
+                        database.blockEventDao().insert(event)
                     }
+
+                    Logger.d(
+                        "Logged ${if (isBlock) "block" else "unblock"} event " +
+                                "for profile ${profileId.take(profileId.length - 4) + "****"}",
+                        LogSource.BRIDGE
+                    )
                 } catch (e: Exception) {
                     Timber.tag(TAG).e(e, "Error logging block event")
                 }
@@ -334,29 +360,40 @@ class BridgeService : Service() {
 
         override fun getBlockEvents(): String {
             return try {
-                if (!blockEventsFile.exists()) {
-                    blockEventsFile.createNewFile()
-                    "[]"
-                } else {
-                    blockEventsFile.readText().ifBlank { "[]" }
+                val future = ioExecutor.submit<String> {
+                    runBlocking {
+                        val events = database.blockEventDao().getAll()
+                        val jsonArray = JSONArray()
+                        events.forEach { event ->
+                            val jsonObject = JSONObject().apply {
+                                put("profileId", event.profileId)
+                                put("displayName", event.displayName)
+                                put("eventType", event.eventType)
+                                put("timestamp", event.timestamp)
+                                put("packageName", event.packageName)
+                            }
+                            jsonArray.put(jsonObject)
+                        }
+                        jsonArray.toString(4)
+                    }
                 }
+                future.get()
             } catch (e: Exception) {
-                Logger.e("Error reading block events file", LogSource.BRIDGE)
+                Logger.e("Error reading block events from DB", LogSource.BRIDGE)
                 Logger.writeRaw(e.stackTraceToString())
                 "[]"
             }
         }
 
         override fun clearBlockEvents() {
-            blockEventsLock.withLock {
+            ioExecutor.execute {
                 try {
-                    if (blockEventsFile.exists()) {
-                        blockEventsFile.delete()
-                        blockEventsFile.createNewFile()
-                        blockEventsFile.writeText("[]")
+                    runBlocking {
+                        database.blockEventDao().deleteAll()
                     }
+                    Logger.i("Cleared all block events", LogSource.BRIDGE)
                 } catch (e: Exception) {
-                    Logger.e("Error clearing block events file", LogSource.BRIDGE)
+                    Logger.e("Error clearing block events", LogSource.BRIDGE)
                     Logger.writeRaw(e.stackTraceToString())
                 }
             }
@@ -514,6 +551,11 @@ class BridgeService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Logger.i("BridgeService destroyed", LogSource.BRIDGE)
+        try {
+            database.close()
+        } catch (e: Exception) {
+            Timber.tag(TAG).e(e, "Error closing database in BridgeService.onDestroy")
+        }
         ioExecutor.shutdown()
         periodicTasksExecutor.shutdown()
     }
