@@ -550,7 +550,8 @@ class BridgeService : Service() {
         try {
             database.close()
         } catch (e: Exception) {
-            Timber.e(e, "Error closing database in BridgeService.onDestroy")
+            Logger.e("Error closing database in BridgeService.onDestroy", LogSource.BRIDGE)
+            Logger.writeRaw(e.stackTraceToString())
         }
         ioExecutor.shutdown()
         periodicTasksExecutor.shutdown()
