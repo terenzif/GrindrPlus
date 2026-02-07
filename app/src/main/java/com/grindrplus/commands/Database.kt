@@ -72,6 +72,7 @@ class Database(
 
         val tableName = args[0]
         try {
+            // Check if table exists to prevent SQL injection
             if (!DatabaseHelper.getTables().contains(tableName)) {
                 GrindrPlus.showToast(Toast.LENGTH_LONG, "Table '$tableName' does not exist.")
                 return
