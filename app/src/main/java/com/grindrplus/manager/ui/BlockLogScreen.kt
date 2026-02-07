@@ -311,7 +311,7 @@ fun BlockEventItem(
                 )
             }
 
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp)

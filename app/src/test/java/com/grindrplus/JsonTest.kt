@@ -3,7 +3,10 @@ package com.grindrplus
 import org.junit.Test
 import org.junit.Assert.*
 import org.json.JSONObject
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class JsonTest {
 
     // Vulnerable logic from Client.kt
