@@ -4,7 +4,9 @@ import android.content.Context
 import com.grindrplus.manager.installation.BaseStep
 import com.grindrplus.manager.installation.Print
 import com.grindrplus.manager.utils.KeyStoreUtils
+import com.iyxan23.zipalignjava.ZipAlign
 import java.io.File
+import java.io.RandomAccessFile
 
 class SignClonedGrindrApk(val keyStoreUtils: KeyStoreUtils, val outputDir: File): BaseStep() {
     override suspend fun doExecute(
@@ -17,23 +19,25 @@ class SignClonedGrindrApk(val keyStoreUtils: KeyStoreUtils, val outputDir: File)
                 continue
             }
 
-//            val outFile = File(outputDir, "${file.name}-aligned.apk")
-//            val zipIn = RandomAccessFile(file, "r");
-//            val zipOut = outFile.outputStream();
-//
-//            print("Aligning ${file.name}...")
-//
-//            ZipAlign.alignZip(zipIn, zipOut)
-//
-//            print("Signing ${outFile.name}...")
-
+            val alignedFile = File(outputDir, "${file.name}-aligned.apk")
             try {
-                keyStoreUtils.signApk(file, File(outputDir, "${file.name}-signed.apk"))
-                //outFile.delete()
+                RandomAccessFile(file, "r").use { zipIn ->
+                    alignedFile.outputStream().use { zipOut ->
+                        print("Aligning ${file.name}...")
+                        ZipAlign.alignZip(zipIn, zipOut)
+                    }
+                }
+
+                print("Signing ${alignedFile.name}...")
+                keyStoreUtils.signApk(alignedFile, File(outputDir, "${file.name}-signed.apk"))
                 file.delete()
             } catch (e: Exception) {
                 print("Failed to sign ${file.name}: ${e.localizedMessage}")
                 throw e
+            } finally {
+                if (alignedFile.exists()) {
+                    alignedFile.delete()
+                }
             }
         }
     }

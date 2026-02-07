@@ -123,7 +123,7 @@ class KeyStoreUtils(context: Context) {
 
     fun signApk(apkFile: File, output: File) {
         ApkSigner.Builder(listOf(signerConfig))
-            .setV1SigningEnabled(false) // TODO: enable so api <24 devices can work, however zip-alignment breaks
+            .setV1SigningEnabled(true)
             .setV2SigningEnabled(true)
             .setV3SigningEnabled(true)
             .setInputApk(apkFile)
