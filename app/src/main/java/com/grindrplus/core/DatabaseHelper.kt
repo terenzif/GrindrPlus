@@ -74,11 +74,6 @@ object DatabaseHelper {
         return rowsDeleted
     }
 
-    fun getTables(): List<String> {
-        val query = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
-        return query(query).map { it["name"].toString() }
-    }
-
     fun execute(sql: String) {
         val database = getDatabase()
         database.execSQL(sql)

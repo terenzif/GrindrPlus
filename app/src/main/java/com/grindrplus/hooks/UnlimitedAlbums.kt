@@ -395,15 +395,9 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                     GrindrPlus.database.withTransaction {
                         val dao = GrindrPlus.database.albumDao()
                         val dbAlbums = dao.getAlbums()
-                        val albumIds = dbAlbums.map { it.id }
-                        val allContent =
-                            if (albumIds.isNotEmpty()) dao.getAlbumContents(albumIds)
-                            else emptyList()
-                        val contentMap = allContent.groupBy { it.albumId }
-
                         dbAlbums.mapNotNull {
                             try {
-                                val dbContent = contentMap[it.id] ?: emptyList()
+                                val dbContent = dao.getAlbumContent(it.id)
                                 it.toGrindrAlbum(dbContent)
                             } catch (e: Exception) {
                                 loge("Error converting album ${it.id}: ${e.message}")
@@ -467,15 +461,9 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                     GrindrPlus.database.withTransaction {
                         val dao = GrindrPlus.database.albumDao()
                         val dbAlbums = dao.getAlbums()
-                        val albumIds = dbAlbums.map { it.id }
-                        val allContent =
-                            if (albumIds.isNotEmpty()) dao.getAlbumContents(albumIds)
-                            else emptyList()
-                        val contentMap = allContent.groupBy { it.albumId }
-
                         dbAlbums.mapNotNull {
                             try {
-                                val dbContent = contentMap[it.id] ?: emptyList()
+                                val dbContent = dao.getAlbumContent(it.id)
                                 if (dbContent.isNotEmpty()) {
                                     it.toGrindrAlbumBrief(dbContent.first())
                                 } else {
@@ -547,15 +535,9 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                     GrindrPlus.database.withTransaction {
                         val dao = GrindrPlus.database.albumDao()
                         val dbAlbums = dao.getAlbums(profileId)
-                        val albumIds = dbAlbums.map { it.id }
-                        val allContent =
-                            if (albumIds.isNotEmpty()) dao.getAlbumContents(albumIds)
-                            else emptyList()
-                        val contentMap = allContent.groupBy { it.albumId }
-
                         dbAlbums.mapNotNull {
                             try {
-                                val dbContent = contentMap[it.id] ?: emptyList()
+                                val dbContent = dao.getAlbumContent(it.id)
                                 if (dbContent.isNotEmpty()) {
                                     it.toGrindrAlbumBrief(dbContent.first())
                                 } else {

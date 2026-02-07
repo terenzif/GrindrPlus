@@ -97,7 +97,7 @@ dependencies {
     compileOnly(fileTree("libs") { include("*.jar") })
     implementation(fileTree("libs") { include("lspatch.jar") })
 
-    val composeBom = platform(libs.compose.bom)
+    val composeBom = platform("androidx.compose:compose-bom:2025.02.00")
     implementation(composeBom)
 
     implementation(libs.androidx.material3)
@@ -126,27 +126,30 @@ dependencies {
     implementation(libs.coil.gif)
     implementation(libs.arsclib)
     compileOnly(libs.bcprov.jdk18on)
-    testImplementation(libs.junit)
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20231013")
 }
 
 tasks.register("setupLSPatch") {
     doLast {
-        val tempDir = layout.buildDirectory.get().asFile.resolve("lspatch_temp")
-        tempDir.mkdirs()
-
         val jarUrl = Regex("https:\\/\\/nightly\\.link\\/JingMatrix\\/LSPatch\\/workflows\\/main\\/master\\/lspatch-debug-[^.]+\\.zip").find(
             URI("https://nightly.link/JingMatrix/LSPatch/workflows/main/master?preview").toURL().readText()
         )!!.value
 
         providers.exec {
-            commandLine("wget", jarUrl, "-O", tempDir.resolve("lspatch.zip").absolutePath)
+            commandLine("mkdir", "-p", "/tmp/lspatch")
         }.result.get()
 
         providers.exec {
-            commandLine("unzip", "-o", tempDir.resolve("lspatch.zip").absolutePath, "-d", tempDir.absolutePath)
+            commandLine("wget", jarUrl, "-O", "/tmp/lspatch/lspatch.zip")
         }.result.get()
 
-        val jarPath = tempDir.listFiles()?.find { it.name.contains("jar-") }?.absolutePath
+        providers.exec {
+            commandLine("unzip", "-o", "/tmp/lspatch/lspatch.zip", "-d", "/tmp/lspatch")
+        }.result.get()
+
+        val jarPath = File("/tmp/lspatch").listFiles()?.find { it.name.contains("jar-") }?.absolutePath
 
         providers.exec {
             commandLine("unzip", "-o", jarPath, "assets/lspatch/so*", "-d", "${project.projectDir}/src/main/")
