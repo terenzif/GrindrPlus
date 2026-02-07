@@ -194,11 +194,9 @@ class Client(interceptor: Interceptor) {
     }
 
     fun updateLocation(geohash: String) {
-        val body = """
-            {
-                "geohash": "$geohash"
-            }
-        """.trimIndent()
+        val body = JSONObject().apply {
+            put("geohash", geohash)
+        }.toString()
 
         GrindrPlus.executeAsync {
             val response = sendRequest(
@@ -223,15 +221,11 @@ class Client(interceptor: Interceptor) {
         comment: String = ""
     ) {
         GrindrPlus.executeAsync {
-            val body = """
-                {
-                    "reason": "$reason",
-                    "comment": "$comment",
-                    "locations": [
-                        "CHAT_MESSAGE"
-                    ]
-                }
-            """.trimIndent()
+            val body = JSONObject().apply {
+                put("reason", reason)
+                put("comment", comment)
+                put("locations", org.json.JSONArray().put("CHAT_MESSAGE"))
+            }.toString()
 
             val response = sendRequest(
                 "https://grindr.mobi/v3.1/flags/$profileId",
@@ -391,12 +385,10 @@ class Client(interceptor: Interceptor) {
             return
         }
 
-        val body = """
-            {
-                "notes": "${notes.replace("\n", "\\n")}",
-                "phoneNumber": "$phoneNumber"
-            }
-        """.trimIndent()
+        val body = JSONObject().apply {
+            put("notes", notes)
+            put("phoneNumber", phoneNumber)
+        }.toString()
 
         GrindrPlus.executeAsync {
             val response = sendRequest(
