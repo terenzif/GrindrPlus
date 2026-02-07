@@ -394,19 +394,12 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                 val albums = runBlocking {
                     GrindrPlus.database.withTransaction {
                         val dao = GrindrPlus.database.albumDao()
-                        val dbAlbums = dao.getAlbums()
-                        val albumIds = dbAlbums.map { it.id }
-                        val allContent =
-                            if (albumIds.isNotEmpty()) dao.getAlbumContents(albumIds)
-                            else emptyList()
-                        val contentMap = allContent.groupBy { it.albumId }
-
+                        val dbAlbums = dao.getAlbumsWithContent()
                         dbAlbums.mapNotNull {
                             try {
-                                val dbContent = contentMap[it.id] ?: emptyList()
-                                it.toGrindrAlbum(dbContent)
+                                it.album.toGrindrAlbum(it.content)
                             } catch (e: Exception) {
-                                loge("Error converting album ${it.id}: ${e.message}")
+                                loge("Error converting album ${it.album.id}: ${e.message}")
                                 Logger.writeRaw(e.stackTraceToString())
                                 null
                             }
@@ -466,24 +459,17 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                 val albumBriefs = runBlocking {
                     GrindrPlus.database.withTransaction {
                         val dao = GrindrPlus.database.albumDao()
-                        val dbAlbums = dao.getAlbums()
-                        val albumIds = dbAlbums.map { it.id }
-                        val allContent =
-                            if (albumIds.isNotEmpty()) dao.getAlbumContents(albumIds)
-                            else emptyList()
-                        val contentMap = allContent.groupBy { it.albumId }
-
+                        val dbAlbums = dao.getAlbumsWithContent()
                         dbAlbums.mapNotNull {
                             try {
-                                val dbContent = contentMap[it.id] ?: emptyList()
-                                if (dbContent.isNotEmpty()) {
-                                    it.toGrindrAlbumBrief(dbContent.first())
+                                if (it.content.isNotEmpty()) {
+                                    it.album.toGrindrAlbumBrief(it.content.first())
                                 } else {
-                                    logw("Album ${it.id} has no content")
+                                    logw("Album ${it.album.id} has no content")
                                     null
                                 }
                             } catch (e: Exception) {
-                                loge("Error converting album ${it.id} to brief: ${e.message}")
+                                loge("Error converting album ${it.album.id} to brief: ${e.message}")
                                 Logger.writeRaw(e.stackTraceToString())
                                 null
                             }
@@ -546,24 +532,17 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                 val albumBriefs = runBlocking {
                     GrindrPlus.database.withTransaction {
                         val dao = GrindrPlus.database.albumDao()
-                        val dbAlbums = dao.getAlbums(profileId)
-                        val albumIds = dbAlbums.map { it.id }
-                        val allContent =
-                            if (albumIds.isNotEmpty()) dao.getAlbumContents(albumIds)
-                            else emptyList()
-                        val contentMap = allContent.groupBy { it.albumId }
-
+                        val dbAlbums = dao.getAlbumsWithContent(profileId)
                         dbAlbums.mapNotNull {
                             try {
-                                val dbContent = contentMap[it.id] ?: emptyList()
-                                if (dbContent.isNotEmpty()) {
-                                    it.toGrindrAlbumBrief(dbContent.first())
+                                if (it.content.isNotEmpty()) {
+                                    it.album.toGrindrAlbumBrief(it.content.first())
                                 } else {
-                                    logw("Album ${it.id} has no content")
+                                    logw("Album ${it.album.id} has no content")
                                     null
                                 }
                             } catch (e: Exception) {
-                                loge("Error converting album ${it.id} to brief: ${e.message}")
+                                loge("Error converting album ${it.album.id} to brief: ${e.message}")
                                 Logger.writeRaw(e.stackTraceToString())
                                 null
                             }
