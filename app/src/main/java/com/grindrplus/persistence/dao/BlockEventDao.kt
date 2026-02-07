@@ -8,11 +8,11 @@ import com.grindrplus.persistence.model.BlockEventEntity
 @Dao
 interface BlockEventDao {
     @Insert
-    suspend fun insert(event: BlockEventEntity)
+    fun insert(event: BlockEventEntity)
 
     @Query("SELECT * FROM block_events ORDER BY timestamp DESC")
-    suspend fun getAll(): List<BlockEventEntity>
+    fun getAll(): List<BlockEventEntity>
 
     @Query("DELETE FROM block_events")
-    suspend fun deleteAll()
+    fun deleteAll()
 }

@@ -155,9 +155,7 @@ class BridgeService : Service() {
                                     timestamp = event.getLong("timestamp"),
                                     packageName = event.optString("packageName", "com.grindrapp.android")
                                 )
-                                runBlocking {
-                                    database.blockEventDao().insert(entity)
-                                }
+                                database.blockEventDao().insert(entity)
                             }
                         }
                         // Rename file after successful migration
@@ -340,9 +338,7 @@ class BridgeService : Service() {
                         timestamp = System.currentTimeMillis(),
                         packageName = packageName
                     )
-                    runBlocking {
-                        database.blockEventDao().insert(event)
-                    }
+                    database.blockEventDao().insert(event)
 
                     Logger.d(
                         "Logged ${if (isBlock) "block" else "unblock"} event " +
@@ -357,24 +353,19 @@ class BridgeService : Service() {
 
         override fun getBlockEvents(): String {
             return try {
-                val future = ioExecutor.submit<String> {
-                    runBlocking {
-                        val events = database.blockEventDao().getAll()
-                        val jsonArray = JSONArray()
-                        events.forEach { event ->
-                            val jsonObject = JSONObject().apply {
-                                put("profileId", event.profileId)
-                                put("displayName", event.displayName)
-                                put("eventType", event.eventType)
-                                put("timestamp", event.timestamp)
-                                put("packageName", event.packageName)
-                            }
-                            jsonArray.put(jsonObject)
-                        }
-                        jsonArray.toString(4)
+                val events = database.blockEventDao().getAll()
+                val jsonArray = JSONArray()
+                events.forEach { event ->
+                    val jsonObject = JSONObject().apply {
+                        put("profileId", event.profileId)
+                        put("displayName", event.displayName)
+                        put("eventType", event.eventType)
+                        put("timestamp", event.timestamp)
+                        put("packageName", event.packageName)
                     }
+                    jsonArray.put(jsonObject)
                 }
-                future.get()
+                jsonArray.toString(4)
             } catch (e: Exception) {
                 Logger.e("Error reading block events from DB", LogSource.BRIDGE)
                 Logger.writeRaw(e.stackTraceToString())
@@ -385,9 +376,7 @@ class BridgeService : Service() {
         override fun clearBlockEvents() {
             ioExecutor.execute {
                 try {
-                    runBlocking {
-                        database.blockEventDao().deleteAll()
-                    }
+                    database.blockEventDao().deleteAll()
                 } catch (e: Exception) {
                     Logger.e("Error clearing block events DB", LogSource.BRIDGE)
                     Logger.writeRaw(e.stackTraceToString())
@@ -547,12 +536,6 @@ class BridgeService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Logger.i("BridgeService destroyed", LogSource.BRIDGE)
-        try {
-            database.close()
-        } catch (e: Exception) {
-            Logger.e("Error closing database in BridgeService.onDestroy", LogSource.BRIDGE)
-            Logger.writeRaw(e.stackTraceToString())
-        }
         ioExecutor.shutdown()
         periodicTasksExecutor.shutdown()
     }
