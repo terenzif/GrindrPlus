@@ -16,8 +16,7 @@ class Database(
     @Command("list_tables", aliases = ["lts"], help = "List all tables in the database")
     fun listTables(args: List<String>) {
         try {
-            val query = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
-            val tables = DatabaseHelper.query(query).map { it["name"].toString() }
+            val tables = DatabaseHelper.getTables()
 
             GrindrPlus.runOnMainThreadWithCurrentActivity { activity ->
                 val dialogView = LinearLayout(activity).apply {
@@ -73,6 +72,12 @@ class Database(
 
         val tableName = args[0]
         try {
+            // Check if table exists to prevent SQL injection
+            if (!DatabaseHelper.getTables().contains(tableName)) {
+                GrindrPlus.showToast(Toast.LENGTH_LONG, "Table '$tableName' does not exist.")
+                return
+            }
+
             val query = "SELECT * FROM $tableName;"
             val rows = DatabaseHelper.query(query)
 
