@@ -9,7 +9,6 @@ import java.util.Comparator
 
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.googleKsp)
     alias(libs.plugins.compose.compiler)
 }
@@ -69,22 +68,21 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    
+    // Replacement for applicationVariants logic
+    defaultConfig {
+        // archivesBaseName set via base {} block below
+    }
+}
 
-    applicationVariants.configureEach {
-        outputs.configureEach {
-            val sanitizedVersionName = versionName.replace(Regex("[^a-zA-Z0-9._-]"), "_").trim('_')
-            (this as BaseVariantOutputImpl).outputFileName =
-                "GPlus_v${sanitizedVersionName}-${name}.apk"
-        }
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
@@ -233,4 +231,10 @@ tasks.register("printVersionInfo") {
         val versionName = android.defaultConfig.versionName
         println("VERSION_INFO: GrindrPlus v$versionName")
     }
+}
+
+base {
+    val versionName = android.defaultConfig.versionName
+    val sanitizedVersionName = (versionName ?: "").replace(Regex("[^a-zA-Z0-9._-]"), "_").trim('_')
+    archivesName.set("GPlus_v${sanitizedVersionName}")
 }
