@@ -19,6 +19,12 @@ import androidx.core.view.WindowCompat
 val GrindrYellow = Color(0xFFFFCC00)
 val GrindrDarkYellow = Color(0xFFA38300)
 
+val LogSuccess = Color(0xFF4CAF50)
+val LogWarning = Color(0xFFFFC107)
+val LogError = Color(0xFFE91E63)
+val LogDebug = Color(0xFF9C27B0)
+val LogVerbose = Color(0xFF757575)
+
 private val LightColorScheme = lightColorScheme(
     primary = GrindrYellow,
     onPrimary = Color(0xFF000000),

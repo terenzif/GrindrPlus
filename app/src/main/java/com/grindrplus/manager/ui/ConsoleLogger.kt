@@ -26,6 +26,11 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.draw.clip
 import androidx.core.content.ContextCompat.getSystemService
+import com.grindrplus.manager.ui.theme.LogDebug
+import com.grindrplus.manager.ui.theme.LogError
+import com.grindrplus.manager.ui.theme.LogSuccess
+import com.grindrplus.manager.ui.theme.LogVerbose
+import com.grindrplus.manager.ui.theme.LogWarning
 import com.grindrplus.manager.utils.uploadAndShare
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -171,12 +176,11 @@ fun ConsoleOutput(
 @Composable
 internal fun LogEntryItem(entry: LogEntry) {
     val logColor = when (entry.type) {
-        // TODO: Move to Theme.kt
-        LogType.SUCCESS -> Color(0xFF4CAF50)
-        LogType.WARNING -> Color(0xFFFFC107)
-        LogType.ERROR -> Color(0xFFE91E63)
-        LogType.DEBUG -> Color(0xFF9C27B0)
-        LogType.VERBOSE -> Color(0xFF757575)
+        LogType.SUCCESS -> LogSuccess
+        LogType.WARNING -> LogWarning
+        LogType.ERROR -> LogError
+        LogType.DEBUG -> LogDebug
+        LogType.VERBOSE -> LogVerbose
         LogType.INFO -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 

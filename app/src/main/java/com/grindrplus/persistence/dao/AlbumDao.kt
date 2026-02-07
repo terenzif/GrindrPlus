@@ -83,6 +83,14 @@ interface AlbumDao {
     suspend fun getAlbumContent(albumId: Long): List<AlbumContentEntity>
 
     /**
+     * Gets all album content for a list of albums
+     * @param albumIds The list of album IDs
+     * @return List of album content entities
+     */
+    @Query("SELECT * FROM AlbumContentEntity WHERE albumId IN (:albumIds)")
+    suspend fun getAlbumContents(albumIds: List<Long>): List<AlbumContentEntity>
+
+    /**
      * Upserts an album content entity
      * @param dbAlbumContent The album content entity to upsert
      */
