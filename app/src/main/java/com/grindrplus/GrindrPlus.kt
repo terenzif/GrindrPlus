@@ -35,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import okhttp3.Call
 import okhttp3.Callback
@@ -226,7 +227,9 @@ object GrindrPlus {
 
         try {
             runBlocking {
-                val initTime = measureTimeMillis { initializeCore() }
+                val startTime = System.currentTimeMillis()
+                initializeCore()
+                val initTime = System.currentTimeMillis() - startTime
                 Logger.i("Initialization completed in $initTime ms", LogSource.MODULE)
             }
             isInitialized = true
@@ -269,9 +272,11 @@ object GrindrPlus {
                     }
                     activity.javaClass.name == browseExploreActivity -> {
                         if ((Config.get("maps_api_key", "") as String).isEmpty()) {
-                            runBlocking {
+                            executeAsync {
                                 if (!bridgeClient.isLSPosed()) {
-                                    showMapsApiKeyDialog(activity)
+                                    withContext(Dispatchers.Main) {
+                                        showMapsApiKeyDialog(activity)
+                                    }
                                 }
                             }
                         }
