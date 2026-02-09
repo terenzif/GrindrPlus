@@ -8,6 +8,7 @@ import com.grindrplus.GrindrPlus.showToast
 import com.grindrplus.core.DatabaseHelper
 import com.grindrplus.core.Logger
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -85,7 +86,7 @@ class Client(interceptor: Interceptor) {
             }
         }
         GrindrPlus.executeAsync {
-            Thread.sleep(500) // Wait for WS to reply
+            delay(500) // Wait for WS to reply
             GrindrPlus.shouldTriggerAntiblock = true
         }
     }
@@ -122,7 +123,7 @@ class Client(interceptor: Interceptor) {
             }
         }
         GrindrPlus.executeAsync {
-            Thread.sleep(500) // Wait for WS to reply
+            delay(500) // Wait for WS to reply
             GrindrPlus.shouldTriggerAntiblock = true
         }
     }
