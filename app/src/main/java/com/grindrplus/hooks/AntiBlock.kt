@@ -14,10 +14,12 @@ import com.grindrplus.utils.hook
 import com.grindrplus.utils.hookConstructor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 // supported version: 25.20.0
@@ -33,6 +35,9 @@ class AntiBlock : Hook(
 
     override fun cleanup() {
         scope.cancel()
+        // Ensure anti-block notifications are not left permanently disabled
+        GrindrPlus.shouldTriggerAntiblock = true
+        GrindrPlus.blockCaller = ""
     }
 
     override fun init() {
@@ -48,8 +53,13 @@ class AntiBlock : Hook(
         findClass(individualUnblockActivityViewModel)
             .hook("R", HookStage.AFTER) { param ->
                 scope.launch {
-                    delay(700) // Wait for WS to unblock
-                    GrindrPlus.shouldTriggerAntiblock = true
+                    try {
+                        delay(700) // Wait for WS to unblock
+                    } finally {
+                        withContext(NonCancellable) {
+                            GrindrPlus.shouldTriggerAntiblock = true
+                        }
+                    }
                 }
             }
 
@@ -78,10 +88,15 @@ class AntiBlock : Hook(
                         GrindrPlus.blockCaller = ""
                     } else {
                         scope.launch {
-                            logd("Request to delete $numberOfChatsToDelete chats")
-                            delay(300L * numberOfChatsToDelete)
-                            GrindrPlus.shouldTriggerAntiblock = true
-                            GrindrPlus.blockCaller = ""
+                            try {
+                                logd("Request to delete $numberOfChatsToDelete chats")
+                                delay(300L * numberOfChatsToDelete)
+                            } finally {
+                                withContext(NonCancellable) {
+                                    GrindrPlus.shouldTriggerAntiblock = true
+                                    GrindrPlus.blockCaller = ""
+                                }
+                            }
                         }
                     }
                 }
