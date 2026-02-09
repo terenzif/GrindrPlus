@@ -2,12 +2,10 @@ package com.grindrplus
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.AlertDialog
 import android.app.Application
 import android.app.Application.ActivityLifecycleCallbacks
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -18,18 +16,20 @@ import com.grindrplus.core.EventManager
 import com.grindrplus.core.InstanceManager
 import com.grindrplus.core.Logger
 import com.grindrplus.core.LogSource
+import com.grindrplus.core.NetworkRepository
 import com.grindrplus.core.TaskScheduler
-import com.grindrplus.utils.TaskManager
+import com.grindrplus.core.Utils
 import com.grindrplus.core.Utils.handleImports
 import com.grindrplus.core.http.Client
 import com.grindrplus.core.http.Interceptor
 import com.grindrplus.persistence.GPDatabase
+import com.grindrplus.ui.DialogManager
 import com.grindrplus.utils.HookManager
-import com.grindrplus.utils.PCHIP
 import com.grindrplus.utils.HookStage
+import com.grindrplus.utils.PCHIP
+import com.grindrplus.utils.TaskManager
 import com.grindrplus.utils.hookConstructor
 import dalvik.system.DexClassLoader
-import de.robv.android.xposed.XposedHelpers.getObjectField
 import de.robv.android.xposed.XposedHelpers.callMethod
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,19 +37,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import org.json.JSONArray
 import org.json.JSONObject
-import java.io.File
-import java.io.IOException
-import java.lang.ref.WeakReference
-import kotlin.system.measureTimeMillis
-import androidx.core.net.toUri
 import timber.log.Timber
+import java.io.File
+import java.lang.ref.WeakReference
 
 @SuppressLint("StaticFieldLeak")
 object GrindrPlus {
@@ -75,8 +66,6 @@ object GrindrPlus {
     var isImportingSomething = false
     var myProfileId: String = ""
     var hasCheckedVersions = false
-    var shouldShowVersionMismatchDialog = false
-    var shouldShowBridgeConnectionError = false
 
     private var isInitialized = false
     private var isMainInitialized = false
@@ -144,7 +133,8 @@ object GrindrPlus {
         Logger.initialize(context, bridgeClient, true)
         Logger.i("Initializing GrindrPlus...", LogSource.MODULE)
 
-        checkVersionCodes(versionCodes, versionNames)
+        DialogManager.checkVersionCodes(context, versionCodes, versionNames)
+        hasCheckedVersions = true
 
         runBlocking {
             val connected = try {
@@ -158,7 +148,7 @@ object GrindrPlus {
 
             if (!connected) {
                 Logger.e("Failed to connect to the bridge service", LogSource.MODULE)
-                shouldShowBridgeConnectionError = true
+                DialogManager.shouldShowBridgeConnectionError = true
             }
 
             Config.initialize(application.packageName)
@@ -205,7 +195,7 @@ object GrindrPlus {
 
         registerActivityLifecycleCallbacks(application)
 
-        if (shouldShowVersionMismatchDialog) {
+        if (DialogManager.shouldShowVersionMismatchDialog) {
             Logger.i("Version mismatch detected, stopping initialization", LogSource.MODULE)
             return
         }
@@ -220,7 +210,7 @@ object GrindrPlus {
             return
         }
 
-        fetchRemoteData(splineDataEndpoint) { points ->
+        NetworkRepository.fetchRemoteData(splineDataEndpoint) { points ->
             spline = PCHIP(points)
             Logger.i("Updated spline with remote data", LogSource.MODULE)
         }
@@ -268,26 +258,26 @@ object GrindrPlus {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                 when {
                     activity.javaClass.name == ageVerificationActivity -> {
-                        showAgeVerificationComplianceDialog(activity)
+                        DialogManager.showAgeVerificationComplianceDialog(activity)
                     }
                     activity.javaClass.name == browseExploreActivity -> {
                         if ((Config.get("maps_api_key", "") as String).isEmpty()) {
                             executeAsync {
                                 if (!bridgeClient.isLSPosed()) {
                                     withContext(Dispatchers.Main) {
-                                        showMapsApiKeyDialog(activity)
+                                        DialogManager.showMapsApiKeyDialog(activity)
                                     }
                                 }
                             }
                         }
                     }
-                    shouldShowBridgeConnectionError -> {
-                        showBridgeConnectionError(activity)
-                        shouldShowBridgeConnectionError = false
+                    DialogManager.shouldShowBridgeConnectionError -> {
+                        DialogManager.showBridgeConnectionError(activity)
+                        DialogManager.shouldShowBridgeConnectionError = false
                     }
-                    shouldShowVersionMismatchDialog -> {
-                        showVersionMismatchDialog(activity)
-                        shouldShowVersionMismatchDialog = false
+                    DialogManager.shouldShowVersionMismatchDialog -> {
+                        DialogManager.showVersionMismatchDialog(activity)
+                        DialogManager.shouldShowVersionMismatchDialog = false
                     }
                 }
 
@@ -338,7 +328,7 @@ object GrindrPlus {
                     httpClient = Client(Interceptor(uSession, uAgent, dInfo))
                     executeAsync {
                         kotlinx.coroutines.delay(1500)
-                        fetchOwnUserId()
+                        NetworkRepository.fetchOwnUserId()
                     }
                     taskManager.registerTasks()
                 }
@@ -367,10 +357,7 @@ object GrindrPlus {
     }
 
     fun runOnMainThread(appContext: Context? = null, block: (Context) -> Unit) {
-        val useContext = appContext ?: context
-        Handler(useContext.mainLooper).post {
-            block(useContext)
-        }
+        Utils.runOnMainThread(appContext, block)
     }
 
     fun runOnMainThreadWithCurrentActivity(block: (Activity) -> Unit) {
@@ -393,10 +380,7 @@ object GrindrPlus {
     }
 
     fun showToast(duration: Int, message: String, appContext: Context? = null) {
-        val useContext = appContext ?: context
-        runOnMainThread(useContext) {
-            Toast.makeText(useContext, message, duration).show()
-        }
+        Utils.showToast(duration, message, appContext)
     }
 
     fun loadClass(name: String): Class<*> {
@@ -422,240 +406,6 @@ object GrindrPlus {
                 }
             context.startActivity(intent)
             android.os.Process.killProcess(android.os.Process.myPid())
-        }
-    }
-
-    private fun checkVersionCodes(versionCodes: IntArray, versionNames: Array<String>) {
-        val pkgInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        val versionCode: Long = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            pkgInfo.longVersionCode
-        } else {
-            @Suppress("DEPRECATION")
-            pkgInfo.versionCode.toLong()
-        }
-
-        val isVersionNameSupported = pkgInfo.versionName in versionNames
-        val isVersionCodeSupported = versionCodes.any { it.toLong() == versionCode }
-
-        if (!isVersionNameSupported || !isVersionCodeSupported) {
-            val installedInfo = "${pkgInfo.versionName} (code: $versionCode)"
-            val expectedInfo = "${versionNames.joinToString(", ")} " +
-                    "(code: ${BuildConfig.TARGET_GRINDR_VERSION_CODES.joinToString(", ")})"
-            shouldShowVersionMismatchDialog = true
-            Logger.w("Version mismatch detected. Installed: $installedInfo, Required: $expectedInfo", LogSource.MODULE)
-        }
-
-        hasCheckedVersions = true
-    }
-
-    private fun showVersionMismatchDialog(activity: Activity) {
-        try {
-            val pkgInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            val versionCode: Long = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                pkgInfo.longVersionCode
-            } else {
-                @Suppress("DEPRECATION")
-                pkgInfo.versionCode.toLong()
-            }
-
-            val installedInfo = "${pkgInfo.versionName} (code: $versionCode)"
-            val expectedInfo = "${BuildConfig.TARGET_GRINDR_VERSION_NAMES.joinToString(", ")} " +
-                    "(code: ${BuildConfig.TARGET_GRINDR_VERSION_CODES.joinToString(", ")})"
-
-            val dialog = android.app.AlertDialog.Builder(activity)
-                .setTitle("GrindrPlus: Version Mismatch")
-                .setMessage("Incompatible Grindr version detected.\n\n" +
-                        "• Installed: $installedInfo\n" +
-                        "• Required: $expectedInfo\n\n" +
-                        "GrindrPlus has been disabled. Please install a compatible Grindr version.")
-                .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .setCancelable(false)
-                .create()
-            dialog.show()
-            Logger.i("Version mismatch dialog shown", LogSource.MODULE)
-        } catch (e: Exception) {
-            Logger.e("Failed to show version mismatch dialog: ${e.message}", LogSource.MODULE)
-            showToast(Toast.LENGTH_LONG, "Version mismatch detected. Please install a compatible Grindr version.")
-        }
-    }
-
-    private fun showBridgeConnectionError(activity: Activity? = null) {
-        try {
-            val targetActivity = activity ?: currentActivity
-
-            if (targetActivity != null) {
-                val dialog = android.app.AlertDialog.Builder(targetActivity)
-                    .setTitle("Bridge Connection Failed")
-                    .setMessage("Failed to connect to the bridge service. The module will not work properly.\n\n" +
-                            "This may be caused by:\n" +
-                            "• Battery optimization settings\n" +
-                            "• System killing background processes\n" +
-                            "• App being force stopped\n\n" +
-                            "Try restarting the app or reinstalling the module.")
-                    .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setCancelable(false)
-                    .create()
-
-                targetActivity.runOnUiThread {
-                    dialog.show()
-                }
-
-                Logger.i("Bridge connection error dialog shown", LogSource.MODULE)
-            } else {
-                showToast(Toast.LENGTH_LONG, "Bridge service connection failed - module features unavailable")
-            }
-        } catch (e: Exception) {
-            Logger.e("Failed to show bridge error dialog: ${e.message}", LogSource.MODULE)
-            showToast(Toast.LENGTH_LONG, "Bridge service connection failed - module features unavailable")
-        }
-    }
-
-    private fun showAgeVerificationComplianceDialog(activity: Activity) {
-        try {
-            val dialog = AlertDialog.Builder(activity)
-                .setTitle("Age Verification Required")
-                .setMessage("You are accessing Grindr from the UK where age verification is legally mandated.\n\n" +
-                        "LEGAL COMPLIANCE NOTICE:\n" +
-                        "GrindrPlus does NOT bypass, disable, or interfere with age verification systems. Any attempt to circumvent age verification requirements is illegal under UK law and is strictly prohibited.\n\n" +
-                        "MANDATORY REQUIREMENTS:\n" +
-                        "1. Complete age verification using the official Grindr application\n" +
-                        "2. Comply with all UK legal verification processes\n" +
-                        "3. Install GrindrPlus only after successful verification through official channels\n\n" +
-                        "WARNING:\n" +
-                        "The developers of this module are not responsible for any legal consequences resulting from non-compliance with age verification requirements.")
-                .setPositiveButton("I Understand") { dialog, _ ->
-                    activity.finish()
-                    dialog.dismiss()
-                    showToast(Toast.LENGTH_LONG,
-                        "Please complete age verification in the official Grindr app first, then reinstall GrindrPlus")
-                }
-                .setNegativeButton("Exit App") { dialog, _ ->
-                    dialog.dismiss()
-                    android.os.Process.killProcess(android.os.Process.myPid())
-                }
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .setCancelable(false)
-                .create()
-
-            dialog.show()
-            Logger.i("Age verification compliance dialog shown", LogSource.MODULE)
-
-        } catch (e: Exception) {
-            Logger.e("Failed to show age verification dialog: ${e.message}", LogSource.MODULE)
-            showToast(Toast.LENGTH_LONG,
-                "Age verification required. Please use official Grindr app to verify, then reinstall GrindrPlus.")
-            activity.finish()
-        }
-    }
-
-    private fun showMapsApiKeyDialog(context: Context) {
-        try {
-            AlertDialog.Builder(context)
-                .setTitle("Maps API Key Required")
-                .setMessage("Maps functionality requires a Google Maps API key for LSPatch users due to signature validation issues.\n\n" +
-                        "Quick Setup:\n" +
-                        "1. Create a Google Cloud project at console.cloud.google.com\n" +
-                        "2. Enable: Maps SDK for Android, Geocoding API, Maps JavaScript API\n" +
-                        "3. Create API key with NO restrictions\n" +
-                        "4. Add key to GrindrPlus settings\n" +
-                        "5. REINSTALL GrindrPlus (restart won't work)\n\n" +
-                        "Note: Google may request credit card for free tier.")
-                .setPositiveButton("Open Console") { dialog, _ ->
-                    dialog.dismiss()
-                    try {
-                        val intent = Intent(Intent.ACTION_VIEW).apply {
-                            data = "https://console.cloud.google.com/".toUri()
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-
-                        val appContext = context.applicationContext
-                        appContext.startActivity(intent)
-
-                    } catch (e: Exception) {
-                        showToast(Toast.LENGTH_LONG, "Unable to open browser. Please visit console.cloud.google.com manually")
-                    }
-                }
-                .setNegativeButton("Dismiss") { dialog, _ -> dialog.dismiss() }
-                .setIcon(android.R.drawable.ic_dialog_info)
-                .setCancelable(true)
-                .show()
-        } catch (e: Exception) {
-            Logger.e("Maps API key dialog error: ${e.message}")
-        }
-    }
-
-    private fun fetchRemoteData(url: String, callback: (List<Pair<Long, Int>>) -> Unit) {
-        val client = OkHttpClient()
-        val request = Request.Builder().url(url).build()
-
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                Logger.e("Failed to fetch remote data: ${e.message}", LogSource.MODULE)
-                Logger.writeRaw(e.stackTraceToString())
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                response.body?.string()?.let { jsonString ->
-                    try {
-                        val jsonArray = JSONArray(jsonString)
-                        val parsedPoints = mutableListOf<Pair<Long, Int>>()
-
-                        for (i in 0 until jsonArray.length()) {
-                            val obj = jsonArray.getJSONObject(i)
-                            val time = obj.getLong("time")
-                            val id = obj.getInt("id")
-                            parsedPoints.add(time to id)
-                        }
-
-                        callback(parsedPoints)
-                    } catch (e: Exception) {
-                        Logger.e("Failed to parse remote data: ${e.message}", LogSource.MODULE)
-                        Logger.writeRaw(e.stackTraceToString())
-                    }
-                }
-            }
-        })
-    }
-
-    private fun fetchOwnUserId() {
-        executeAsync {
-            try {
-                Logger.d("Fetching own user ID...", LogSource.MODULE)
-                val response = httpClient.sendRequest(
-                    url = "https://grindr.mobi/v5/me/profile",
-                    method = "GET"
-                )
-
-                if (response.isSuccessful) {
-                    val responseBody = response.body?.string()
-                    if (!responseBody.isNullOrEmpty()) {
-                        val jsonResponse = JSONObject(responseBody)
-                        val profilesArray = jsonResponse.optJSONArray("profiles")
-
-                        if (profilesArray != null && profilesArray.length() > 0) {
-                            val profile = profilesArray.getJSONObject(0)
-                            val profileId = profile.optString("profileId")
-
-                            if (profileId.isNotEmpty()) {
-                                myProfileId = profileId
-                            } else {
-                                Logger.w("Profile ID field is empty in response", LogSource.MODULE)
-                            }
-                        } else {
-                            Logger.w("No profiles array found in response", LogSource.MODULE)
-                        }
-                    } else {
-                        Logger.w("Empty response body from profile endpoint", LogSource.MODULE)
-                    }
-                } else {
-                    Logger.e("Failed to fetch own profile: HTTP ${response.code}", LogSource.MODULE)
-                }
-            } catch (e: Exception) {
-                Logger.e("Error fetching own user ID: ${e.message}", LogSource.MODULE)
-                Logger.writeRaw(e.stackTraceToString())
-            }
         }
     }
 

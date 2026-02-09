@@ -5,6 +5,7 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -25,6 +26,20 @@ import java.io.File
 import kotlin.math.pow
 
 object Utils {
+    fun runOnMainThread(appContext: Context? = null, block: (Context) -> Unit) {
+        val useContext = appContext ?: GrindrPlus.context
+        Handler(useContext.mainLooper).post {
+            block(useContext)
+        }
+    }
+
+    fun showToast(duration: Int, message: String, appContext: Context? = null) {
+        val useContext = appContext ?: GrindrPlus.context
+        runOnMainThread(useContext) {
+            Toast.makeText(useContext, message, duration).show()
+        }
+    }
+
     fun openChat(id: String) {
         val chatActivityInnerClass =
             GrindrPlus.loadClass("com.grindrapp.android.chat.presentation.ui.ChatActivityV2\$a")
@@ -380,7 +395,7 @@ object Utils {
                         } catch (e: Exception) {
                             withContext(Dispatchers.Main) {
                                 val message = "An error occurred while importing favorites: ${e.message ?: "Unknown error"}"
-                                GrindrPlus.showToast(Toast.LENGTH_LONG, message)
+                                showToast(Toast.LENGTH_LONG, message)
                                 Logger.apply {
                                     e(message)
                                     writeRaw(e.stackTraceToString())
@@ -395,7 +410,7 @@ object Utils {
             )
         } catch (e: Exception) {
             val message = "An error occurred while importing favorites: ${e.message ?: "Unknown error"}"
-            GrindrPlus.showToast(Toast.LENGTH_LONG, message)
+            showToast(Toast.LENGTH_LONG, message)
             Logger.apply {
                 e(message)
                 writeRaw(e.stackTraceToString())
@@ -443,7 +458,7 @@ object Utils {
                         } catch (e: Exception) {
                             withContext(Dispatchers.Main) {
                                 val message = "An error occurred while importing blocks: ${e.message ?: "Unknown error"}"
-                                GrindrPlus.showToast(Toast.LENGTH_LONG, message)
+                                showToast(Toast.LENGTH_LONG, message)
                                 Logger.apply {
                                     e(message)
                                     writeRaw(e.stackTraceToString())
@@ -459,10 +474,8 @@ object Utils {
             )
         } catch (e: Exception) {
             val message = "An error occurred while importing blocks: ${e.message ?: "Unknown error"}"
-            GrindrPlus.apply {
-                shouldTriggerAntiblock = true
-                showToast(Toast.LENGTH_LONG, message)
-            }
+            GrindrPlus.shouldTriggerAntiblock = true
+            showToast(Toast.LENGTH_LONG, message)
             Logger.apply {
                 e(message)
                 writeRaw(e.stackTraceToString())
