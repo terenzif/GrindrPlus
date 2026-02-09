@@ -585,6 +585,14 @@ fun ImprovedTextSetting(
     var text by remember { mutableStateOf(setting.value) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    val onSave = {
+        if (errorMessage == null) {
+            setting.onValueChange(text)
+            isExpanded = false
+            onChanged()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -679,13 +687,7 @@ fun ImprovedTextSetting(
                         imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(
-                        onDone = {
-                            if (errorMessage == null) {
-                                setting.onValueChange(text)
-                                isExpanded = false
-                                onChanged()
-                            }
-                        }
+                        onDone = { onSave() }
                     ),
                     singleLine = true,
                     shape = MaterialTheme.shapes.small,
@@ -697,13 +699,7 @@ fun ImprovedTextSetting(
                     ),
                     trailingIcon = {
                         IconButton(
-                            onClick = {
-                                if (errorMessage == null) {
-                                    setting.onValueChange(text)
-                                    isExpanded = false
-                                    onChanged()
-                                }
-                            },
+                            onClick = onSave,
                             enabled = errorMessage == null
                         ) {
                             Icon(
@@ -738,13 +734,7 @@ fun ImprovedTextSetting(
                     }
 
                     Button(
-                        onClick = {
-                            if (errorMessage == null) {
-                                setting.onValueChange(text)
-                                isExpanded = false
-                                onChanged()
-                            }
-                        },
+                        onClick = onSave,
                         enabled = errorMessage == null,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
@@ -770,6 +760,14 @@ fun ImprovedTextSettingWithButtons(
     var isExpanded by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf(setting.value) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val onSave = {
+        if (errorMessage == null) {
+            setting.onValueChange(text)
+            isExpanded = false
+            onChanged()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -865,13 +863,7 @@ fun ImprovedTextSettingWithButtons(
                         imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(
-                        onDone = {
-                            if (errorMessage == null) {
-                                setting.onValueChange(text)
-                                isExpanded = false
-                                onChanged()
-                            }
-                        }
+                        onDone = { onSave() }
                     ),
                     singleLine = true,
                     shape = MaterialTheme.shapes.small,
@@ -883,13 +875,7 @@ fun ImprovedTextSettingWithButtons(
                     ),
                     trailingIcon = {
                         IconButton(
-                            onClick = {
-                                if (errorMessage == null) {
-                                    setting.onValueChange(text)
-                                    isExpanded = false
-                                    onChanged()
-                                }
-                            },
+                            onClick = onSave,
                             enabled = errorMessage == null
                         ) {
                             Icon(
@@ -947,13 +933,7 @@ fun ImprovedTextSettingWithButtons(
                         }
 
                         Button(
-                            onClick = {
-                                if (errorMessage == null) {
-                                    setting.onValueChange(text)
-                                    isExpanded = false
-                                    onChanged()
-                                }
-                            },
+                            onClick = onSave,
                             enabled = errorMessage == null,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
