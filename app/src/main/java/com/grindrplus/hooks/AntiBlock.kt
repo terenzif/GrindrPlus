@@ -14,6 +14,8 @@ import com.grindrplus.utils.hook
 import com.grindrplus.utils.hookConstructor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -23,11 +25,15 @@ class AntiBlock : Hook(
     "Anti Block",
     "Notifies you when someone blocks or unblocks you"
 ) {
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var myProfileId: Long = 0
     private val chatDeleteConversationPlugin = "R9.c" // search for '"com.grindrapp.android.chat.ChatDeleteConversationPlugin",' and use the outer class
     private val inboxFragmentV2DeleteConversations = "re.d" // search for '("chat_read_receipt", conversationId, null);'
     private val individualUnblockActivityViewModel = "bl.k" // search for 'SnackbarEvent.i.ERROR, R.string.unblock_individual_sync_blocks_failure, null, new SnackbarEvent'
+
+    override fun cleanup() {
+        scope.cancel()
+    }
 
     override fun init() {
         // do not invoke antiblock notification when the user is unblocking someone else
@@ -66,13 +72,17 @@ class AntiBlock : Hook(
             findClass(inboxFragmentV2DeleteConversations)
                 .hook("b", HookStage.AFTER) { param ->
                     val numberOfChatsToDelete = (param.args().firstOrNull() as? List<*>)?.size ?: 0
-                    scope.launch {
-                        if (numberOfChatsToDelete > 0) {
-                            logd("Request to delete $numberOfChatsToDelete chats")
-                            delay((300 * numberOfChatsToDelete).toLong())
-                        }
+                    if (numberOfChatsToDelete <= 0) {
+                        // No chats to delete: reset flags immediately without launching a coroutine
                         GrindrPlus.shouldTriggerAntiblock = true
                         GrindrPlus.blockCaller = ""
+                    } else {
+                        scope.launch {
+                            logd("Request to delete $numberOfChatsToDelete chats")
+                            delay(300L * numberOfChatsToDelete)
+                            GrindrPlus.shouldTriggerAntiblock = true
+                            GrindrPlus.blockCaller = ""
+                        }
                     }
                 }
 
