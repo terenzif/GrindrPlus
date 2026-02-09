@@ -9,15 +9,14 @@ import android.widget.Toast
 import androidx.core.net.toUri
 import com.grindrplus.BuildConfig
 import com.grindrplus.GrindrPlus
-import com.grindrplus.core.Config
 import com.grindrplus.core.Logger
 import com.grindrplus.core.LogSource
 import com.grindrplus.core.Utils
 
 object DialogManager {
-    var shouldShowVersionMismatchDialog = false
-    var shouldShowBridgeConnectionError = false
-    var hasCheckedVersions = false
+    @Volatile var shouldShowVersionMismatchDialog = false
+    @Volatile var shouldShowBridgeConnectionError = false
+    @Volatile var hasCheckedVersions = false
 
     fun checkVersionCodes(context: Context, versionCodes: IntArray, versionNames: Array<String>) {
         val pkgInfo = context.packageManager.getPackageInfo(context.packageName, 0)
@@ -34,7 +33,7 @@ object DialogManager {
         if (!isVersionNameSupported || !isVersionCodeSupported) {
             val installedInfo = "${pkgInfo.versionName} (code: $versionCode)"
             val expectedInfo = "${versionNames.joinToString(", ")} " +
-                    "(code: ${BuildConfig.TARGET_GRINDR_VERSION_CODES.joinToString(", ")})"
+                    "(code: ${versionCodes.joinToString(", ")})"
             shouldShowVersionMismatchDialog = true
             Logger.w("Version mismatch detected. Installed: $installedInfo, Required: $expectedInfo", LogSource.MODULE)
         }
@@ -145,9 +144,9 @@ object DialogManager {
         }
     }
 
-    fun showMapsApiKeyDialog(context: Context) {
+    fun showMapsApiKeyDialog(activity: Activity) {
         try {
-            AlertDialog.Builder(context)
+            AlertDialog.Builder(activity)
                 .setTitle("Maps API Key Required")
                 .setMessage("Maps functionality requires a Google Maps API key for LSPatch users due to signature validation issues.\n\n" +
                         "Quick Setup:\n" +
@@ -165,11 +164,11 @@ object DialogManager {
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
 
-                        val appContext = context.applicationContext
+                        val appContext = activity.applicationContext
                         appContext.startActivity(intent)
 
                     } catch (e: Exception) {
-                        Utils.showToast(Toast.LENGTH_LONG, "Unable to open browser. Please visit console.cloud.google.com manually", context)
+                        Utils.showToast(Toast.LENGTH_LONG, "Unable to open browser. Please visit console.cloud.google.com manually", activity)
                     }
                 }
                 .setNegativeButton("Dismiss") { dialog, _ -> dialog.dismiss() }

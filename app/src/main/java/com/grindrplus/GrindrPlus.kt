@@ -65,7 +65,11 @@ object GrindrPlus {
     var blockCaller: String = ""
     var isImportingSomething = false
     var myProfileId: String = ""
-    var hasCheckedVersions = false
+    var hasCheckedVersions: Boolean
+        get() = DialogManager.hasCheckedVersions
+        set(value) {
+            DialogManager.hasCheckedVersions = value
+        }
 
     private var isInitialized = false
     private var isMainInitialized = false
@@ -134,7 +138,6 @@ object GrindrPlus {
         Logger.i("Initializing GrindrPlus...", LogSource.MODULE)
 
         DialogManager.checkVersionCodes(context, versionCodes, versionNames)
-        hasCheckedVersions = true
 
         runBlocking {
             val connected = try {
