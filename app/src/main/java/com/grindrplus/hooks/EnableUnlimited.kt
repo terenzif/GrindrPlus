@@ -44,7 +44,6 @@ class EnableUnlimited : Hook(
         userSessionClass.hook( // rolesUpdated()
 			"W", HookStage.BEFORE // search for 'Intrinsics.checkNotNullParameter(roles, "roles");' in userSession
 		) { param ->
-			val roles = param.arg(0) as List<String>
 			val allRoles = listOf(
 				"Plus",
 				"Xtra",
@@ -56,7 +55,7 @@ class EnableUnlimited : Hook(
 				"Free_Premium"
 			)
 
-			logi("received roles: $roles, replacing with $allRoles")
+			logd("Updating user roles to enable unlimited features")
 
 			param.setArg(0, allRoles)
 		}

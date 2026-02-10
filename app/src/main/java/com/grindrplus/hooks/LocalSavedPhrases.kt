@@ -74,12 +74,12 @@ class LocalSavedPhrases : Hook(
             when {
                 method.isPOST("v3/me/prefs/phrases") -> {
                     val phrase = getObjectField(args[0], "phrase") as String
-                    logi("Adding new local phrase: \"$phrase\"")
+                    logi("Adding new local phrase")
 
                     runBlocking {
                         val index = getCurrentPhraseIndex() + 1
                         addPhrase(index, phrase, 0, System.currentTimeMillis())
-                        logs("Phrase saved locally with ID: $index")
+                        logs("Phrase saved locally")
 
                         val response = savedPhraseConstructor?.newInstance(index.toString())
                         createSuccess.newInstance(response)
@@ -88,19 +88,19 @@ class LocalSavedPhrases : Hook(
 
                 method.isDELETE("v3/me/prefs/phrases/{id}") -> {
                     val id = args[0] as? String ?: "unknown"
-                    logi("Deleting local phrase ID: $id")
+                    logi("Deleting local phrase")
 
                     runBlocking {
                         val index = id.toLongOrNull() ?: getCurrentPhraseIndex()
                         deletePhrase(index)
-                        logs("Deleted local phrase ID: $index")
+                        logs("Deleted local phrase")
                         createSuccess.newInstance(Unit)
                     }
                 }
 
                 method.isPOST("v4/phrases/frequency/{id}") -> {
                     val id = args[0] as? String ?: "0"
-                    logd("Incrementing usage frequency for ID: $id")
+                    logd("Incrementing phrase usage frequency")
 
                     runBlocking {
                         val index = id.toLongOrNull() ?: 0L
