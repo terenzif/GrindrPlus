@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -22,9 +23,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 
+enum class ApiKeyTestStatus {
+    SUCCESS,
+    WARNING,
+    ERROR
+}
+
 @Composable
 fun ApiKeyTestDialog(
     isLoading: Boolean,
+    status: ApiKeyTestStatus,
     title: String,
     message: String,
     rawResponse: String,
@@ -50,32 +58,30 @@ fun ApiKeyTestDialog(
                             .padding(bottom = 16.dp)
                     )
                 } else {
-                    when {
-                        title.contains("Success") -> {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "Success",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(48.dp)
-                            )
-                        }
-                        title.contains("Warning") -> {
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = "Warning",
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(48.dp)
-                            )
-                        }
-                        else -> {
-                            Icon(
-                                imageVector = Icons.Default.Error,
-                                contentDescription = "Error",
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(48.dp)
-                            )
-                        }
+                    val (icon, contentDescription, tint) = when (status) {
+                        ApiKeyTestStatus.SUCCESS -> Triple(
+                            Icons.Default.CheckCircle,
+                            "Success",
+                            MaterialTheme.colorScheme.primary
+                        )
+                        ApiKeyTestStatus.WARNING -> Triple(
+                            Icons.Default.Warning,
+                            "Warning",
+                            MaterialTheme.colorScheme.error
+                        )
+                        ApiKeyTestStatus.ERROR -> Triple(
+                            Icons.Default.Error,
+                            "Error",
+                            MaterialTheme.colorScheme.error
+                        )
                     }
+                    
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = contentDescription,
+                        tint = tint,
+                        modifier = Modifier.size(48.dp)
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -228,7 +234,7 @@ fun AboutDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
-                .fillMaxWidth(1f)
+                .fillMaxWidth()
                 .padding(16.dp),
             shape = MaterialTheme.shapes.large
         ) {
