@@ -14,6 +14,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.grindrplus.core.Config
 import com.grindrplus.manager.DATA_URL
 import com.grindrplus.manager.settings.SettingsUtils.testMapsApiKey
+import com.grindrplus.manager.ui.ApiKeyTestStatus
 import com.grindrplus.manager.utils.AppIconManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,17 +49,22 @@ class SettingsViewModel(
     private val _apiKeyTestLoading = MutableStateFlow(false)
     val apiKeyTestLoading: StateFlow<Boolean> = _apiKeyTestLoading
 
+    private val _apiKeyTestStatus = MutableStateFlow(ApiKeyTestStatus.ERROR)
+    val apiKeyTestStatus: StateFlow<ApiKeyTestStatus> = _apiKeyTestStatus
+
     fun dismissApiKeyTestDialog() {
         _showApiKeyTestDialog.value = false
     }
 
     private fun showApiKeyTestDialog(
         isLoading: Boolean,
+        status: ApiKeyTestStatus,
         title: String,
         message: String,
         rawResponse: String
     ) {
         _apiKeyTestLoading.value = isLoading
+        _apiKeyTestStatus.value = status
         _apiKeyTestTitle.value = title
         _apiKeyTestMessage.value = message
         _apiKeyTestRawResponse.value = rawResponse

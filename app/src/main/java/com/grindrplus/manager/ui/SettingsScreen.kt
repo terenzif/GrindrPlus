@@ -59,7 +59,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import com.grindrplus.core.Config
 import com.grindrplus.manager.settings.ButtonSetting
@@ -91,6 +90,7 @@ fun SettingsScreen(
     var debugLogsScreen by remember { mutableStateOf(false) }
 
     val showApiKeyTestDialog by viewModel.showApiKeyTestDialog.collectAsState()
+    val apiKeyTestStatus by viewModel.apiKeyTestStatus.collectAsState()
     val apiKeyTestTitle by viewModel.apiKeyTestTitle.collectAsState()
     val apiKeyTestMessage by viewModel.apiKeyTestMessage.collectAsState()
     val apiKeyTestRawResponse by viewModel.apiKeyTestRawResponse.collectAsState()
@@ -133,6 +133,7 @@ fun SettingsScreen(
     if (showApiKeyTestDialog) {
         ApiKeyTestDialog(
             isLoading = apiKeyTestLoading,
+            status = apiKeyTestStatus,
             title = apiKeyTestTitle,
             message = apiKeyTestMessage,
             rawResponse = apiKeyTestRawResponse,

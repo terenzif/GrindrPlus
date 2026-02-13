@@ -1,6 +1,7 @@
 package com.grindrplus.manager.settings
 
 import android.content.Context
+import com.grindrplus.manager.ui.ApiKeyTestStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -14,9 +15,9 @@ object SettingsUtils {
         context: Context,
         viewModelScope: CoroutineScope,
         apiKey: String,
-        showTestDialog: (Boolean, String, String, String) -> Unit
+        showTestDialog: (Boolean, ApiKeyTestStatus, String, String, String) -> Unit
     ) {
-        showTestDialog(true, "Testing", "Testing your API key...", "")
+        showTestDialog(true, ApiKeyTestStatus.ERROR, "Testing", "Testing your API key...", "")
 
         viewModelScope.launch {
             try {
@@ -48,6 +49,7 @@ object SettingsUtils {
                     status == "OK" -> {
                         showTestDialog(
                             false,
+                            ApiKeyTestStatus.SUCCESS,
                             "Success!",
                             "Your Google Maps API key is working correctly. You can use it with GrindrPlus.",
                             rawResponse
@@ -57,6 +59,7 @@ object SettingsUtils {
                         if (errorMessage.contains("API key is invalid")) {
                             showTestDialog(
                                 false,
+                                ApiKeyTestStatus.ERROR,
                                 "Invalid API Key",
                                 "Your API key is invalid. Please double-check that you've copied it correctly.",
                                 rawResponse
@@ -64,6 +67,7 @@ object SettingsUtils {
                         } else if (errorMessage.contains("not authorized")) {
                             showTestDialog(
                                 false,
+                                ApiKeyTestStatus.ERROR,
                                 "API Not Enabled",
                                 "Your API key is valid but you need to enable the Geocoding API in the Google Cloud Console.",
                                 rawResponse
@@ -71,6 +75,7 @@ object SettingsUtils {
                         } else {
                             showTestDialog(
                                 false,
+                                ApiKeyTestStatus.ERROR,
                                 "API Error",
                                 "Error: $errorMessage",
                                 rawResponse
@@ -80,6 +85,7 @@ object SettingsUtils {
                     else -> {
                         showTestDialog(
                             false,
+                            ApiKeyTestStatus.WARNING,
                             "Warning",
                             "API returned $status status",
                             rawResponse
@@ -90,6 +96,7 @@ object SettingsUtils {
                 e.printStackTrace()
                 showTestDialog(
                     false,
+                    ApiKeyTestStatus.ERROR,
                     "Connection Error",
                     "Failed to connect to Google Maps API: ${e.message}",
                     e.stackTraceToString()
