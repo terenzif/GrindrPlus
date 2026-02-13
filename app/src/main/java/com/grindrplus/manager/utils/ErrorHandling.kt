@@ -2,8 +2,9 @@ package com.grindrplus.manager.utils
 
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
+import com.grindrplus.core.Logger
+import com.grindrplus.core.LogSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -16,7 +17,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// TODO: Sync with module once everything's connected
 object ErrorHandler {
     private const val TAG = "ErrorHandler"
     private const val LOG_FILE_PREFIX = "grindrplus_log_"
@@ -26,6 +26,30 @@ object ErrorHandler {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                val sw = StringWriter()
+                val writer = PrintWriter(sw)
+
+                writer.println("---- ERROR LOG $timestamp ----")
+                writer.println("Device: ${Build.MANUFACTURER} ${Build.MODEL}")
+                writer.println("Android: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})")
+                writer.println("Message: $message")
+
+                if (error != null) {
+                    writer.println("Exception: ${error.javaClass.name}: ${error.message}")
+                    error.printStackTrace(writer)
+                }
+
+                writer.println("----------------------")
+                writer.println()
+                writer.flush()
+
+                val logContent = sw.toString()
+
+                // Sync with module
+                Logger.e("Manager Error: $message", LogSource.MANAGER)
+                Logger.writeRaw(logContent)
+
                 val logDir = File(context.getExternalFilesDir(null), "logs")
                 if (!logDir.exists()) {
                     logDir.mkdirs()
@@ -33,28 +57,10 @@ object ErrorHandler {
 
                 cleanupOldLogs(logDir, 5)
 
-                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
                 val logFile = File(logDir, "$LOG_FILE_PREFIX${timestamp}.txt")
 
                 FileOutputStream(logFile, true).use { output ->
-                    val writer = PrintWriter(output)
-
-                    writer.println("---- ERROR LOG $timestamp ----")
-                    writer.println("Device: ${Build.MANUFACTURER} ${Build.MODEL}")
-                    writer.println("Android: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})")
-                    writer.println("Message: $message")
-
-                    if (error != null) {
-                        writer.println("Exception: ${error.javaClass.name}: ${error.message}")
-                        val sw = StringWriter()
-                        val pw = PrintWriter(sw)
-                        error.printStackTrace(pw)
-                        writer.println(sw.toString())
-                    }
-
-                    writer.println("----------------------")
-                    writer.println()
-                    writer.flush()
+                    output.write(logContent.toByteArray())
                 }
             } catch (e: Exception) {
                 Timber.tag(TAG).e(e, "Failed to write to error log")
