@@ -1,5 +1,6 @@
 package com.grindrplus
 
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.Ignore
 import kotlin.system.measureNanoTime
@@ -53,6 +54,9 @@ class ReflectionBenchmarkTest {
         println("Improvement Factor: %.2fx".format(improvement))
 
         // Assert improvement is significant (at least 2x faster, usually much more)
-        println("Benchmark complete: cached reflection was ${improvement}x faster")
+        assertTrue(
+            "Expected cached reflection to be at least 2x faster, but was ${improvement}x",
+            improvement > 2.0
+        )
     }
 }
