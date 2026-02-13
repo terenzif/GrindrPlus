@@ -170,134 +170,31 @@ class LocationSpoofer : Hook(
 
     private fun manageLocationsDialog(context: Context) {
         coroutineScope.launch {
-            var locations: List<TeleportLocationEntity>
+            val dialogLayout = createDialogLayout(context)
+            val radioGroup = createLocationsRadioGroup(context)
+            val scrollView = createLocationsScrollView(context, radioGroup)
 
-            val locationDialogView = LinearLayout(context).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(32, 32, 32, 32)
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-            }
+            dialogLayout.addView(scrollView)
 
-            // ScrollView + RadioGroup
-            val scrollView = ScrollView(context).apply {
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    360
-                ).apply {
-                    topMargin = 16
-                    marginStart = 70
-                    marginEnd = 70
-                    bottomMargin = 16
-                }
-            }
-
-            val radioGroup = RadioGroup(context).apply {
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-                orientation = RadioGroup.VERTICAL
-            }
-
-            // Add RadioButtons dynamically
-            suspend fun refreshLocations(newSelectedLocatioName: String = "") {
-                locations = getLocations()
-                val selectedLocationName = newSelectedLocatioName.ifEmpty {
-                    Config.get("current_location_name", "") as String
-                }
-
-                withContext(Dispatchers.Main) {
-                    radioGroup.clearCheck()
-                    radioGroup.removeAllViews()
-
-                    val radioButtonLayoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    )
-
-                    val teleportOffRadioButton = RadioButton(context).apply {
-                        layoutParams = radioButtonLayoutParams
-                        text = "teleport off"
-                        id = View.generateViewId()
-                    }
-                    radioGroup.addView(teleportOffRadioButton)
-                    var selectedLocationViewId = teleportOffRadioButton.id
-
-                    locations.forEach { location ->
-                        val radioButton = RadioButton(context).apply {
-                            layoutParams = radioButtonLayoutParams
-                            text = location.name
-                            id = View.generateViewId()
-                            tag = location
-                        }
-                        if (location.name == selectedLocationName)
-                            selectedLocationViewId = radioButton.id
-
-                        radioGroup.addView(radioButton)
-                    }
-
-                    radioGroup.check(selectedLocationViewId)
-                }
-            }
-
-            fun getSelectedLocation() : TeleportLocationEntity? {
-                if (radioGroup.checkedRadioButtonId == -1)
-                    return null
-
-                val radioButton: RadioButton = radioGroup.findViewById(radioGroup.checkedRadioButtonId)
-                val location = radioButton.tag as TeleportLocationEntity?
-
-                return location
-            }
-
-            refreshLocations()
-
-            scrollView.addView(radioGroup)
-            locationDialogView.addView(scrollView)
+            // Initial population
+            refreshLocations(context, radioGroup)
 
             // Buttons
-            val buttonLayoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                topMargin = 16
-                marginStart = 16
-                marginEnd = 16
-                bottomMargin = 16
-            }
-
-            val buttonAdd = Button(context).apply {
-                layoutParams = buttonLayoutParams
-                text = "Add"
-                setTextColor(Color.WHITE)
-                setBackgroundColor(Color.parseColor("#4CAF50"))
-                setOnClickListener {
-                    addSavedLocationDialog(context) { location ->
-                        coroutineScope.launch {
-                            withContext(Dispatchers.Main) {
-                                addLocation(location)
-                            }
-                            refreshLocations(location.name)
-                        }
+            val buttonAdd = createActionButton(context, "Add", Color.parseColor("#4CAF50")) {
+                addSavedLocationDialog(context) { location ->
+                    coroutineScope.launch {
+                        addLocation(location)
+                        refreshLocations(context, radioGroup, location.name)
                     }
                 }
             }
 
-            val buttonSet = Button(context).apply {
-                layoutParams = buttonLayoutParams
-                text = "Teleport"
-                setTextColor(Color.WHITE)
-                setBackgroundColor(Color.parseColor("#2196F3"))
-                setOnClickListener {
-                    val location = getSelectedLocation()
-
-                    if (location == null) {
-                        GrindrPlus.showToast(Toast.LENGTH_SHORT, "No location selected")
-                        return@setOnClickListener
-                    }
-
-                    val coordinates = location.let { "${it.latitude}, ${it.longitude}" }
-
+            val buttonTeleport = createActionButton(context, "Teleport", Color.parseColor("#2196F3")) {
+                val location = getSelectedLocation(radioGroup)
+                if (location == null) {
+                    GrindrPlus.showToast(Toast.LENGTH_SHORT, "No location selected")
+                } else {
+                    val coordinates = "${location.latitude}, ${location.longitude}"
                     coroutineScope.launch {
                         Config.put("current_location", coordinates)
                         GrindrPlus.showToast(Toast.LENGTH_LONG, "Teleported to $coordinates")
@@ -305,92 +202,173 @@ class LocationSpoofer : Hook(
                 }
             }
 
-            val buttonOpenMaps = Button(context).apply {
-                layoutParams = buttonLayoutParams
-                text = "View in Maps"
-                setTextColor(Color.WHITE)
-                setBackgroundColor(Color.parseColor("#9C27B0"))
-                setOnClickListener {
-                    val location = getSelectedLocation()
-
-                    if (location == null) {
-                        GrindrPlus.showToast(Toast.LENGTH_SHORT, "No location selected")
-                        return@setOnClickListener
-                    }
-
-                    val coordinates = location.let { "${it.latitude}, ${it.longitude}" }
+            val buttonOpenMaps = createActionButton(context, "View in Maps", Color.parseColor("#9C27B0")) {
+                val location = getSelectedLocation(radioGroup)
+                if (location == null) {
+                    GrindrPlus.showToast(Toast.LENGTH_SHORT, "No location selected")
+                } else {
+                    val coordinates = "${location.latitude}, ${location.longitude}"
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("geo:$coordinates")))
                 }
             }
 
-            val buttonDelete = Button(context).apply {
-                layoutParams = buttonLayoutParams
-                text = "Delete"
-                setTextColor(Color.WHITE)
-                setBackgroundColor(Color.parseColor("#FF0000"))
-                setOnClickListener {
-                    val location = getSelectedLocation()
-
-                    if (location == null) {
-                        GrindrPlus.showToast(Toast.LENGTH_SHORT, "No location selected")
-                        return@setOnClickListener
-                    }
-
+            val buttonDelete = createActionButton(context, "Delete", Color.parseColor("#FF0000")) {
+                val location = getSelectedLocation(radioGroup)
+                if (location == null) {
+                    GrindrPlus.showToast(Toast.LENGTH_SHORT, "No location selected")
+                } else {
                     coroutineScope.launch {
                         deleteLocation(location.name)
-                        refreshLocations()
+                        refreshLocations(context, radioGroup)
                     }
                 }
             }
 
-            // Add buttons into horizontal LinearLayouts
-            val rowLayoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
-                marginStart = 70
-                marginEnd = 70
-            }
+            // Button Rows
+            val row1 = createButtonRow(context, buttonAdd)
+            // row1.addView(buttonTeleport)
 
-            val row1 = LinearLayout(context).apply {
-                layoutParams = rowLayoutParams
-                orientation = LinearLayout.HORIZONTAL
-                addView(buttonAdd)
-//                addView(buttonSet)
-            }
+            val row2 = createButtonRow(context, buttonOpenMaps, buttonDelete)
 
-            val row2 = LinearLayout(context).apply {
-                layoutParams = rowLayoutParams
-                orientation = LinearLayout.HORIZONTAL
-                addView(buttonOpenMaps)
-                addView(buttonDelete)
-            }
-
-            locationDialogView.addView(row1)
-            locationDialogView.addView(row2)
-
-            fun teleport() {
-                coroutineScope.launch {
-                    val location = getSelectedLocation()
-
-                    if (location == null) {
-                        Config.put("current_location", "")
-                        Config.put("current_location_name", "")
-                        GrindrPlus.showToast(Toast.LENGTH_SHORT, "Teleporting stopped")
-                        return@launch
-                    }
-
-                    val coordinates = location.let { "${it.latitude}, ${it.longitude}" }
-                    Config.put("current_location", coordinates)
-                    Config.put("current_location_name", location.name)
-                    GrindrPlus.showToast(Toast.LENGTH_LONG, "Teleported to ${location.name}")
-                }
-            }
+            dialogLayout.addView(row1)
+            dialogLayout.addView(row2)
 
             AlertDialog.Builder(context).apply {
                 setTitle("Teleport Locations")
-                setView(locationDialogView)
-                setPositiveButton("OK") { dialog, _ -> teleport() }
+                setView(dialogLayout)
+                setPositiveButton("OK") { _, _ ->
+                    coroutineScope.launch {
+                        val location = getSelectedLocation(radioGroup)
+                        if (location == null) {
+                            Config.put("current_location", "")
+                            Config.put("current_location_name", "")
+                            GrindrPlus.showToast(Toast.LENGTH_SHORT, "Teleporting stopped")
+                        } else {
+                            val coordinates = "${location.latitude}, ${location.longitude}"
+                            Config.put("current_location", coordinates)
+                            Config.put("current_location_name", location.name)
+                            GrindrPlus.showToast(Toast.LENGTH_LONG, "Teleported to ${location.name}")
+                        }
+                    }
+                }
                 setNegativeButton("Close", null)
                 show()
             }
+        }
+    }
+
+    private fun createDialogLayout(context: Context): LinearLayout {
+        return LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32, 32, 32, 32)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+    }
+
+    private fun createLocationsScrollView(context: Context, content: View): ScrollView {
+        return ScrollView(context).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                360
+            ).apply {
+                topMargin = 16
+                marginStart = 70
+                marginEnd = 70
+                bottomMargin = 16
+            }
+            addView(content)
+        }
+    }
+
+    private fun createLocationsRadioGroup(context: Context): RadioGroup {
+        return RadioGroup(context).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            orientation = RadioGroup.VERTICAL
+        }
+    }
+
+    private suspend fun refreshLocations(context: Context, radioGroup: RadioGroup, selectedLocationName: String = "") {
+        val locations = getLocations()
+        val currentSelectedName = selectedLocationName.ifEmpty {
+            Config.get("current_location_name", "") as String
+        }
+
+        withContext(Dispatchers.Main) {
+            radioGroup.clearCheck()
+            radioGroup.removeAllViews()
+
+            val radioButtonLayoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+
+            val teleportOffRadioButton = RadioButton(context).apply {
+                layoutParams = radioButtonLayoutParams
+                text = "teleport off"
+                id = View.generateViewId()
+            }
+            radioGroup.addView(teleportOffRadioButton)
+            var selectedLocationViewId = teleportOffRadioButton.id
+
+            locations.forEach { location ->
+                val radioButton = RadioButton(context).apply {
+                    layoutParams = radioButtonLayoutParams
+                    text = location.name
+                    id = View.generateViewId()
+                    tag = location
+                }
+                if (location.name == currentSelectedName)
+                    selectedLocationViewId = radioButton.id
+
+                radioGroup.addView(radioButton)
+            }
+
+            radioGroup.check(selectedLocationViewId)
+        }
+    }
+
+    private fun getSelectedLocation(radioGroup: RadioGroup): TeleportLocationEntity? {
+        if (radioGroup.checkedRadioButtonId == -1)
+            return null
+
+        val radioButton = radioGroup.findViewById<RadioButton>(radioGroup.checkedRadioButtonId)
+        if (radioButton == null) return null
+
+        return radioButton.tag as? TeleportLocationEntity
+    }
+
+    private fun createActionButton(context: Context, text: String, backgroundColor: Int, onClick: (View) -> Unit): Button {
+        return Button(context).apply {
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                topMargin = 16
+                marginStart = 16
+                marginEnd = 16
+                bottomMargin = 16
+            }
+            this.text = text
+            setTextColor(Color.WHITE)
+            setBackgroundColor(backgroundColor)
+            setOnClickListener(onClick)
+        }
+    }
+
+    private fun createButtonRow(context: Context, vararg views: View): LinearLayout {
+        return LinearLayout(context).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                marginStart = 70
+                marginEnd = 70
+            }
+            orientation = LinearLayout.HORIZONTAL
+            views.forEach { addView(it) }
         }
     }
 
