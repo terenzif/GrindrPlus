@@ -6,6 +6,7 @@ import com.grindrplus.bridge.BridgeService
 import com.grindrplus.core.Config
 import com.grindrplus.core.DatabaseHelper
 import com.grindrplus.core.Logger
+import com.grindrplus.core.Obfuscation
 import com.grindrplus.core.logd
 import com.grindrplus.core.loge
 import com.grindrplus.utils.Hook
@@ -24,28 +25,25 @@ class AntiBlock : Hook(
 ) {
     private val scope = CoroutineScope(Dispatchers.IO)
     private var myProfileId: Long = 0
-    private val chatDeleteConversationPlugin = "R9.c" // search for '"com.grindrapp.android.chat.ChatDeleteConversationPlugin",' and use the outer class
-    private val inboxFragmentV2DeleteConversations = "re.d" // search for '("chat_read_receipt", conversationId, null);'
-    private val individualUnblockActivityViewModel = "bl.k" // search for 'SnackbarEvent.i.ERROR, R.string.unblock_individual_sync_blocks_failure, null, new SnackbarEvent'
 
     override fun init() {
         // do not invoke antiblock notification when the user is unblocking someone else
         // search for '.setValue(new DialogMessage(116, null, 2, null));'
-        findClass(individualUnblockActivityViewModel)
+        findClass(Obfuscation.G.AntiBlock.INDIVIDUAL_UNBLOCK_ACTIVITY_VIEW_MODEL)
             .hook("R", HookStage.BEFORE) { param ->
                 GrindrPlus.shouldTriggerAntiblock = false
             }
 
         // reenable antiblock notification after *above* is finished
         // search for '.setValue(new DialogMessage(116, null, 2, null));'
-        findClass(individualUnblockActivityViewModel)
+        findClass(Obfuscation.G.AntiBlock.INDIVIDUAL_UNBLOCK_ACTIVITY_VIEW_MODEL)
             .hook("R", HookStage.AFTER) { param ->
                 Thread.sleep(700) // Wait for WS to unblock
                 GrindrPlus.shouldTriggerAntiblock = true
             }
 
         if (Config.get("force_old_anti_block_behavior", false) as Boolean) {
-            findClass("com.grindrapp.android.chat.model.ConversationDeleteNotification")
+            findClass(Obfuscation.G.AntiBlock.CONVERSATION_DELETE_NOTIFICATION)
                 .hookConstructor(HookStage.BEFORE) { param ->
                     @Suppress("UNCHECKED_CAST")
                     val profiles = param.args().firstOrNull() as? List<String> ?: emptyList()
@@ -53,14 +51,14 @@ class AntiBlock : Hook(
                 }
         } else {
             // search for '("chat_read_receipt", conversationId, null);'
-            findClass(inboxFragmentV2DeleteConversations)
+            findClass(Obfuscation.G.AntiBlock.INBOX_FRAGMENT_V2_DELETE_CONVERSATIONS)
                 .hook("b", HookStage.BEFORE) { param ->
                     GrindrPlus.shouldTriggerAntiblock = false
                     GrindrPlus.blockCaller = "inboxFragmentV2DeleteConversations"
                 }
 
             // search for '("chat_read_receipt", conversationId, null);'
-            findClass(inboxFragmentV2DeleteConversations)
+            findClass(Obfuscation.G.AntiBlock.INBOX_FRAGMENT_V2_DELETE_CONVERSATIONS)
                 .hook("b", HookStage.AFTER) { param ->
                     val numberOfChatsToDelete = (param.args().firstOrNull() as? List<*>)?.size ?: 0
                     if (numberOfChatsToDelete == 0)
@@ -75,7 +73,7 @@ class AntiBlock : Hook(
                 }
 
             // search for 'Deleting conversations'
-            findClass(chatDeleteConversationPlugin)
+            findClass(Obfuscation.G.AntiBlock.CHAT_DELETE_CONVERSATION_PLUGIN)
                 .hook("b", HookStage.BEFORE) { param ->
                     myProfileId = GrindrPlus.myProfileId.toLong()
                     if (GrindrPlus.shouldTriggerAntiblock)
@@ -90,7 +88,7 @@ class AntiBlock : Hook(
                     param.setResult(null)
                 }
 
-            findClass("com.grindrapp.android.chat.model.ConversationDeleteNotification")
+            findClass(Obfuscation.G.AntiBlock.CONVERSATION_DELETE_NOTIFICATION)
                 .hookConstructor(HookStage.BEFORE) { param ->
                     @Suppress("UNCHECKED_CAST")
                     if (GrindrPlus.shouldTriggerAntiblock) {
