@@ -126,20 +126,22 @@ object Utils {
     }
 
     fun w2n(isMetric: Boolean, weight: String): Double {
-        return when {
-            isMetric -> weight.substringBefore("kg").trim().toDouble()
-            else -> weight.substringBefore("lbs").trim().toDouble()
-        }
+        val cleaned = if (isMetric) weight.substringBefore("kg") else weight.substringBefore("lbs")
+        return cleaned.trim().filter { it.isDigit() || it == '.' || it == '-' }.toDoubleOrNull() ?: 0.0
     }
 
     fun h2n(isMetric: Boolean, height: String): Double {
         return if (isMetric) {
-            height.removeSuffix("cm").trim().toDouble()
+            height.substringBefore("cm").trim().filter { it.isDigit() || it == '.' || it == '-' }.toDoubleOrNull() ?: 0.0
         } else {
-            val (feet, inches) = height.split("'").let {
-                it[0].toDouble() to it[1].replace("\"", "").toDouble()
+            val parts = height.split("'")
+            if (parts.size == 1) {
+                parts[0].trim().filter { it.isDigit() || it == '.' || it == '-' }.toDoubleOrNull() ?: 0.0
+            } else {
+                val feet = parts.getOrNull(0)?.trim()?.filter { it.isDigit() || it == '.' || it == '-' }?.toDoubleOrNull() ?: 0.0
+                val inches = parts.getOrNull(1)?.trim()?.replace("\"", "")?.filter { it.isDigit() || it == '.' || it == '-' }?.toDoubleOrNull() ?: 0.0
+                feet * 12 + inches
             }
-            feet * 12 + inches
         }
     }
 
