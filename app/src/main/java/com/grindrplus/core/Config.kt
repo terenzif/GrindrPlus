@@ -8,12 +8,14 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.json.JSONObject
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicReference
 
 object Config {
     private var localConfig = JSONObject()
-    private var currentPackageName = Constants.GRINDR_PACKAGE_NAME
+    @Volatile private var currentPackageName = Constants.GRINDR_PACKAGE_NAME
     private val GLOBAL_SETTINGS = listOf("first_launch", "analytics", "discreet_icon", "material_you", "debug_mode", "disable_permission_checks", "custom_manifest", "maps_api_key")
     private val configMutex = Mutex()
+    private val configCache = AtomicReference<Map<String, Any>>(emptyMap())
 
     suspend fun initialize(packageName: String? = null) {
         configMutex.withLock {
@@ -28,7 +30,62 @@ object Config {
             }
 
             migrateToMultiCloneFormat()
+            updateCache()
         }
+    }
+
+    private fun updateCache() {
+        val newCache = HashMap<String, Any>()
+
+        // Global settings
+        for (key in GLOBAL_SETTINGS) {
+            localConfig.opt(key)?.let { newCache[key] = it }
+        }
+
+        // Package settings
+        val clones = localConfig.optJSONObject("clones")
+        if (clones != null) {
+            val pkgKeys = clones.keys()
+            while (pkgKeys.hasNext()) {
+                val pkgName = pkgKeys.next()
+                val pkgConfig = clones.optJSONObject(pkgName) ?: continue
+
+                val keys = pkgConfig.keys()
+                while (keys.hasNext()) {
+                    val key = keys.next()
+                    newCache["$pkgName/$key"] = pkgConfig.get(key)
+
+                    if (key == "hooks") {
+                        val hooks = pkgConfig.optJSONObject("hooks")
+                        if (hooks != null) {
+                            val hookKeys = hooks.keys()
+                            while (hookKeys.hasNext()) {
+                                val hookName = hookKeys.next()
+                                hooks.optJSONObject(hookName)?.let { hookObj ->
+                                    if (hookObj.has("enabled")) {
+                                        newCache["$pkgName/hooks/$hookName"] = hookObj.getBoolean("enabled")
+                                    }
+                                }
+                            }
+                        }
+                    } else if (key == "tasks") {
+                        val tasks = pkgConfig.optJSONObject("tasks")
+                        if (tasks != null) {
+                            val taskKeys = tasks.keys()
+                            while (taskKeys.hasNext()) {
+                                val taskId = taskKeys.next()
+                                tasks.optJSONObject(taskId)?.let { taskObj ->
+                                    if (taskObj.has("enabled")) {
+                                        newCache["$pkgName/tasks/$taskId"] = taskObj.getBoolean("enabled")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        configCache.set(newCache)
     }
 
     private fun isGlobalSetting(name: String): Boolean {
@@ -71,6 +128,7 @@ object Config {
             Logger.d("Setting current package to $packageName", LogSource.MANAGER)
             currentPackageName = packageName
             ensurePackageExists(packageName)
+            updateCache()
         }
     }
 
@@ -143,45 +201,41 @@ object Config {
             }
 
             writeRemoteConfig(localConfig)
+            updateCache()
         }
     }
 
-    fun get(name: String, default: Any, autoPut: Boolean = false): Any = runBlocking {
-        configMutex.withLock {
-            val rawValue = if (isGlobalSetting(name)) {
-                localConfig.opt(name)
-            } else {
-                val packageConfig = getCurrentPackageConfig()
-                packageConfig.opt(name)
-            }
+    fun get(name: String, default: Any, autoPut: Boolean = false): Any {
+        val cache = configCache.get()
+        val key = if (isGlobalSetting(name)) name else "$currentPackageName/$name"
+        val rawValue = cache[key]
 
-            if (rawValue == null) {
-                if (autoPut) {
-                    GrindrPlus.executeAsync {
-                        put(name, default)
-                    }
+        if (rawValue == null) {
+            if (autoPut) {
+                GrindrPlus.executeAsync {
+                    put(name, default)
                 }
-                return@runBlocking default
             }
+            return default
+        }
 
-            return@runBlocking when (default) {
-                is Number -> {
-                    if (rawValue is String) {
+        return when (default) {
+            is Number -> {
+                if (rawValue is String) {
+                    try {
+                        rawValue.toInt()
+                    } catch (_: NumberFormatException) {
                         try {
-                            rawValue.toInt()
+                            rawValue.toDouble()
                         } catch (_: NumberFormatException) {
-                            try {
-                                rawValue.toDouble()
-                            } catch (_: NumberFormatException) {
-                                default
-                            }
+                            default
                         }
-                    } else {
-                        rawValue as? Number ?: default
                     }
+                } else {
+                    rawValue as? Number ?: default
                 }
-                else -> rawValue
             }
+            else -> rawValue
         }
     }
 
@@ -194,16 +248,14 @@ object Config {
 
             hooks.optJSONObject(hookName)?.put("enabled", enabled)
             writeRemoteConfig(localConfig)
+            updateCache()
         }
     }
 
-    fun isHookEnabled(hookName: String): Boolean = runBlocking {
-        configMutex.withLock {
-            Logger.d("Checking if hook $hookName is enabled", LogSource.MANAGER)
-            val packageConfig = getCurrentPackageConfig()
-            val hooks = packageConfig.optJSONObject("hooks") ?: return@runBlocking false
-            return@runBlocking hooks.optJSONObject(hookName)?.getBoolean("enabled") == true
-        }
+    fun isHookEnabled(hookName: String): Boolean {
+        val cache = configCache.get()
+        val key = "$currentPackageName/hooks/$hookName"
+        return cache[key] as? Boolean == true
     }
 
     suspend fun setTaskEnabled(taskId: String, enabled: Boolean) {
@@ -215,16 +267,14 @@ object Config {
 
             tasks.optJSONObject(taskId)?.put("enabled", enabled)
             writeRemoteConfig(localConfig)
+            updateCache()
         }
     }
 
-    fun isTaskEnabled(taskId: String): Boolean = runBlocking {
-        configMutex.withLock {
-            Logger.d("Checking if task $taskId is enabled", LogSource.MANAGER)
-            val packageConfig = getCurrentPackageConfig()
-            val tasks = packageConfig.optJSONObject("tasks") ?: return@runBlocking false
-            return@runBlocking tasks.optJSONObject(taskId)?.getBoolean("enabled") == true
-        }
+    fun isTaskEnabled(taskId: String): Boolean {
+        val cache = configCache.get()
+        val key = "$currentPackageName/tasks/$taskId"
+        return cache[key] as? Boolean == true
     }
 
     fun getTasksSettings(): Map<String, Pair<String, Boolean>> = runBlocking {
@@ -259,6 +309,7 @@ object Config {
                 })
 
                 writeRemoteConfig(localConfig)
+                updateCache()
             }
         }
     }
@@ -277,6 +328,7 @@ object Config {
                 })
 
                 writeRemoteConfig(localConfig)
+                updateCache()
             }
         }
     }
