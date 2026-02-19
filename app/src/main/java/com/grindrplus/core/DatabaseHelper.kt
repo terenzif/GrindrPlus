@@ -30,14 +30,22 @@ object DatabaseHelper {
 
         try {
             if (cursor.moveToFirst()) {
+                val columnNames = cursor.columnNames
+                val columnIndices = IntArray(columnNames.size) { i ->
+                    cursor.getColumnIndexOrThrow(columnNames[i])
+                }
+
                 do {
                     val row = mutableMapOf<String, Any>()
-                    cursor.columnNames.forEach { column ->
-                        row[column] = when (cursor.getType(cursor.getColumnIndexOrThrow(column))) {
-                            Cursor.FIELD_TYPE_INTEGER -> cursor.getInt(cursor.getColumnIndexOrThrow(column))
-                            Cursor.FIELD_TYPE_FLOAT -> cursor.getFloat(cursor.getColumnIndexOrThrow(column))
-                            Cursor.FIELD_TYPE_STRING -> cursor.getString(cursor.getColumnIndexOrThrow(column))
-                            Cursor.FIELD_TYPE_BLOB -> cursor.getBlob(cursor.getColumnIndexOrThrow(column))
+                    for (i in columnNames.indices) {
+                        val columnName = columnNames[i]
+                        val columnIndex = columnIndices[i]
+
+                        row[columnName] = when (cursor.getType(columnIndex)) {
+                            Cursor.FIELD_TYPE_INTEGER -> cursor.getInt(columnIndex)
+                            Cursor.FIELD_TYPE_FLOAT -> cursor.getFloat(columnIndex)
+                            Cursor.FIELD_TYPE_STRING -> cursor.getString(columnIndex)
+                            Cursor.FIELD_TYPE_BLOB -> cursor.getBlob(columnIndex)
                             Cursor.FIELD_TYPE_NULL -> "NULL"
                             else -> "UNKNOWN"
                         }
