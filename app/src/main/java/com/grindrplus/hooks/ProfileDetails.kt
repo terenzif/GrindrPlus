@@ -168,7 +168,6 @@ class ProfileDetails : Hook(
 
         findClass(distanceUtils).hook("c", HookStage.AFTER) { param ->
             val distance = param.arg<Double>(0)
-            // val isAbbreviated = param.arg<Boolean>(1)
             val isFeet = param.arg<Boolean>(2)
 
             param.setResult(
