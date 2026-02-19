@@ -129,6 +129,7 @@ dependencies {
     testImplementation(libs.androidx.room.testing)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
+    testImplementation(fileTree("libs") { include("*.jar") })
 }
 
 apply(from = rootProject.file("scripts/setup_lspatch.gradle.kts"))
