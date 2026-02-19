@@ -10,6 +10,9 @@ interface BlockEventDao {
     @Insert
     suspend fun insert(event: BlockEventEntity)
 
+    @Insert
+    suspend fun insertAll(events: List<BlockEventEntity>)
+
     @Query("SELECT * FROM block_events ORDER BY timestamp DESC")
     suspend fun getAll(): List<BlockEventEntity>
 
