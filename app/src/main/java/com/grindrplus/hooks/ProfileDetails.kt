@@ -7,6 +7,7 @@ import android.widget.Toast
 import com.grindrplus.GrindrPlus
 import com.grindrplus.core.Config
 import com.grindrplus.core.Logger
+import com.grindrplus.core.Obfuscation
 import com.grindrplus.core.Utils
 import com.grindrplus.core.Utils.calculateBMI
 import com.grindrplus.core.Utils.h2n
@@ -30,22 +31,12 @@ class ProfileDetails : Hook(
 	"Add extra fields and details to profiles"
 ) {
     private var boostedProfilesList = emptyList<String>()
-    private val blockedProfilesObserver = "Hm.f" // search for 'Intrinsics.checkNotNullParameter(dataList, "dataList");' - typically the last match
-    private val profileViewHolder = "bl.u\$c" // search for 'Intrinsics.checkNotNullParameter(individualUnblockActivityViewModel, "individualUnblockActivityViewModel");'
-
-    private val distanceUtils = "com.grindrapp.android.utils.DistanceUtils"
-    private val profileBarView = "com.grindrapp.android.ui.profileV2.ProfileBarView"
-    private val profileViewState = "com.grindrapp.android.ui.profileV2.model.ProfileViewState"
-    private val serverDrivenCascadeCachedState =
-        "com.grindrapp.android.persistence.model.serverdrivencascade.ServerDrivenCascadeCacheState"
-    private val serverDrivenCascadeCachedProfile =
-        "com.grindrapp.android.persistence.model.serverdrivencascade.ServerDrivenCascadeCachedProfile"
 
     @SuppressLint("DefaultLocale")
     override fun init() {
-        findClass(serverDrivenCascadeCachedState).hook("getItems", HookStage.AFTER) { param ->
+        findClass(Obfuscation.G.ProfileDetails.SERVER_DRIVEN_CASCADE_CACHED_STATE).hook("getItems", HookStage.AFTER) { param ->
             (param.getResult() as List<*>)
-                .filter { (it?.javaClass?.name ?: "") == serverDrivenCascadeCachedProfile }
+                .filter { (it?.javaClass?.name ?: "") == Obfuscation.G.ProfileDetails.SERVER_DRIVEN_CASCADE_CACHED_PROFILE }
                 .forEach {
                     if (getObjectField(it, "isBoosting") as Boolean) {
                         boostedProfilesList += callMethod(it, "getProfileId") as String
@@ -53,7 +44,7 @@ class ProfileDetails : Hook(
                 }
         }
 
-        findClass(blockedProfilesObserver).hook("onChanged", HookStage.AFTER) { param ->
+        findClass(Obfuscation.G.ProfileDetails.BLOCKED_PROFILES_OBSERVER).hook("onChanged", HookStage.AFTER) { param ->
             // recently got merged into a case statement, so filter for the right argument type
             if ((getObjectField(param.thisObject(), "a") as Int) != 0) return@hook
 
@@ -71,7 +62,7 @@ class ProfileDetails : Hook(
             }
         }
 
-        findClass(profileViewHolder).hookConstructor(HookStage.AFTER) { param ->
+        findClass(Obfuscation.G.ProfileDetails.PROFILE_VIEW_HOLDER).hookConstructor(HookStage.AFTER) { param ->
             val textView =
                 getObjectField(param.thisObject(), "a") as TextView
 
@@ -87,7 +78,7 @@ class ProfileDetails : Hook(
             }
         }
 
-        findClass(profileBarView).hook("setProfile", HookStage.BEFORE) { param ->
+        findClass(Obfuscation.G.ProfileDetails.PROFILE_BAR_VIEW).hook("setProfile", HookStage.BEFORE) { param ->
             val profileId = getObjectField(param.arg(0), "profileId") as String
             val accountCreationTime =
                 formatEpochSeconds(GrindrPlus.spline.invert(profileId.toDouble()).toLong())
@@ -166,9 +157,8 @@ class ProfileDetails : Hook(
             }
         }
 
-        findClass(distanceUtils).hook("c", HookStage.AFTER) { param ->
+        findClass(Obfuscation.G.ProfileDetails.DISTANCE_UTILS).hook("c", HookStage.AFTER) { param ->
             val distance = param.arg<Double>(0)
-            // val isAbbreviated = param.arg<Boolean>(1)
             val isFeet = param.arg<Boolean>(2)
 
             param.setResult(
@@ -190,7 +180,7 @@ class ProfileDetails : Hook(
             )
         }
 
-        findClass(profileViewState).hook("getWeight", HookStage.AFTER) { param ->
+        findClass(Obfuscation.G.ProfileDetails.PROFILE_VIEW_STATE).hook("getWeight", HookStage.AFTER) { param ->
             if (Config.get("show_bmi_in_profile", true) as Boolean) {
                 val weight = param.getResult()
                 val height = callMethod(param.thisObject(), "getHeight")

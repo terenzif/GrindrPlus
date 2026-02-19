@@ -7,6 +7,10 @@ import android.database.sqlite.SQLiteDatabase
 import com.grindrplus.GrindrPlus
 
 object DatabaseHelper {
+    private var database: SQLiteDatabase? = null
+    private var databaseName: String? = null
+
+    @Synchronized
     private fun getDatabase(): SQLiteDatabase {
         val context = GrindrPlus.context
         val databases = context.databaseList()
@@ -19,8 +23,17 @@ object DatabaseHelper {
                             "${databases.joinToString("\n") { "  $it" }}\n")
                 }
             }
-        return context.openOrCreateDatabase(grindrUserDb.also {
+
+        if (database != null && databaseName == grindrUserDb && database!!.isOpen) {
+            return database!!
+        }
+
+        database?.close()
+        databaseName = grindrUserDb
+        database = context.openOrCreateDatabase(grindrUserDb.also {
             Logger.d("Using database: $it") }, Context.MODE_PRIVATE, null)
+
+        return database!!
     }
 
     fun query(query: String, args: Array<String>? = null): List<Map<String, Any>> {
@@ -30,14 +43,16 @@ object DatabaseHelper {
 
         try {
             if (cursor.moveToFirst()) {
+                val columnNames = cursor.columnNames
+                val columnIndices = columnNames.map { it to cursor.getColumnIndexOrThrow(it) }
                 do {
                     val row = mutableMapOf<String, Any>()
-                    cursor.columnNames.forEach { column ->
-                        row[column] = when (cursor.getType(cursor.getColumnIndexOrThrow(column))) {
-                            Cursor.FIELD_TYPE_INTEGER -> cursor.getInt(cursor.getColumnIndexOrThrow(column))
-                            Cursor.FIELD_TYPE_FLOAT -> cursor.getFloat(cursor.getColumnIndexOrThrow(column))
-                            Cursor.FIELD_TYPE_STRING -> cursor.getString(cursor.getColumnIndexOrThrow(column))
-                            Cursor.FIELD_TYPE_BLOB -> cursor.getBlob(cursor.getColumnIndexOrThrow(column))
+                    columnIndices.forEach { (column, index) ->
+                        row[column] = when (cursor.getType(index)) {
+                            Cursor.FIELD_TYPE_INTEGER -> cursor.getInt(index)
+                            Cursor.FIELD_TYPE_FLOAT -> cursor.getFloat(index)
+                            Cursor.FIELD_TYPE_STRING -> cursor.getString(index)
+                            Cursor.FIELD_TYPE_BLOB -> cursor.getBlob(index)
                             Cursor.FIELD_TYPE_NULL -> "NULL"
                             else -> "UNKNOWN"
                         }
@@ -47,31 +62,21 @@ object DatabaseHelper {
             }
         } finally {
             cursor.close()
-            database.close()
         }
 
         return results
     }
 
     fun insert(table: String, values: ContentValues): Long {
-        val database = getDatabase()
-        val rowId = database.insert(table, null, values)
-        database.close()
-        return rowId
+        return getDatabase().insert(table, null, values)
     }
 
     fun update(table: String, values: ContentValues, whereClause: String?, whereArgs: Array<String>?): Int {
-        val database = getDatabase()
-        val rowsAffected = database.update(table, values, whereClause, whereArgs)
-        database.close()
-        return rowsAffected
+        return getDatabase().update(table, values, whereClause, whereArgs)
     }
 
     fun delete(table: String, whereClause: String?, whereArgs: Array<String>?): Int {
-        val database = getDatabase()
-        val rowsDeleted = database.delete(table, whereClause, whereArgs)
-        database.close()
-        return rowsDeleted
+        return getDatabase().delete(table, whereClause, whereArgs)
     }
 
     fun getTables(): List<String> {
@@ -80,8 +85,6 @@ object DatabaseHelper {
     }
 
     fun execute(sql: String) {
-        val database = getDatabase()
-        database.execSQL(sql)
-        database.close()
+        getDatabase().execSQL(sql)
     }
 }
