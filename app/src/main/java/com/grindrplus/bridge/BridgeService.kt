@@ -148,18 +148,19 @@ class BridgeService : Service() {
                         val eventsArray = JSONArray(content)
                         if (eventsArray.length() > 0) {
                             Logger.i("Migrating ${eventsArray.length()} block events to database", LogSource.BRIDGE)
+                            val entities = mutableListOf<BlockEventEntity>()
                             for (i in 0 until eventsArray.length()) {
                                 val event = eventsArray.getJSONObject(i)
-                                val entity = BlockEventEntity(
+                                entities.add(BlockEventEntity(
                                     profileId = event.getString("profileId"),
                                     displayName = event.getString("displayName"),
                                     eventType = event.getString("eventType"),
                                     timestamp = event.getLong("timestamp"),
                                     packageName = event.optString("packageName", "com.grindrapp.android")
-                                )
-                                runBlocking {
-                                    database.blockEventDao().insert(entity)
-                                }
+                                ))
+                            }
+                            runBlocking {
+                                database.blockEventDao().insertAll(entities)
                             }
                         }
                         // Rename file after successful migration
