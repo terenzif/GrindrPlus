@@ -1,5 +1,6 @@
 package com.grindrplus.hooks
 
+import com.grindrplus.core.Obfuscation
 import com.grindrplus.utils.Hook
 import com.grindrplus.utils.HookStage
 import com.grindrplus.utils.RetrofitUtils
@@ -12,13 +13,12 @@ class ChatIndicators : Hook(
     "Chat indicators",
     "Don't show chat markers / indicators to others"
 ) {
-    private val chatRestService = "com.grindrapp.android.chat.data.datasource.api.service.ChatRestService"
     private val blacklistedPaths = setOf(
         "v4/chatstatus/typing"
     )
 
     override fun init() {
-        val chatRestServiceClass = findClass(chatRestService)
+        val chatRestServiceClass = findClass(Obfuscation.G.ChatIndicators.CHAT_REST_SERVICE)
 
         val methodBlacklist = blacklistedPaths.mapNotNull {
             RetrofitUtils.findPOSTMethod(chatRestServiceClass, it)?.name
