@@ -155,8 +155,8 @@ class AntiBlock : Hook(
         }
     }
 
-    private fun fetchProfileData(profileId: String): String {
-        val response = GrindrPlus.httpClient.sendRequest(
+    private suspend fun fetchProfileData(profileId: String): String {
+        val response = GrindrPlus.httpClient.sendRequestAsync(
             url = "https://grindr.mobi/v4/profiles/$profileId",
             method = "GET"
         )
