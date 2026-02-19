@@ -7,13 +7,16 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.os.Process
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
+import com.grindrplus.core.Constants
 import com.grindrplus.core.LogSource
 import com.grindrplus.core.Logger
 import com.grindrplus.manager.fetchNotifs
@@ -56,7 +59,11 @@ class BridgeService : Service() {
         initializeFiles()
     }
 
-    override fun onBind(intent: Intent?): IBinder {
+    override fun onBind(intent: Intent?): IBinder? {
+        if (!isCallerAuthorized()) {
+            Logger.w("Unauthorized bind attempt from UID ${Binder.getCallingUid()}", LogSource.BRIDGE)
+            return null
+        }
         Logger.i("BridgeService bound", LogSource.BRIDGE)
         startForegroundSafely()
         return binder
@@ -148,18 +155,19 @@ class BridgeService : Service() {
                         val eventsArray = JSONArray(content)
                         if (eventsArray.length() > 0) {
                             Logger.i("Migrating ${eventsArray.length()} block events to database", LogSource.BRIDGE)
+                            val entities = mutableListOf<BlockEventEntity>()
                             for (i in 0 until eventsArray.length()) {
                                 val event = eventsArray.getJSONObject(i)
-                                val entity = BlockEventEntity(
+                                entities.add(BlockEventEntity(
                                     profileId = event.getString("profileId"),
                                     displayName = event.getString("displayName"),
                                     eventType = event.getString("eventType"),
                                     timestamp = event.getLong("timestamp"),
                                     packageName = event.optString("packageName", "com.grindrapp.android")
-                                )
-                                runBlocking {
-                                    database.blockEventDao().insert(entity)
-                                }
+                                ))
+                            }
+                            runBlocking {
+                                database.blockEventDao().insertAll(entities)
                             }
                         }
                         // Rename file after successful migration
@@ -179,8 +187,40 @@ class BridgeService : Service() {
         }
     }
 
+    private fun isCallerAuthorized(): Boolean {
+        val callingUid = Binder.getCallingUid()
+
+        // 1. Same UID is always allowed
+        if (callingUid == Process.myUid()) return true
+
+        // 2. Check for signature match (Manager app)
+        if (packageManager.checkSignatures(Process.myUid(), callingUid) == PackageManager.SIGNATURE_MATCH) {
+            return true
+        }
+
+        // 3. Check if caller is Grindr or a clone
+        val callingPackages = packageManager.getPackagesForUid(callingUid)
+        val isGrindr = callingPackages?.any { pkg ->
+            pkg == Constants.GRINDR_PACKAGE_NAME ||
+                    pkg == "com.grindr" ||
+                    pkg.startsWith(Constants.GRINDR_PACKAGE_NAME + ".")
+        } ?: false
+
+        if (isGrindr) return true
+
+        // 4. Custom permission check
+        return checkCallingPermission("com.grindrplus.permission.ACCESS_BRIDGE_SERVICE") == PackageManager.PERMISSION_GRANTED
+    }
+
     private val binder = object : IBridgeService.Stub() {
+        private fun checkCaller() {
+            if (!isCallerAuthorized()) {
+                throw SecurityException("Unauthorized caller UID ${Binder.getCallingUid()}")
+            }
+        }
+
         override fun getConfig(): String {
+            checkCaller()
             Logger.d("getConfig() called")
             return try {
                 if (!configFile.exists()) {
@@ -197,6 +237,7 @@ class BridgeService : Service() {
         }
 
         override fun setConfig(config: String?) {
+            checkCaller()
             Logger.d("setConfig() called")
             try {
                 if (!configFile.exists()) {
@@ -211,6 +252,7 @@ class BridgeService : Service() {
         }
 
         override fun log(level: String, source: String, message: String, hookName: String?) {
+            checkCaller()
             ioExecutor.execute {
                 try {
                     if (logWriteCount++ % LOG_SIZE_CHECK_INTERVAL == 0) {
@@ -225,6 +267,7 @@ class BridgeService : Service() {
         }
 
         override fun writeRawLog(content: String) {
+            checkCaller()
             ioExecutor.execute {
                 try {
                     if (logWriteCount++ % LOG_SIZE_CHECK_INTERVAL == 0) {
@@ -238,6 +281,7 @@ class BridgeService : Service() {
         }
 
         override fun clearLogs() {
+            checkCaller()
             Logger.d("clearLogs() called")
             try {
                 logLock.withLock {
@@ -259,6 +303,7 @@ class BridgeService : Service() {
             channelName: String,
             channelDescription: String
         ) {
+            checkCaller()
             Logger.d("sendNotification() called")
             try {
                 createNotificationChannel(channelId, channelName, channelDescription)
@@ -290,6 +335,7 @@ class BridgeService : Service() {
             actionIntents: Array<String>,
             actionData: Array<String>
         ) {
+            checkCaller()
             Logger.d("sendNotificationWithActions() called")
             try {
                 createNotificationChannel(channelId, channelName, channelDescription)
@@ -334,6 +380,7 @@ class BridgeService : Service() {
             isBlock: Boolean,
             packageName: String
         ) {
+            checkCaller()
             ioExecutor.execute {
                 try {
                     val event = BlockEventEntity(
@@ -359,6 +406,7 @@ class BridgeService : Service() {
         }
 
         override fun getBlockEvents(): String {
+            checkCaller()
             return try {
                 val future = ioExecutor.submit<String> {
                     runBlocking {
@@ -386,6 +434,7 @@ class BridgeService : Service() {
         }
 
         override fun clearBlockEvents() {
+            checkCaller()
             ioExecutor.execute {
                 try {
                     runBlocking {
@@ -400,6 +449,7 @@ class BridgeService : Service() {
         }
 
         override fun shouldRegenAndroidId(packageName: String): Boolean {
+            checkCaller()
             val regenFile = File(getExternalFilesDir(null), "$packageName.android_id_regen")
             return regenFile.exists().also { exists ->
                 if (exists) {
@@ -409,6 +459,7 @@ class BridgeService : Service() {
         }
 
         override fun getForcedLocation(packageName: String): String {
+            checkCaller()
             val coordinatesFile = File(getExternalFilesDir(null), "$packageName.location")
             return if (coordinatesFile.exists()) {
                 coordinatesFile.readText().trim().ifBlank { "" }
@@ -418,6 +469,7 @@ class BridgeService : Service() {
         }
 
         override fun deleteForcedLocation(packageName: String) {
+            checkCaller()
             val coordinatesFile = File(getExternalFilesDir(null), "$packageName.location")
             if (coordinatesFile.exists()) {
                 coordinatesFile.delete()
@@ -425,10 +477,12 @@ class BridgeService : Service() {
         }
 
         override fun isRooted(): Boolean {
+            checkCaller()
             return com.grindrplus.manager.utils.isRooted(applicationContext)
         }
 
         override fun isLSPosed(): Boolean {
+            checkCaller()
             return com.grindrplus.manager.utils.isLSPosed()
         }
     }

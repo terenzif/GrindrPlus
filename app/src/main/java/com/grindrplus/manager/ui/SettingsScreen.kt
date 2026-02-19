@@ -62,7 +62,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import com.grindrplus.core.Config
-import com.grindrplus.manager.settings.ApiKeyTestDialog
 import com.grindrplus.manager.settings.ButtonSetting
 import com.grindrplus.manager.settings.KeyboardType
 import com.grindrplus.manager.settings.Setting
@@ -280,200 +279,6 @@ fun SettingsScreen(
     }
 }
 
-@Composable
-fun ResetSettingsDialog(
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = MaterialTheme.shapes.large
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Reset Settings",
-                    style = MaterialTheme.typography.headlineSmall
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "This action will reset all settings to their default values. This action cannot be undone and the app will restart.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Button(
-                        onClick = onDismiss,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    ) {
-                        Text("Cancel")
-                    }
-
-                    Button(
-                        onClick = onConfirm,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError
-                        )
-                    ) {
-                        Text("Reset")
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun AboutDialog(
-    onDismiss: () -> Unit,
-    onViewSourceCode: () -> Unit,
-) {
-    val context = LocalContext.current
-
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth(1f)
-                .padding(16.dp),
-            shape = MaterialTheme.shapes.large
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "GrindrPlus",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Surface(
-                        modifier = Modifier.size(56.dp),
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = "App Icon",
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "Made with ❤️ by",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-
-                        Row {
-                            Text(
-                                text = "R0rt1z2",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    color = MaterialTheme.colorScheme.primary
-                                ),
-                                modifier = Modifier.clickable {
-                                    val intent = Intent(
-                                        Intent.ACTION_VIEW,
-                                        "https://github.com/R0rt1z2".toUri()
-                                    )
-                                    context.startActivity(intent)
-                                }
-                            )
-
-                            Text(
-                                text = " and ",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-
-                            Text(
-                                text = "Rattly",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    color = MaterialTheme.colorScheme.primary
-                                ),
-                                modifier = Modifier.clickable {
-                                    val intent = Intent(
-                                        Intent.ACTION_VIEW,
-                                        "https://github.com/Rattlyy".toUri()
-                                    )
-                                    context.startActivity(intent)
-                                }
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Button(
-                        onClick = onDismiss,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(56.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    ) {
-                        Text(
-                            "Close",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-
-                    Button(
-                        onClick = onViewSourceCode,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(56.dp)
-                    ) {
-                        Text(
-                            "Source",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun SettingGroupSection(
@@ -585,6 +390,14 @@ fun ImprovedTextSetting(
     var text by remember { mutableStateOf(setting.value) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    val onSave = {
+        if (errorMessage == null) {
+            setting.onValueChange(text)
+            isExpanded = false
+            onChanged()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -679,13 +492,7 @@ fun ImprovedTextSetting(
                         imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(
-                        onDone = {
-                            if (errorMessage == null) {
-                                setting.onValueChange(text)
-                                isExpanded = false
-                                onChanged()
-                            }
-                        }
+                        onDone = { onSave() }
                     ),
                     singleLine = true,
                     shape = MaterialTheme.shapes.small,
@@ -697,13 +504,7 @@ fun ImprovedTextSetting(
                     ),
                     trailingIcon = {
                         IconButton(
-                            onClick = {
-                                if (errorMessage == null) {
-                                    setting.onValueChange(text)
-                                    isExpanded = false
-                                    onChanged()
-                                }
-                            },
+                            onClick = onSave,
                             enabled = errorMessage == null
                         ) {
                             Icon(
@@ -738,13 +539,7 @@ fun ImprovedTextSetting(
                     }
 
                     Button(
-                        onClick = {
-                            if (errorMessage == null) {
-                                setting.onValueChange(text)
-                                isExpanded = false
-                                onChanged()
-                            }
-                        },
+                        onClick = onSave,
                         enabled = errorMessage == null,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
@@ -770,6 +565,14 @@ fun ImprovedTextSettingWithButtons(
     var isExpanded by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf(setting.value) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val onSave = {
+        if (errorMessage == null) {
+            setting.onValueChange(text)
+            isExpanded = false
+            onChanged()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -865,13 +668,7 @@ fun ImprovedTextSettingWithButtons(
                         imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(
-                        onDone = {
-                            if (errorMessage == null) {
-                                setting.onValueChange(text)
-                                isExpanded = false
-                                onChanged()
-                            }
-                        }
+                        onDone = { onSave() }
                     ),
                     singleLine = true,
                     shape = MaterialTheme.shapes.small,
@@ -883,13 +680,7 @@ fun ImprovedTextSettingWithButtons(
                     ),
                     trailingIcon = {
                         IconButton(
-                            onClick = {
-                                if (errorMessage == null) {
-                                    setting.onValueChange(text)
-                                    isExpanded = false
-                                    onChanged()
-                                }
-                            },
+                            onClick = onSave,
                             enabled = errorMessage == null
                         ) {
                             Icon(
@@ -947,13 +738,7 @@ fun ImprovedTextSettingWithButtons(
                         }
 
                         Button(
-                            onClick = {
-                                if (errorMessage == null) {
-                                    setting.onValueChange(text)
-                                    isExpanded = false
-                                    onChanged()
-                                }
-                            },
+                            onClick = onSave,
                             enabled = errorMessage == null,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,

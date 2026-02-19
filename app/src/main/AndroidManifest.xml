@@ -13,6 +13,11 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="com.grindrplus.permission.ACCESS_BRIDGE_SERVICE" />
+
+    <permission
+        android:name="com.grindrplus.permission.ACCESS_BRIDGE_SERVICE"
+        android:protectionLevel="signature" />
 
     <application
             android:allowBackup="true"
@@ -42,10 +47,6 @@
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="xposed_module" />
-            <intent-filter>
-                <action android:name="android.intent.action.GET_CONTENT" />
-                <category android:name="android.intent.category.OPENABLE" />
-            </intent-filter>
         </service>
 
         <activity

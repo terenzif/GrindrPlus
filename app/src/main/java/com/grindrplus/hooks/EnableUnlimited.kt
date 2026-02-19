@@ -34,7 +34,7 @@ class EnableUnlimited : Hook(
     private val viewsToHide = mapOf(
         "com.grindrapp.android.ui.tagsearch.ProfileTagCascadeFragment\$b" to listOf("upsell_bottom_bar"), // search for 'bind(Landroid/view/View;)Lcom/grindrapp/android/databinding/ProfileTagCascadeFragmentBinding;'
         "com.grindrapp.android.ui.browse.CascadeFragment\$b" to listOf("upsell_bottom_bar", "shuffle_top_bar", "floating_rating_banner", "micros_fab", "right_now_progress_compose_view"), // search for '"bind(Landroid/view/View;)Lcom/grindrapp/android/databinding/FragmentBrowseCascadeBinding;"'
-        "com.grindrapp.android.ui.home.HomeActivity\$g" to listOf("persistentAdBannerContainer"), // search for 'ViewBindings.findChildViewById(inflate, R.id.activity_home_content);'
+        "com.grindrapp.android.ui.home.HomeActivity\$g" to listOf("persistent_banner_ad_container", "persistent_banner_ad_compose_view"), // search for 'ViewBindings.findChildViewById(inflate, R.id.activity_home_content);'
         "com.grindrapp.android.ui.drawer.DrawerProfileFragment\$e" to listOf("plans_title", "store_in_profile_drawer_card", "sideDrawerBoostContainer", "drawer_profile_offer_card"), // search for '"bind(Landroid/view/View;)Lcom/grindrapp/android/databinding/DrawerProfileBinding;"'
         "com.grindrapp.android.radar.presentation.ui.RadarFragment\$c" to listOf("micros_fab", "right_now_fabs_container") // search for 'bind(Landroid/view/View;)Lcom/grindrapp/android/databinding/FragmentRadarBinding;'
     )
@@ -44,7 +44,6 @@ class EnableUnlimited : Hook(
         userSessionClass.hook( // rolesUpdated()
 			"W", HookStage.BEFORE // search for 'Intrinsics.checkNotNullParameter(roles, "roles");' in userSession
 		) { param ->
-			val roles = param.arg(0) as List<String>
 			val allRoles = listOf(
 				"Plus",
 				"Xtra",
@@ -56,7 +55,7 @@ class EnableUnlimited : Hook(
 				"Free_Premium"
 			)
 
-			logi("received roles: $roles, replacing with $allRoles")
+			logd("Updating user roles to enable unlimited features")
 
 			param.setArg(0, allRoles)
 		}
@@ -116,8 +115,7 @@ class EnableUnlimited : Hook(
         findClass(persistentAdBannerContainer).hook("a", HookStage.BEFORE) { param ->
             if (param.args().isNotEmpty()) {
                 val rootView = param.arg<View>(0)
-				// TODO validate change from persistent_banner_ad_container to persistent_banner_ad_compose_view
-                hideViews(rootView, listOf("persistent_banner_ad_compose_view"))
+                hideViews(rootView, listOf("persistent_banner_ad_container", "persistent_banner_ad_compose_view"))
             }
         }
 

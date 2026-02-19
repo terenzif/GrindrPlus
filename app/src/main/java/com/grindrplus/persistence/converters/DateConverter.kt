@@ -8,8 +8,10 @@ import java.util.TimeZone
 
 class DateConverter {
     companion object {
-        private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
-            timeZone = TimeZone.getTimeZone("UTC")
+        private val dateFormat = ThreadLocal.withInitial {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+            }
         }
     }
 
@@ -17,7 +19,7 @@ class DateConverter {
     fun fromTimestamp(value: String?): Date? {
         return value?.let {
             try {
-                dateFormat.parse(it)
+                dateFormat.get()!!.parse(it)
             } catch (e: Exception) {
                 null
             }
@@ -26,6 +28,6 @@ class DateConverter {
 
     @TypeConverter
     fun dateToTimestamp(date: Date?): String? {
-        return date?.let { dateFormat.format(it) }
+        return date?.let { dateFormat.get()!!.format(it) }
     }
 }
