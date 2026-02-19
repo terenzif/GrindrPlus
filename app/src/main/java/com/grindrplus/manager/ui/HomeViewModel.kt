@@ -80,8 +80,9 @@ class HomeViewModel : ViewModel() {
                 release.getString("name") else release.getString("tag_name")
             val description = if (!release.isNull("body"))
                 release.getString("body") else "No description provided"
-            val author = release.getJSONObject("author").getString("login")
-            val avatarUrl = release.getJSONObject("author").getString("avatar_url")
+            val authorObj = release.getJSONObject("author")
+            val author = authorObj.getString("login")
+            val avatarUrl = authorObj.getString("avatar_url")
             val publishedAt = Instant.parse(release.getString("published_at"))
 
             newReleases[id] = Release(name, description, author, avatarUrl, publishedAt)
