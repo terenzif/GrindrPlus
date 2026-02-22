@@ -12,6 +12,7 @@ import com.grindrplus.core.Utils.openChat
 import com.grindrplus.core.Utils.openProfile
 import com.grindrplus.ui.Utils.copyToClipboard
 import com.grindrplus.ui.Utils.formatEpochSeconds
+import kotlinx.coroutines.delay
 
 class Profile(
     recipient: String,
@@ -41,14 +42,16 @@ class Profile(
     @Command("clear", aliases = ["reset"], help = "Reset chat with a user")
     fun reset(args: List<String>) {
         val profileId = if (args.isNotEmpty()) args[0] else sender
-        GrindrPlus.shouldTriggerAntiblock = false
-        block(listOf(profileId, "silent", "no-reflect"))
-        Thread.sleep(200)
-        unblock(listOf(profileId, "silent", "no-reflect"))
-        Thread.sleep(200)
-        openChat("$recipient:$profileId")
-        Thread.sleep(200)
-        GrindrPlus.shouldTriggerAntiblock = true
+        GrindrPlus.executeAsync {
+            GrindrPlus.shouldTriggerAntiblock = false
+            block(listOf(profileId, "silent", "no-reflect"))
+            delay(200)
+            unblock(listOf(profileId, "silent", "no-reflect"))
+            delay(200)
+            openChat("$recipient:$profileId")
+            delay(200)
+            GrindrPlus.shouldTriggerAntiblock = true
+        }
     }
 
     @Command("unblock", help = "Unblock a user")
@@ -83,7 +86,7 @@ class Profile(
         if (args.isNotEmpty() && args[0] == "all") {
             GrindrPlus.executeAsync {
                 val favorites = GrindrPlus.httpClient.getFavorites()
-                Thread.sleep(1000)
+                delay(1000)
                 favorites.forEach { GrindrPlus.httpClient.unfavorite(it.first, silent = true) }
             }
         }

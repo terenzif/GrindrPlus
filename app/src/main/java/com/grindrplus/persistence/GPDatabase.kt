@@ -40,8 +40,8 @@ abstract class GPDatabase : RoomDatabase() {
         private const val DATABASE_NAME = "grindrplus.db"
 
         val MIGRATION_5_6 = object : Migration(5, 6) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `block_events` (" +
                             "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
                             "`profileId` TEXT NOT NULL, " +
@@ -50,7 +50,7 @@ abstract class GPDatabase : RoomDatabase() {
                             "`timestamp` INTEGER NOT NULL, " +
                             "`packageName` TEXT NOT NULL)"
                 )
-                database.execSQL(
+                db.execSQL(
                     "CREATE INDEX IF NOT EXISTS `index_block_events_timestamp` ON `block_events` (`timestamp`)"
                 )
             }

@@ -20,6 +20,7 @@ import com.grindrplus.core.Constants.NEWLINE
 import de.robv.android.xposed.XposedHelpers.callMethod
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -387,7 +388,7 @@ object Utils {
                                 favoritesFile.writeText(favorites.drop(index + 1).joinToString("\n"))
                                 val progress = ((index + 1) * 100) / favorites.size
                                 updateProgress(progress)
-                                Thread.sleep(threshold.toLong())
+                                delay(threshold.toLong())
                             }
 
                             withContext(Dispatchers.Main) {
@@ -450,7 +451,7 @@ object Utils {
                                 blocksFile.writeText(blocks.drop(index + 1).joinToString("\n"))
                                 val progress = ((index + 1) * 100) / blocks.size
                                 updateProgress(progress)
-                                Thread.sleep(threshold.toLong())
+                                delay(threshold.toLong())
                             }
 
                             withContext(Dispatchers.Main) {

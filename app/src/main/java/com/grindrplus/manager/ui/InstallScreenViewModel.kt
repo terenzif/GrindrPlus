@@ -38,9 +38,7 @@ class InstallScreenViewModel : ViewModel() {
                 _loadingText.value = "Still loading... Check your internet connectivity."
             }
 
-            val result = withContext(Dispatchers.IO) {
-                fetchVersions(manifestUrl)
-            }
+            val result = fetchVersions(manifestUrl)
 
             textUpdateJob.cancel() // Cancel the text update job once loading is done
 
@@ -56,27 +54,29 @@ class InstallScreenViewModel : ViewModel() {
         }
     }
 
-    private fun fetchVersions(manifestUrl: String): Result<List<Data>> {
-        val client = HttpClient.instance
-        val maxRetries = 3
-        var lastException: Exception? = null
+    private suspend fun fetchVersions(manifestUrl: String): Result<List<Data>> {
+        return withContext(Dispatchers.IO) {
+            val client = HttpClient.instance
+            val maxRetries = 3
+            var lastException: Exception? = null
 
-        for (attempt in 1..maxRetries) {
-            try {
-                Logger.d("Loading version data from $manifestUrl (Attempt $attempt/$maxRetries)")
-                val request = Request.Builder().url(manifestUrl).build()
-                client.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) throw IOException("Server error: ${response.code}")
-                    val body = response.body?.string() ?: throw IOException("Empty response body")
-                    return Result.success(parseVersionData(body))
+            for (attempt in 1..maxRetries) {
+                try {
+                    Logger.d("Loading version data from $manifestUrl (Attempt $attempt/$maxRetries)")
+                    val request = Request.Builder().url(manifestUrl).build()
+                    client.newCall(request).execute().use { response ->
+                        if (!response.isSuccessful) throw IOException("Server error: ${response.code}")
+                        val body = response.body?.string() ?: throw IOException("Empty response body")
+                        return@withContext Result.success(parseVersionData(body))
+                    }
+                } catch (e: Exception) {
+                    lastException = e
+                    Logger.e("Attempt $attempt failed: ${e.message}")
+                    if (attempt < maxRetries) delay(2000) // Use delay for coroutine delay
                 }
-            } catch (e: Exception) {
-                lastException = e
-                Logger.e("Attempt $attempt failed: ${e.message}")
-                if (attempt < maxRetries) Thread.sleep(2000) // Use sleep for non-coroutine delay
             }
+            Result.failure(lastException ?: IOException("Unknown error after $maxRetries retries"))
         }
-        return Result.failure(lastException ?: IOException("Unknown error after $maxRetries retries"))
     }
 
     private fun parseVersionData(jsonData: String): List<Data> {
