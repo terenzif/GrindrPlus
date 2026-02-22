@@ -101,7 +101,7 @@ class ExpiringMedia : Hook(
         if (!originalUrl.isNullOrEmpty() && !originalUrl.startsWith("file://")) {
             coroutineScope.launch {
                 try {
-                    logd("Downloading $mediaTypeStr from URL: ${originalUrl.take(50)}...")
+                    logd("Downloading $mediaTypeStr")
 
                     MediaUtils.downloadMedia(originalUrl).fold(
                         onSuccess = { mediaData ->
@@ -133,7 +133,7 @@ class ExpiringMedia : Hook(
 
         MediaUtils.saveMedia(mediaId, mediaData, mediaType, fileExtension).fold(
             onSuccess = { filePath ->
-                logi("Saved $mediaTypeStr permanently for mediaId: $mediaId")
+                logi("Saved $mediaTypeStr permanently")
                 filePathCache[mediaId] = filePath
 
                 withContext(Dispatchers.Main) {

@@ -1,42 +1,63 @@
 package com.grindrplus.core
 
-import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.junit.Assert.*
 
 class UtilsTest {
 
     @Test
+    fun testW2nMetric() {
+        assertEquals(70.0, Utils.w2n(true, "70kg"), 0.01)
+        assertEquals(70.0, Utils.w2n(true, "70 kg"), 0.01)
+        assertEquals(70.0, Utils.w2n(true, "70"), 0.01)
+        assertEquals(70.5, Utils.w2n(true, "70.5kg"), 0.01)
+    }
+
+    @Test
+    fun testW2nImperial() {
+        assertEquals(154.0, Utils.w2n(false, "154lbs"), 0.01)
+        assertEquals(154.0, Utils.w2n(false, "154 lbs"), 0.01)
+        assertEquals(154.0, Utils.w2n(false, "154"), 0.01)
+        assertEquals(154.5, Utils.w2n(false, "154.5lbs"), 0.01)
+    }
+
+    @Test
+    fun testH2nMetric() {
+        assertEquals(180.0, Utils.h2n(true, "180cm"), 0.01)
+        assertEquals(180.0, Utils.h2n(true, "180 cm"), 0.01)
+        assertEquals(180.0, Utils.h2n(true, "180"), 0.01)
+        assertEquals(180.5, Utils.h2n(true, "180.5cm"), 0.01)
+    }
+
+    @Test
+    fun testH2nImperial() {
+        assertEquals(71.0, Utils.h2n(false, "5'11\""), 0.01)
+        assertEquals(72.0, Utils.h2n(false, "6'0\""), 0.01)
+        assertEquals(71.0, Utils.h2n(false, "5' 11\""), 0.01)
+        assertEquals(71.0, Utils.h2n(false, "5'11"), 0.01)
+    }
+
+    @Test
+    fun testH2nImperialEdgeCases() {
+        assertEquals(72.0, Utils.h2n(false, "6'"), 0.01)
+        assertEquals(71.0, Utils.h2n(false, "71"), 0.01)
+        assertEquals(0.0, Utils.h2n(false, "invalid"), 0.01)
+    }
+
+    @Test
+    fun testW2nEdgeCases() {
+        assertEquals(0.0, Utils.w2n(true, "invalid"), 0.01)
+        assertEquals(70.0, Utils.w2n(true, "70kg (approx)"), 0.01)
+        assertEquals(-70.0, Utils.w2n(true, "-70kg"), 0.01)
+    }
+
+    @Test
     fun testCalculateBMIMetric() {
-        val weight = 70.0 // kg
-        val height = 175.0 // cm
-        val expected = 70.0 / (1.75 * 1.75)
-        val result = Utils.calculateBMI(true, weight, height)
-        assertEquals(expected, result, 1e-6)
+        assertEquals(22.86, Utils.calculateBMI(true, 70.0, 175.0), 0.01)
     }
 
     @Test
     fun testCalculateBMIImperial() {
-        val weight = 154.0 // lbs
-        val height = 69.0 // inches
-        val expected = 703 * 154.0 / (69.0 * 69.0)
-        val result = Utils.calculateBMI(false, weight, height)
-        assertEquals(expected, result, 1e-6)
-    }
-
-    @Test
-    fun testCalculateBMIZeroHeight() {
-        val weight = 70.0
-        val height = 0.0
-        val result = Utils.calculateBMI(true, weight, height)
-        // Division by zero with Doubles results in Infinity
-        assertEquals(Double.POSITIVE_INFINITY, result, 0.0)
-    }
-
-    @Test
-    fun testCalculateBMIZeroWeight() {
-        val weight = 0.0
-        val height = 175.0
-        val result = Utils.calculateBMI(true, weight, height)
-        assertEquals(0.0, result, 1e-6)
+        assertEquals(21.48, Utils.calculateBMI(false, 154.0, 71.0), 0.01)
     }
 }

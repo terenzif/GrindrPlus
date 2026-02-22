@@ -6,6 +6,7 @@ import com.grindrplus.bridge.BridgeService
 import com.grindrplus.core.Config
 import com.grindrplus.core.DatabaseHelper
 import com.grindrplus.core.Logger
+import com.grindrplus.core.Obfuscation
 import com.grindrplus.core.logd
 import com.grindrplus.core.loge
 import com.grindrplus.utils.Hook
@@ -14,7 +15,12 @@ import com.grindrplus.utils.hook
 import com.grindrplus.utils.hookConstructor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 // supported version: 25.20.0
@@ -22,30 +28,41 @@ class AntiBlock : Hook(
     "Anti Block",
     "Notifies you when someone blocks or unblocks you"
 ) {
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var myProfileId: Long = 0
-    private val chatDeleteConversationPlugin = "R9.c" // search for '"com.grindrapp.android.chat.ChatDeleteConversationPlugin",' and use the outer class
-    private val inboxFragmentV2DeleteConversations = "re.d" // search for '("chat_read_receipt", conversationId, null);'
-    private val individualUnblockActivityViewModel = "bl.k" // search for 'SnackbarEvent.i.ERROR, R.string.unblock_individual_sync_blocks_failure, null, new SnackbarEvent'
+
+    override fun cleanup() {
+        scope.cancel()
+        // Ensure anti-block notifications are not left permanently disabled
+        GrindrPlus.shouldTriggerAntiblock = true
+        GrindrPlus.blockCaller = ""
+    }
 
     override fun init() {
         // do not invoke antiblock notification when the user is unblocking someone else
         // search for '.setValue(new DialogMessage(116, null, 2, null));'
-        findClass(individualUnblockActivityViewModel)
+        findClass(Obfuscation.G.AntiBlock.INDIVIDUAL_UNBLOCK_ACTIVITY_VIEW_MODEL)
             .hook("R", HookStage.BEFORE) { param ->
                 GrindrPlus.shouldTriggerAntiblock = false
             }
 
         // reenable antiblock notification after *above* is finished
         // search for '.setValue(new DialogMessage(116, null, 2, null));'
-        findClass(individualUnblockActivityViewModel)
+        findClass(Obfuscation.G.AntiBlock.INDIVIDUAL_UNBLOCK_ACTIVITY_VIEW_MODEL)
             .hook("R", HookStage.AFTER) { param ->
-                Thread.sleep(700) // Wait for WS to unblock
-                GrindrPlus.shouldTriggerAntiblock = true
+                scope.launch {
+                    try {
+                        delay(700) // Wait for WS to unblock
+                    } finally {
+                        withContext(NonCancellable) {
+                            GrindrPlus.shouldTriggerAntiblock = true
+                        }
+                    }
+                }
             }
 
         if (Config.get("force_old_anti_block_behavior", false) as Boolean) {
-            findClass("com.grindrapp.android.chat.model.ConversationDeleteNotification")
+            findClass(Obfuscation.G.AntiBlock.CONVERSATION_DELETE_NOTIFICATION)
                 .hookConstructor(HookStage.BEFORE) { param ->
                     @Suppress("UNCHECKED_CAST")
                     val profiles = param.args().firstOrNull() as? List<String> ?: emptyList()
@@ -53,29 +70,37 @@ class AntiBlock : Hook(
                 }
         } else {
             // search for '("chat_read_receipt", conversationId, null);'
-            findClass(inboxFragmentV2DeleteConversations)
+            findClass(Obfuscation.G.AntiBlock.INBOX_FRAGMENT_V2_DELETE_CONVERSATIONS)
                 .hook("b", HookStage.BEFORE) { param ->
                     GrindrPlus.shouldTriggerAntiblock = false
                     GrindrPlus.blockCaller = "inboxFragmentV2DeleteConversations"
                 }
 
             // search for '("chat_read_receipt", conversationId, null);'
-            findClass(inboxFragmentV2DeleteConversations)
+            findClass(Obfuscation.G.AntiBlock.INBOX_FRAGMENT_V2_DELETE_CONVERSATIONS)
                 .hook("b", HookStage.AFTER) { param ->
                     val numberOfChatsToDelete = (param.args().firstOrNull() as? List<*>)?.size ?: 0
-                    if (numberOfChatsToDelete == 0)
-                        return@hook
-                    // is this okay to return here? shouldTriggerAntiblock stays false.
-                    // Do we expect another invocation with number > 0 ?
-
-                    logd("Request to delete $numberOfChatsToDelete chats")
-                    Thread.sleep((300 * numberOfChatsToDelete).toLong()) // FIXME
-                    GrindrPlus.shouldTriggerAntiblock = true
-                    GrindrPlus.blockCaller = ""
+                    if (numberOfChatsToDelete <= 0) {
+                        // No chats to delete: reset flags immediately without launching a coroutine
+                        GrindrPlus.shouldTriggerAntiblock = true
+                        GrindrPlus.blockCaller = ""
+                    } else {
+                        scope.launch {
+                            try {
+                                logd("Request to delete $numberOfChatsToDelete chats")
+                                delay(300L * numberOfChatsToDelete)
+                            } finally {
+                                withContext(NonCancellable) {
+                                    GrindrPlus.shouldTriggerAntiblock = true
+                                    GrindrPlus.blockCaller = ""
+                                }
+                            }
+                        }
+                    }
                 }
 
             // search for 'Deleting conversations'
-            findClass(chatDeleteConversationPlugin)
+            findClass(Obfuscation.G.AntiBlock.CHAT_DELETE_CONVERSATION_PLUGIN)
                 .hook("b", HookStage.BEFORE) { param ->
                     myProfileId = GrindrPlus.myProfileId.toLong()
                     if (GrindrPlus.shouldTriggerAntiblock)
@@ -90,7 +115,7 @@ class AntiBlock : Hook(
                     param.setResult(null)
                 }
 
-            findClass("com.grindrapp.android.chat.model.ConversationDeleteNotification")
+            findClass(Obfuscation.G.AntiBlock.CONVERSATION_DELETE_NOTIFICATION)
                 .hookConstructor(HookStage.BEFORE) { param ->
                     @Suppress("UNCHECKED_CAST")
                     if (GrindrPlus.shouldTriggerAntiblock) {
@@ -150,8 +175,8 @@ class AntiBlock : Hook(
         }
     }
 
-    private fun fetchProfileData(profileId: String): String {
-        val response = GrindrPlus.httpClient.sendRequest(
+    private suspend fun fetchProfileData(profileId: String): String {
+        val response = GrindrPlus.httpClient.sendRequestAsync(
             url = "https://grindr.mobi/v4/profiles/$profileId",
             method = "GET"
         )

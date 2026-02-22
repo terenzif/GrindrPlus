@@ -8,6 +8,7 @@ import com.grindrplus.GrindrPlus.showToast
 import com.grindrplus.core.DatabaseHelper
 import com.grindrplus.core.Logger
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -15,6 +16,10 @@ import org.json.JSONObject
 
 import com.grindrplus.hooks.unsafeTrustManager
 import com.grindrplus.hooks.unsafeSslContext
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import java.io.IOException
 
 class Client(interceptor: Interceptor) {
     // although we have SSLUnpinning which hooks the OkHttpClient.Builder(),
@@ -55,6 +60,47 @@ class Client(interceptor: Interceptor) {
         return httpClient.newCall(requestBuilder.build()).execute()
     }
 
+    suspend fun sendRequestAsync(
+        url: String,
+        method: String = "GET",
+        headers: Map<String, String>? = null,
+        body: RequestBody? = null
+    ): Response = suspendCancellableCoroutine { continuation ->
+        val requestBuilder = Request.Builder().url(url)
+        headers?.forEach { (key, value) ->
+            requestBuilder.addHeader(key, value)
+        }
+
+        when (method.uppercase()) {
+            "POST" -> requestBuilder.post(body ?: RequestBody.createEmpty())
+            "PUT" -> requestBuilder.put(body ?: throw IllegalArgumentException("PUT requires a body"))
+            "DELETE" -> {
+                if (body != null) requestBuilder.delete(body) else requestBuilder.delete()
+            }
+            "PATCH" -> requestBuilder.patch(body ?: throw IllegalArgumentException("PATCH requires a body"))
+            "GET" -> requestBuilder.get()
+            else -> throw IllegalArgumentException("Unsupported HTTP method: $method")
+        }
+
+        val call = httpClient.newCall(requestBuilder.build())
+
+        call.enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                continuation.resume(response)
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                if (continuation.isActive) {
+                    continuation.resumeWithException(e)
+                }
+            }
+        })
+
+        continuation.invokeOnCancellation {
+            call.cancel()
+        }
+    }
+
     fun blockUser(profileId: String, silent: Boolean = false, reflectInDb: Boolean = true) {
         GrindrPlus.shouldTriggerAntiblock = false
         GrindrPlus.executeAsync {
@@ -85,7 +131,7 @@ class Client(interceptor: Interceptor) {
             }
         }
         GrindrPlus.executeAsync {
-            Thread.sleep(500) // Wait for WS to reply
+            delay(500) // Wait for WS to reply
             GrindrPlus.shouldTriggerAntiblock = true
         }
     }
@@ -122,7 +168,7 @@ class Client(interceptor: Interceptor) {
             }
         }
         GrindrPlus.executeAsync {
-            Thread.sleep(500) // Wait for WS to reply
+            delay(500) // Wait for WS to reply
             GrindrPlus.shouldTriggerAntiblock = true
         }
     }

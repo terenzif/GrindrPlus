@@ -51,6 +51,14 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
     private val sharedAlbumsBrief = "com.grindrapp.android.model.albums.SharedAlbumsBrief"
     private val albumsList = "com.grindrapp.android.model.AlbumsList"
 
+    private val albumsListConstructor by lazy {
+        findClass(albumsList).getConstructor(List::class.java)
+    }
+
+    private val sharedAlbumsBriefConstructor by lazy {
+        findClass(sharedAlbumsBrief).getConstructor(List::class.java)
+    }
+
     override fun init() {
         val albumsServiceClass = findClass(albumsService)
 
@@ -407,11 +415,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                     }
                 }
 
-                val newValue =
-                    findClass(albumsList)
-                        .getConstructor(List::class.java)
-                        .newInstance(albums)
-
+                val newValue = albumsListConstructor.newInstance(albums)
                 createSuccess(newValue)
             } catch (e: Exception) {
                 loge("Error creating albums list: ${e.message}")
@@ -477,11 +481,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                     }
                 }
 
-                val newValue =
-                    findClass(sharedAlbumsBrief)
-                        .getConstructor(List::class.java)
-                        .newInstance(albumBriefs)
-
+                val newValue = sharedAlbumsBriefConstructor.newInstance(albumBriefs)
                 createSuccess(newValue)
             } catch (e: Exception) {
                 loge("Error creating shared albums brief: ${e.message}")
@@ -550,11 +550,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                     }
                 }
 
-                val newValue =
-                    findClass(sharedAlbumsBrief)
-                        .getConstructor(List::class.java)
-                        .newInstance(albumBriefs)
-
+                val newValue = sharedAlbumsBriefConstructor.newInstance(albumBriefs)
                 createSuccess(newValue)
             } catch (e: Exception) {
                 loge("Error creating shared albums brief: ${e.message}")

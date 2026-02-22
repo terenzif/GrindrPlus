@@ -50,10 +50,12 @@ class CloneGrindrStep(
                 }
 
                 print("Deleting old AndroidManifest.xml in ${file.name}")
+                // fillVoid = true: avoids rewriting the entire file. The voids
+                // will be removed by zipalign in SignClonedGrindrApk.
                 zip.deleteEntry(
                     "AndroidManifest.xml",
-                    /* fillVoid = */ true //TODO: maybe
-                ) // Preserve alignment in libs apk
+                    /* fillVoid = */ true
+                )
 
                 print("Adding patched AndroidManifest.xml in ${file.name}")
                 zip.writeEntry("AndroidManifest.xml", patchedManifestBytes)
