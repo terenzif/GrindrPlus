@@ -1,3 +1,8 @@
+>[!WARNING]
+> Grindr has started using PairIP for their latest versions of the app. **This effectively marks the end of this module, and no further updates will be released**.
+>
+> Enjoy it while it lasts, as you’ll eventually be required to update to the latest version.
+
 <p align="center" style="border-radius: 50%;">
   <img src="gplus_icon.svg" alt="Grindr Plus Icon" width="150" height="150">
 </p>
