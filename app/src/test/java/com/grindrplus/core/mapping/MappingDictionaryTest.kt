@@ -3,6 +3,7 @@ package com.grindrplus.core.mapping
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -80,5 +81,73 @@ class MappingDictionaryTest {
         assertEquals("fallback", MappingDictionary.resolve("missing.key", "fallback"))
         assertEquals("c", MappingDictionary.methodName("ProfileDetails.DISTANCE_UTILS", "x"))
         assertNull(MappingDictionary.methodName("missing", null))
+    }
+
+    @Test
+    fun decodeAndActivate_softFailsOnMalformedJson() {
+        assertNull(MappingDictionary.decodeAndActivate("{ not json", expectedVersionCode = 179451))
+        assertNull(MappingDictionary.current)
+        assertEquals("literal", MappingDictionary.resolve("core.userAgent", "literal"))
+    }
+
+    @Test
+    fun decodeAndActivate_softFailsOnBadSymbolShape() {
+        val json = """
+            {
+              "schemaVersion": 1,
+              "versionName": "t",
+              "versionCode": 179451,
+              "confidence": "test",
+              "generatedFrom": "test",
+              "symbols": {
+                "core.userAgent": "not-an-object"
+              },
+              "hooks": {}
+            }
+        """.trimIndent()
+        assertNull(MappingDictionary.decodeAndActivate(json, expectedVersionCode = 179451))
+        assertNull(MappingDictionary.current)
+        assertEquals("literal", MappingDictionary.resolve("core.userAgent", "literal"))
+    }
+
+    @Test
+    fun decodeAndActivate_rejectsVersionCodeMismatch() {
+        val json = """
+            {
+              "schemaVersion": 1,
+              "versionName": "t",
+              "versionCode": 999,
+              "confidence": "test",
+              "generatedFrom": "test",
+              "symbols": {
+                "core.userAgent": { "kind": "class", "name": "fromPack" }
+              },
+              "hooks": {}
+            }
+        """.trimIndent()
+        assertNull(MappingDictionary.decodeAndActivate(json, expectedVersionCode = 179451))
+        assertNull(MappingDictionary.current)
+        assertEquals("literal", MappingDictionary.resolve("core.userAgent", "literal"))
+    }
+
+    @Test
+    fun decodeAndActivate_activatesWhenVersionMatches() {
+        val json = """
+            {
+              "schemaVersion": 1,
+              "versionName": "26.16.1",
+              "versionCode": 179451,
+              "confidence": "test",
+              "generatedFrom": "test",
+              "symbols": {
+                "core.userAgent": { "kind": "class", "name": "lrc" }
+              },
+              "hooks": {}
+            }
+        """.trimIndent()
+        val pack = MappingDictionary.decodeAndActivate(json, expectedVersionCode = 179451)
+        assertNotNull(pack)
+        assertEquals(179451, MappingDictionary.current?.versionCode)
+        assertEquals("lrc", MappingDictionary.resolve("core.userAgent", "fallback"))
     }
 }

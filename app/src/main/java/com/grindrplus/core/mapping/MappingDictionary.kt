@@ -1,9 +1,10 @@
 package com.grindrplus.core.mapping
 
 import android.content.Context
+import com.grindrplus.core.LogSource
+import com.grindrplus.core.Logger
 import org.json.JSONObject
 import java.io.File
-import java.io.IOException
 import java.util.zip.ZipFile
 
 /**
@@ -28,20 +29,21 @@ object MappingDictionary {
      */
     fun loadFromModuleApk(modulePath: String, versionCode: Int): MappingPack? {
         val assetPath = "$ASSET_DIR/$versionCode.json"
-        val pack = runCatching {
+        val json = runCatching {
             ZipFile(File(modulePath)).use { zip ->
                 val entry = zip.getEntry("assets/$assetPath")
                     ?: zip.getEntry(assetPath)
                     ?: return null
-                zip.getInputStream(entry).bufferedReader().use { reader ->
-                    parsePack(JSONObject(reader.readText()))
-                }
+                zip.getInputStream(entry).bufferedReader().use { it.readText() }
             }
         }.getOrElse { err ->
-            if (err is IOException) return null
-            throw err
+            Logger.w(
+                "Mapping pack I/O failed for versionCode=$versionCode: ${err.message}",
+                LogSource.MODULE
+            )
+            return null
         }
-        return activateIfCompatible(pack)
+        return decodeAndActivate(json, versionCode)
     }
 
     /**
@@ -50,15 +52,16 @@ object MappingDictionary {
      */
     fun load(context: Context, versionCode: Int): MappingPack? {
         val assetPath = "$ASSET_DIR/$versionCode.json"
-        val pack = runCatching {
-            context.assets.open(assetPath).bufferedReader().use { reader ->
-                parsePack(JSONObject(reader.readText()))
-            }
+        val json = runCatching {
+            context.assets.open(assetPath).bufferedReader().use { it.readText() }
         }.getOrElse { err ->
-            if (err is IOException) return null
-            throw err
+            Logger.w(
+                "Mapping pack I/O failed for versionCode=$versionCode: ${err.message}",
+                LogSource.MODULE
+            )
+            return null
         }
-        return activateIfCompatible(pack)
+        return decodeAndActivate(json, versionCode)
     }
 
     /**
@@ -102,8 +105,41 @@ object MappingDictionary {
     /** Test / tooling: set the active pack after [parsePack]. Soft-rejects unsupported schema. */
     internal fun activate(pack: MappingPack): MappingPack? = activateIfCompatible(pack)
 
-    private fun activateIfCompatible(pack: MappingPack): MappingPack? {
+    /**
+     * Parse [json] and activate when schema/version are compatible with [expectedVersionCode].
+     * Soft-fails format/shape errors: logs a warning and returns null (keeps literals).
+     */
+    internal fun decodeAndActivate(json: String, expectedVersionCode: Int): MappingPack? {
+        val pack = runCatching {
+            parsePack(JSONObject(json))
+        }.getOrElse { err ->
+            Logger.w(
+                "Invalid mapping pack for versionCode=$expectedVersionCode: ${err.message}",
+                LogSource.MODULE
+            )
+            return null
+        }
+        return activateIfCompatible(pack, expectedVersionCode)
+    }
+
+    private fun activateIfCompatible(
+        pack: MappingPack,
+        expectedVersionCode: Int? = null,
+    ): MappingPack? {
         if (pack.schemaVersion > SCHEMA_VERSION) {
+            Logger.w(
+                "Mapping pack schemaVersion=${pack.schemaVersion} unsupported " +
+                    "(max=$SCHEMA_VERSION) — leaving pack unloaded",
+                LogSource.MODULE
+            )
+            return null
+        }
+        if (expectedVersionCode != null && pack.versionCode != expectedVersionCode) {
+            Logger.w(
+                "Mapping pack versionCode mismatch: embedded=${pack.versionCode} " +
+                    "expected=$expectedVersionCode — leaving pack unloaded",
+                LogSource.MODULE
+            )
             return null
         }
         active = pack
