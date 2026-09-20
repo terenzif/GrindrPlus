@@ -83,7 +83,9 @@ object GrindrPlus {
     private val deviceInfo =
         "wh3" // search for 'AdvertisingIdClient.Info("00000000-0000-0000-0000-000000000000", true)'
     internal val grindrLocationProvider = "sw5" // search for 'system settings insufficient for location request, attempting to resolve'
-    internal val serverDrivenCascadeRepo = "com.grindrapp.android.persistence.repository.ServerDrivenCascadeRepo"
+    // Was ServerDrivenCascadeRepo (removed). On 26.16.1 the cascade data layer is default-package us1
+    // (wraps CascadeService.getCascadePage / v4/cascade). Used by AlwaysOnline only — not required for HookManager.
+    internal val serverDrivenCascadeRepo = "us1"
     internal val ageVerificationActivity = "com.grindrapp.android.ageverification.presentation.ui.AgeVerificationActivity"
     internal val browseExploreActivity = "com.grindrapp.android.ui.browse.BrowseExploreMapActivity"
     internal val serverNotification = "com.grindrapp.android.network.websocket.model.WebSocketNotification\$ServerNotification"
@@ -183,10 +185,11 @@ object GrindrPlus {
             setupInstanceManager()
             setupServerNotificationHook()
         } catch (t: Throwable) {
-            Logger.e("Failed to hook critical classes: ${t.message}", LogSource.MODULE)
+            // Soft-fail: InstanceManager already skips missing classes per-name. Do not abort
+            // before HookManager — MVP hooks must still initialize.
+            Logger.e("Failed to hook critical classes (continuing to HookManager): ${t.message}", LogSource.MODULE)
             Logger.writeRaw(t.stackTraceToString())
             showToast(Toast.LENGTH_LONG, "Failed to hook critical classes: ${t.message}")
-            return
         }
 
         NetworkRepository.fetchRemoteData(splineDataEndpoint) { points ->
@@ -293,12 +296,16 @@ object GrindrPlus {
             return
         }
 
-        instanceManager.hookClassConstructors(
+        val hooked = instanceManager.hookClassConstructors(
             userAgent,
             userSession,
             deviceInfo,
             grindrLocationProvider,
             serverDrivenCascadeRepo
+        )
+        Logger.i(
+            "InstanceManager hooked ${hooked.size}/5 classes: ${hooked.joinToString()}",
+            LogSource.MODULE
         )
 
         instanceManager.setCallback(userSession) { uSession ->
