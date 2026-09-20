@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "versionName": "25.20.0",
+  "versionCode": 147239,
+  "confidence": "historical-git",
+  "generatedFrom": "48d56cb Obfuscation.kt + GrindrPlus.kt + RetrofitUtils (pre-#63)",
+  "symbols": {
+    "core.userAgent": {
+      "kind": "class",
+      "name": "Pb.e",
+      "fingerprint": "grindr3/"
+    },
+    "core.userSession": {
+      "kind": "class",
+      "name": "com.grindrapp.android.usersession.b",
+      "fingerprint": "com.grindrapp.android.storage.UserSessionImpl$1"
+    },
+    "core.deviceInfo": {
+      "kind": "class",
+      "name": "u8.u",
+      "fingerprint": "AdvertisingIdClient.Info(\"00000000-0000-0000-0000-000000000000\", true)"
+    },
+    "core.grindrLocationProvider": {
+      "kind": "class",
+      "name": "ff.e",
+      "fingerprint": "system settings insufficient for location request, attempting to resolve"
+    },
+    "core.serverDrivenCascadeRepo": {
+      "kind": "class",
+      "name": "com.grindrapp.android.persistence.repository.ServerDrivenCascadeRepo"
+    },
+    "core.ageVerificationActivity": {
+      "kind": "class",
+      "name": "com.grindrapp.android.ageverification.presentation.ui.AgeVerificationActivity"
+    },
+    "core.browseExploreActivity": {
+      "kind": "class",
+      "name": "com.grindrapp.android.ui.browse.BrowseExploreMapActivity"
+    },
+    "retrofit.fail": {
+      "kind": "class",
+      "name": "Yf.a$a",
+      "fingerprint": "Fail(failValue="
+    },
+    "retrofit.success": {
+      "kind": "class",
+      "name": "Yf.a$b",
+      "fingerprint": "Success(successValue="
+    },
+    "retrofit.successValue": {
+      "kind": "field",
+      "name": "a"
+    },
+    "retrofit.failValue": {
+      "kind": "field",
+      "name": "a"
+    },
+    "DisableBoosting.DRAWER_PROFILE_UI_STATE": {
+      "kind": "class",
+      "name": "yl.e$a",
+      "fingerprint": "DrawerProfileUiState(showBoostMeButton="
+    },
+    "DisableBoosting.RADAR_UI_MODEL": {
+      "kind": "class",
+      "name": "ii.a$a",
+      "fingerprint": "RadarUiModel(boostButton="
+    },
+    "DisableBoosting.FAB_UI_MODEL": {
+      "kind": "class",
+      "name": "com.grindrapp.android.boost2.presentation.model.FabUiModel"
+    },
+    "DisableBoosting.RIGHT_NOW_MICROS_FAB_UI_MODEL": {
+      "kind": "class",
+      "name": "com.grindrapp.android.rightnow.presentation.model.RightNowMicrosFabUiModel"
+    },
+    "DisableBoosting.BOOST_STATE_CLASS": {
+      "kind": "class",
+      "name": "com.grindrapp.android.ui.drawer.model.MicrosDrawerItemState$Unavailable"
+    },
+    "DisableBoosting.NAVBAR_CLASS": {
+      "kind": "class",
+      "name": "com.grindrapp.android.home.presentation.model.HomeScreenBottomNavigationUiModel"
+    },
+    "DisableBoosting.SMALL_PERSISTENT_VECTOR": {
+      "kind": "class",
+      "name": "kotlinx.collections.immutable.implementations.immutableList.SmallPersistentVector"
+    },
+    "DisableBoosting.SUBSCRIBE_FOR_BOOST_REDEEM": {
+      "kind": "class",
+      "name": "Il.w0",
+      "fingerprint": "com.grindrapp.android.ui.home.HomeActivity$subscribeForBoostRedeem$1"
+    },
+    "DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP": {
+      "kind": "class",
+      "name": ""
+    },
+    "DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP_METHOD": {
+      "kind": "method",
+      "name": ""
+    },
+    "AntiBlock.CHAT_DELETE_CONVERSATION_PLUGIN": {
+      "kind": "class",
+      "name": "R9.c",
+      "fingerprint": "com.grindrapp.android.chat.ChatDeleteConversationPlugin"
+    },
+    "AntiBlock.INBOX_FRAGMENT_V2_DELETE_CONVERSATIONS": {
+      "kind": "class",
+      "name": "re.d",
+      "fingerprint": "chat_read_receipt"
+    },
+    "AntiBlock.INDIVIDUAL_UNBLOCK_ACTIVITY_VIEW_MODEL": {
+      "kind": "class",
+      "name": "bl.k"
+    },
+    "AntiBlock.CONVERSATION_DELETE_NOTIFICATION": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.model.ConversationDeleteNotification"
+    },
+    "ProfileDetails.BLOCKED_PROFILES_OBSERVER": {
+      "kind": "class",
+      "name": "Hm.f",
+      "fingerprint": "Intrinsics.checkNotNullParameter(dataList, \"dataList\")"
+    },
+    "ProfileDetails.PROFILE_VIEW_HOLDER": {
+      "kind": "class",
+      "name": "bl.u$c"
+    },
+    "ProfileDetails.DISTANCE_UTILS": {
+      "kind": "class",
+      "name": "com.grindrapp.android.utils.DistanceUtils"
+    },
+    "ProfileDetails.PROFILE_BAR_VIEW": {
+      "kind": "class",
+      "name": "com.grindrapp.android.ui.profileV2.ProfileBarView"
+    },
+    "ProfileDetails.PROFILE_VIEW_STATE": {
+      "kind": "class",
+      "name": "com.grindrapp.android.ui.profileV2.model.ProfileViewState"
+    },
+    "ProfileDetails.SERVER_DRIVEN_CASCADE_CACHED_STATE": {
+      "kind": "class",
+      "name": "com.grindrapp.android.persistence.model.serverdrivencascade.ServerDrivenCascadeCacheState"
+    },
+    "ProfileDetails.SERVER_DRIVEN_CASCADE_CACHED_PROFILE": {
+      "kind": "class",
+      "name": "com.grindrapp.android.persistence.model.serverdrivencascade.ServerDrivenCascadeCachedProfile"
+    },
+    "ProfileDetails.CASCADE_PROFILE_UI_DATA": {
+      "kind": "class",
+      "name": "",
+      "note": "key introduced on 26.16.1; not used on 25.20.0"
+    },
+    "ChatIndicators.CHAT_REST_SERVICE": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.data.datasource.api.service.ChatRestService"
+    }
+  },
+  "hooks": {
+    "DisableBoosting": { "status": "mapped" },
+    "AntiBlock": { "status": "mapped" },
+    "ProfileDetails": { "status": "mapped" },
+    "ChatIndicators": { "status": "mapped" }
+  }
+}
