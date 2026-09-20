@@ -13,16 +13,16 @@ import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.XposedHelpers.callMethod
 import de.robv.android.xposed.XposedHelpers.getObjectField
 
-// supported version: 25.20.0
+// supported version: 26.16.1
 class FeatureGranting : Hook(
     "Feature granting",
     "Grant all Grindr features"
 ) {
-    private val isFeatureFlagEnabled = "ih.e" // search for 'implements IsFeatureFlagEnabled {'
+    private val isFeatureFlagEnabled = "iv6" // implements IsFeatureFlagEnabled
     private val upsellsV8Model = "com.grindrapp.android.model.UpsellsV8"
     private val insertsModel = "com.grindrapp.android.model.Inserts"
     private val settingDistanceVisibilityViewModel =
-        "com.grindrapp.android.ui.settings.distance.a\$e" // search for 'UiState(distanceVisibility='
+        "n5b" // search for 'UiState(distanceVisibility='
     private val featureModel = "com.grindrapp.android.usersession.model.Feature"
     private val tapModel = "com.grindrapp.android.taps.model.Tap"
     private val tapInboxModel = "com.grindrapp.android.taps.data.model.TapsInboxEntity"
@@ -48,7 +48,10 @@ class FeatureGranting : Hook(
 
         findClass(settingDistanceVisibilityViewModel)
             .hookConstructor(HookStage.BEFORE) { param ->
-                param.setArg(4, false) // hidePreciseDistance
+                // n5b(int distanceVisibility, boolean hidePreciseDistance, Set loading)
+                if (param.args().size >= 2) {
+                    param.setArg(1, false) // hidePreciseDistance
+                }
             }
 
         listOf(upsellsV8Model, insertsModel).forEach { model ->

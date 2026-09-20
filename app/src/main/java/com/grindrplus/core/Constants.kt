@@ -26,5 +26,5 @@ object Constants {
     )
 
     const val SPLINE_DATA_ENDPOINT =
-        "https://raw.githubusercontent.com/R0rt1z2/GrindrPlus/refs/heads/master/spline.json"
+        "https://raw.githubusercontent.com/terenzif/grindrplus/refs/heads/master/spline.json"
 }

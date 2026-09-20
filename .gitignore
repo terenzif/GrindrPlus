@@ -13,3 +13,4 @@ build_keys/*
 
 # Antigravity working files
 *.txt
+__pycache__/

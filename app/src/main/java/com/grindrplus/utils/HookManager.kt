@@ -82,8 +82,13 @@ class HookManager {
 
             hooks.values.forEach { hook ->
                 if (Config.isHookEnabled(hook.hookName)) {
-                    hook.init()
-                    Logger.s("Initialized hook: ${hook.hookName}")
+                    try {
+                        hook.init()
+                        Logger.s("Initialized hook: ${hook.hookName}")
+                    } catch (t: Throwable) {
+                        Logger.e("Failed to initialize hook ${hook.hookName}: ${t.message}")
+                        Logger.writeRaw(t.stackTraceToString())
+                    }
                 } else {
                     Logger.i("Hook ${hook.hookName} is disabled.")
                 }

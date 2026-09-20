@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Script to fetch the latest app version and build number and save to version.json file."""
+"""Fetch the latest Play-scraped Grindr version into latest_play.json.
+
+This is telemetry / spoof input only — it is NOT the supported hook target.
+Hook support is tracked in supported_target.json (and BuildConfig in app/build.gradle.kts).
+"""
 
 import argparse
 import json
@@ -103,8 +107,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         '-o',
         '--output',
-        default='version.json',
-        help='Output JSON file path (default: version.json)',
+        default='latest_play.json',
+        help='Output JSON file path (default: latest_play.json)',
+    )
+    parser.add_argument(
+        '--also-version-json',
+        action='store_true',
+        help='Also write version.json as a deprecated mirror of the Play scrape',
     )
     return parser.parse_args()
 
@@ -116,6 +125,13 @@ def main() -> None:
     print(f'App Version: {version}')
     print(f'Build Number: {build}')
     save_version_to_json(version, build, args.output)
+    if args.also_version_json or args.output == 'latest_play.json':
+        # Keep deprecated version.json in sync with Play scrape for old consumers.
+        save_version_to_json(version, build, 'version.json')
+        print(
+            'Note: supported_target.json is NOT updated by this script '
+            '(hook mappings must be updated manually).'
+        )
 
 
 if __name__ == '__main__':

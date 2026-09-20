@@ -19,7 +19,8 @@ an update and will not reload the module. You can find this option in the
 ## Grindr apk
 You will need the apk to a) inspect the code and b) test your patches in the app.  
 
-Download the latest supported version (found in [version.json](../version.json))
+Download the latest **supported** version (found in [supported_target.json](../supported_target.json);
+Play scrape telemetry is in [latest_play.json](../latest_play.json))
 from [apkmirror](https://www.apkmirror.com/apk/grindr-llc/grindr-gay-chat-meet-date/)
 (or whatever source you like). If you download from apkmirror, you will get .apkm file,
 which is just a zip of all the partial .apk files.
