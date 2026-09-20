@@ -27,8 +27,14 @@ class EnableUnlimited : Hook(
     private val paywallUtils = "xub"
     // ViewBinding for persistent_banner_ad_compose_view (was Z4.a)
     private val persistentAdBannerContainer = "h68"
-    // Interstitial subscribe classes not re-resolved on 26.16.1 — empty until device/JADX follow-up
-    private val subscribeToInterstitialsList = emptyList<String>()
+    // Interstitial FlowCollectors that show ReadyToBeShown ads (was empty on earlier 26.16.1 pass)
+    private val subscribeToInterstitialsList = listOf(
+        "fo1", // static FlowCollector — show()
+        "o39", // static FlowCollector
+        "d12", // static FlowCollector
+        "qy1", // ChatActivityV2 collector
+        "p49"  // ProfilesActivity collector
+    )
     private val viewsToHide = mapOf(
         // FunctionReferenceImpl bind helpers (default package on 26.16.1)
         "ny8" to listOf("upsell_bottom_bar"), // ProfileTagCascadeFragmentBinding

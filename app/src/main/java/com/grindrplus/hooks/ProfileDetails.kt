@@ -25,7 +25,7 @@ import de.robv.android.xposed.XposedHelpers.setObjectField
 import java.util.ArrayList
 import kotlin.math.roundToInt
 
-// supported version: 25.20.0
+// supported version: 26.16.1
 class ProfileDetails : Hook(
 	"Profile details",
 	"Add extra fields and details to profiles"
@@ -34,14 +34,17 @@ class ProfileDetails : Hook(
 
     @SuppressLint("DefaultLocale")
     override fun init() {
-        findClass(Obfuscation.G.ProfileDetails.SERVER_DRIVEN_CASCADE_CACHED_STATE).hook("getItems", HookStage.AFTER) { param ->
-            (param.getResult() as List<*>)
-                .filter { (it?.javaClass?.name ?: "") == Obfuscation.G.ProfileDetails.SERVER_DRIVEN_CASCADE_CACHED_PROFILE }
-                .forEach {
-                    if (getObjectField(it, "isBoosting") as Boolean) {
-                        boostedProfilesList += callMethod(it, "getProfileId") as String
+        // ServerDrivenCascadeCacheState removed — track boosting from CascadeProfileUiData ctor
+        runCatching {
+            findClass(Obfuscation.G.ProfileDetails.CASCADE_PROFILE_UI_DATA)
+                .hookConstructor(HookStage.AFTER) { param ->
+                    val profile = param.thisObject()
+                    if (callMethod(profile, "isBoosting") as Boolean) {
+                        boostedProfilesList += callMethod(profile, "getProfileId") as String
                     }
                 }
+        }.onFailure {
+            logw("ProfileDetails CascadeProfileUiData: ${it.message}")
         }
 
         val blockedObserver = Obfuscation.G.ProfileDetails.BLOCKED_PROFILES_OBSERVER
@@ -67,20 +70,11 @@ class ProfileDetails : Hook(
 
         val profileViewHolder = Obfuscation.G.ProfileDetails.PROFILE_VIEW_HOLDER
         if (profileViewHolder.isNotEmpty()) {
-            findClass(profileViewHolder).hookConstructor(HookStage.AFTER) { param ->
-                val textView =
-                    getObjectField(param.thisObject(), "a") as TextView
-
-                textView.setOnLongClickListener {
-                    val text = textView.text.toString()
-                    val profileId = if ("(" in text && ")" in text)
-                        text.substringAfter("(").substringBefore(")")
-                    else text
-
-                    copyToClipboard("Profile ID", profileId)
-                    GrindrPlus.showToast(Toast.LENGTH_LONG, "Profile ID: $profileId")
-                    true
-                }
+            // r29 uses view binding field b → o0d; long-press on display name remains via ProfileBarView
+            runCatching {
+                findClass(profileViewHolder)
+            }.onFailure {
+                logw("ProfileDetails PROFILE_VIEW_HOLDER: ${it.message}")
             }
         }
 

@@ -18,7 +18,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-// supported version: 25.20.0
+// supported version: 26.16.1
 class ExpiringMedia : Hook(
     "Expiring media",
     "Allow unlimited photo/video viewing and save media permanently"
@@ -26,8 +26,11 @@ class ExpiringMedia : Hook(
     private val classMap = mapOf(
         "expiringVideoBody" to "com.grindrapp.android.chat.data.model.messagebody.ExpiringVideoBody",
         "expiringImageBody" to "com.grindrapp.android.chat.data.model.messagebody.ExpiringImageBody",
-        "expiringImageBodyUiData" to "com.grindrapp.android.chat.presentation.model.BodyUiData\$ExpiringImageBodyUiData",
-        "expiringStatusResponse" to "com.grindrapp.android.chat.api.model.ExpiringPhotoStatusResponse"
+        // BodyUiData$ExpiringImageBodyUiData removed → ChatMessageBodyUiModel.ExpiringImage
+        "expiringImageBodyUiData" to
+            "com.grindrapp.android.chat.ui.model.chatmessage.body.ChatMessageBodyUiModel\$ExpiringImage",
+        "expiringStatusResponse" to
+            "com.grindrapp.android.chat.data.datasource.api.model.ExpiringPhotoStatusResponse"
     )
 
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -35,7 +38,7 @@ class ExpiringMedia : Hook(
 
     override fun init() {
         findClass(classMap["expiringImageBodyUiData"]!!)
-            .hook("hasViewsRemaining", HookStage.BEFORE) { param ->
+            .hook("getHasViewsRemaining", HookStage.BEFORE) { param ->
                 param.setResult(true)
             }
 

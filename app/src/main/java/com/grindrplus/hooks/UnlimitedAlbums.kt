@@ -37,9 +37,9 @@ import java.io.IOException
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 
-// supported version: 25.20.0
+// supported version: 26.16.1
 class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlimited albums") {
-    private val albumsService = "K8.a" // search for 'v1/albums/red-dot'
+    private val albumsService = "com.grindrapp.android.api.albums.AlbumsRestService" // 'v1/albums/red-dot'
     private val albumModel = "com.grindrapp.android.chat.domain.model.Album"
     private val filteredSpankBankAlbumContent =
         "com.grindrapp.android.albums.spankbank.domain.model.FilteredSpankBankAlbumContent"

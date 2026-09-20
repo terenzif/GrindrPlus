@@ -38,6 +38,7 @@ class DisableBoosting : Hook(
         val radar = Obfuscation.G.DisableBoosting.RADAR_UI_MODEL
         if (radar.isNotEmpty()) {
             runCatching {
+                // dc9 RadarUiModel(roamButton=a, activeMicroSessionUi=b, …)
                 findClass(radar).hookConstructor(HookStage.AFTER) { param ->
                     setObjectField(param.thisObject(), "a", null)
                     setObjectField(param.thisObject(), "b", null)
@@ -75,20 +76,27 @@ class DisableBoosting : Hook(
                 }
         }.onFailure { loge("DisableBoosting navbar: ${it.message}") }
 
-        val popupMethods = mutableListOf<String>()
         if (Obfuscation.G.DisableBoosting.SUBSCRIBE_FOR_BOOST_REDEEM.isNotEmpty()) {
-            popupMethods.add(Obfuscation.G.DisableBoosting.SUBSCRIBE_FOR_BOOST_REDEEM)
-        }
-        if (Obfuscation.G.DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP.isNotEmpty()) {
-            popupMethods.add(Obfuscation.G.DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP)
+            runCatching {
+                findClass(Obfuscation.G.DisableBoosting.SUBSCRIBE_FOR_BOOST_REDEEM)
+                    .hook("invoke", HookStage.BEFORE) { param -> param.setResult(null) }
+            }.onFailure { loge("DisableBoosting boost redeem: ${it.message}") }
         }
 
-        popupMethods.forEach { className ->
+        // ShowTapsAndViewedMeNotification: HomeActivity FlowCollector h76.emit(ynb)
+        val tapsPopup = Obfuscation.G.DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP
+        if (tapsPopup.isNotEmpty()) {
             runCatching {
-                findClass(className).hook("invoke", HookStage.BEFORE) { param ->
-                    param.setResult(null)
+                findClass(tapsPopup).hook(
+                    Obfuscation.G.DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP_METHOD,
+                    HookStage.BEFORE
+                ) { param ->
+                    val event = param.args().firstOrNull() ?: return@hook
+                    if (event.javaClass.name == "xnb") {
+                        param.setResult(null)
+                    }
                 }
-            }.onFailure { loge("DisableBoosting popup $className: ${it.message}") }
+            }.onFailure { loge("DisableBoosting taps popup: ${it.message}") }
         }
     }
 }

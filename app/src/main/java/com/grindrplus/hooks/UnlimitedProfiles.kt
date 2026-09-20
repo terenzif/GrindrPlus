@@ -3,8 +3,8 @@ package com.grindrplus.hooks
 import com.grindrplus.GrindrPlus
 import com.grindrplus.core.Config
 import com.grindrplus.core.Utils.openProfile
-import com.grindrplus.core.Logger
 import com.grindrplus.core.loge
+import com.grindrplus.core.logi
 import com.grindrplus.utils.Hook
 import com.grindrplus.utils.HookStage
 import com.grindrplus.utils.hook
@@ -13,39 +13,31 @@ import de.robv.android.xposed.XposedHelpers.callStaticMethod
 import de.robv.android.xposed.XposedHelpers.getObjectField
 import java.lang.reflect.Proxy
 
-// supported version: 25.20.0
+// supported version: 26.16.1
 class UnlimitedProfiles : Hook(
     "Unlimited profiles",
     "Allow unlimited profiles"
 ) {
     private val function2 = "kotlin.jvm.functions.Function2"
-    private val onProfileClicked = "com.grindrapp.android.ui.browse.E" // search for 'com.grindrapp.android.ui.browse.ServerDrivenCascadeViewModel$onProfileClicked$1'
+    // ServerDrivenCascadeViewModel$onProfileClicked removed with Cascade V2 — skip swipe path
+    private val onProfileClicked = ""
     private val profileWithPhoto = "com.grindrapp.android.persistence.pojo.ProfileWithPhoto"
-    private val serverDrivenCascadeCachedState =
-        "com.grindrapp.android.persistence.model.serverdrivencascade.ServerDrivenCascadeCacheState"
-    private val serverDrivenCascadeCachedProfile =
-        "com.grindrapp.android.persistence.model.serverdrivencascade.ServerDrivenCascadeCachedProfile"
+    // ServerDrivenCascadeCacheState removed — use CascadeProfileUiData rows + tag cascade click gate
+    private val cascadeProfileUiData =
+        "com.grindrapp.android.persistence.model.serverdrivencascade.CascadeProfileUiData"
     private val profileTagCascadeFragment = "com.grindrapp.android.ui.tagsearch.ProfileTagCascadeFragment"
 
     override fun init() {
-        findClass(serverDrivenCascadeCachedState)
-            .hook("getItems", HookStage.AFTER) { param ->
-                val items = (param.getResult() as List<*>).filter {
-                    it?.javaClass?.name == serverDrivenCascadeCachedProfile
+        // Old getItems filter on CacheState is gone. Null out upsell type via profile list is N/A;
+        // CascadeProfileUiData has no getUpsellType — upsells are separate UI models.
+
+        runCatching {
+            // Was method O; now z(int) — returns false when position hits Unlimited ad insert
+            findClass(profileTagCascadeFragment)
+                .hook("z", HookStage.BEFORE) { param ->
+                    param.setResult(true)
                 }
-
-                param.setResult(items)
-            }
-
-        findClass(profileTagCascadeFragment) // search for 'new StringBuilder("cascadeClickEvent/position=");'
-            .hook("O", HookStage.BEFORE) { param ->
-                param.setResult(true)
-            }
-
-        findClass(serverDrivenCascadeCachedProfile)
-            .hook("getUpsellType", HookStage.BEFORE) { param ->
-                param.setResult(null)
-            }
+        }.onFailure { loge("UnlimitedProfiles ProfileTagCascadeFragment: ${it.message}") }
 
         val profileClass = findClass("com.grindrapp.android.persistence.model.Profile")
         val profileWithPhotoClass = findClass(profileWithPhoto)
@@ -107,19 +99,29 @@ class UnlimitedProfiles : Hook(
             param.setResult(transformedFlow)
         }
 
-        findClass(onProfileClicked).hook("invokeSuspend", HookStage.BEFORE) { param ->
-            if (Config.get("disable_profile_swipe", false) as Boolean) {
-                getObjectField(param.thisObject(), param.thisObject().javaClass.declaredFields
-                    .firstOrNull { it.type.name.contains("ServerDrivenCascadeCachedProfile") }?.name
-                )?.let { cachedProfile ->
-                    runCatching { getObjectField(cachedProfile, "profileIdLong").toString() }
-                        .onSuccess { profileId ->
-                            openProfile(profileId)
-                            param.setResult(null)
-                        }
-                        .onFailure { loge("Profile ID not found in cached profile") }
+        if (onProfileClicked.isNotEmpty()) {
+            findClass(onProfileClicked).hook("invokeSuspend", HookStage.BEFORE) { param ->
+                if (Config.get("disable_profile_swipe", false) as Boolean) {
+                    getObjectField(
+                        param.thisObject(),
+                        param.thisObject().javaClass.declaredFields
+                            .firstOrNull { it.type.name.contains("CascadeProfile") }?.name
+                    )?.let { cachedProfile ->
+                        runCatching { getObjectField(cachedProfile, "profileId").toString() }
+                            .onSuccess { profileId ->
+                                openProfile(profileId)
+                                param.setResult(null)
+                            }
+                            .onFailure { loge("Profile ID not found in cached profile") }
+                    }
                 }
             }
+        } else {
+            logi("UnlimitedProfiles: onProfileClicked remap skipped (Cascade V2 — no ServerDrivenCascadeViewModel)")
         }
+
+        // Ensure CascadeProfileUiData exists (soft)
+        runCatching { findClass(cascadeProfileUiData) }
+            .onFailure { loge("UnlimitedProfiles CascadeProfileUiData: ${it.message}") }
     }
 }
