@@ -25,12 +25,13 @@ jobs:
 
       - name: Run version fetcher script
         run: |
-          python fetch_version.py
+          # Writes latest_play.json (+ deprecated version.json mirror). Never touches supported_target.json.
+          python fetch_version.py --also-version-json
 
       - name: Commit and push if changed
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add version.json
-          git diff --quiet && git diff --staged --quiet || git commit -m "GrindrPlus: Fetch latest Grindr version"
+          git add latest_play.json version.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "GrindrPlus: Fetch latest Play Grindr version"
           git push

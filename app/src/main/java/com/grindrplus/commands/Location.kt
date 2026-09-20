@@ -267,7 +267,7 @@ class Location(recipient: String, sender: String) : CommandModule("Location", re
             val grindrLocationProviderInstance =
                 GrindrPlus.instanceManager.getInstance<Any>(GrindrPlus.grindrLocationProvider)
 
-            val location = getObjectField(grindrLocationProviderInstance, "e")
+            val location = getObjectField(grindrLocationProviderInstance, "d")
             val latitude = callMethod(location, "getLatitude") as Double
             val longitude = callMethod(location, "getLongitude") as Double
 

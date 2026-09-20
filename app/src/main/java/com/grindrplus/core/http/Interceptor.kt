@@ -35,8 +35,8 @@ class Interceptor(
                 ""
             }
 
-            // search for one line method returning an string in userSession
-            val roles = invokeMethodSafe(userSession, "F") as? String ?: ""
+            // Roles string for L-Grindr-Roles (was "F" on 25.20.0; UserSession.E() on 26.16.1)
+            val roles = invokeMethodSafe(userSession, "E") as? String ?: ""
 
             if (authToken.isNotEmpty()) {
                 builder.header("Authorization", "Grindr3 $authToken")

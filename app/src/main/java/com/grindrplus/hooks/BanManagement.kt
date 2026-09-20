@@ -30,16 +30,17 @@ import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.XposedHelpers.getObjectField
 import org.json.JSONObject
 
-// supported version: 25.20.0
+// supported version: 26.16.1
 class BanManagement : Hook(
     "Ban management",
     "Provides comprehensive ban management tools (detailed ban info, etc.)"
 ) {
-    private val authServiceClass = "J8.h" // search for 'v3/users/password-validation'
+    private val authServiceClass = "com.grindrapp.android.api.LoginRestService" // 'v3/users/password-validation'
     private val materialButton = "com.google.android.material.button.MaterialButton"
     private val bannedFragment = "com.grindrapp.android.ui.account.banned.BannedFragment"
-    private val deviceUtility = "Ej.m" // search for 'Settings.Secure.getString(context.getContentResolver(), "android_id")' and 'profile_tag_search_history'
-    private val bannedArgs = "N8.a" // search for 'new StringBuilder("BannedArgs(bannedType=")'
+    // Device-id utility (Ej.m / dual fingerprint) not confidently remapped on 26.16.1 — skip override
+    private val deviceUtility = ""
+    private val bannedArgs = "ak0" // 'BannedArgs(bannedType='
     private var bannedInfo: JSONObject = JSONObject()
 
     @SuppressLint("DiscouragedApi")
@@ -73,24 +74,29 @@ class BanManagement : Hook(
             result
         }
 
-		// search for 'Settings.Secure.getString(context.getContentResolver(), "android_id");' in deviceUtility class
-        findClass(deviceUtility).hook("g", HookStage.AFTER) { param ->
-            val androidId = Config.get("android_device_id", "") as String
-            if (androidId.isNotEmpty()) {
-                param.setResult(androidId)
+        if (deviceUtility.isNotEmpty()) {
+            // search for 'Settings.Secure.getString(context.getContentResolver(), "android_id");'
+            findClass(deviceUtility).hook("g", HookStage.AFTER) { param ->
+                val androidId = Config.get("android_device_id", "") as String
+                if (androidId.isNotEmpty()) {
+                    param.setResult(androidId)
+                }
             }
+        } else {
+            logi("Ban management: deviceUtility remap skipped (fingerprint not found on 26.16.1)")
         }
 
+        // ak0(bannedType, bannedReason, email, phoneNumber, dialCode, isBanAutomated, bannedSubReason, authAnalyticsParams)
         findClass(bannedArgs).hookConstructor(HookStage.AFTER) { param ->
             val args = param.args()
             val json = JSONObject()
-            json.put("code", args[0].toString())
-            json.put("message", args[1])
-            json.put("mail", args[2])
-            json.put("phoneNumber", args[3])
-            json.put("dialCode", args[4])
-            json.put("isBanAutomated", args[5])
-            json.put("subReason", args[6])
+            json.put("code", args.getOrNull(0)?.toString())
+            json.put("message", args.getOrNull(1))
+            json.put("mail", args.getOrNull(2))
+            json.put("phoneNumber", args.getOrNull(3))
+            json.put("dialCode", args.getOrNull(4))
+            json.put("isBanAutomated", args.getOrNull(5))
+            json.put("subReason", args.getOrNull(6))
             bannedInfo = json
         }
 
