@@ -3,7 +3,7 @@
   "versionName": "26.16.1",
   "versionCode": 179451,
   "confidence": "static-jadx",
-  "generatedFrom": "master@3906e8f Obfuscation.kt + GrindrPlus.kt + RetrofitUtils (post-#63)",
+  "generatedFrom": "Obfuscation.kt + GrindrPlus.kt + RetrofitUtils (post-#64 wire)",
   "symbols": {
     "core.userAgent": {
       "kind": "class",
@@ -37,6 +37,11 @@
     "core.browseExploreActivity": {
       "kind": "class",
       "name": "com.grindrapp.android.ui.browse.BrowseExploreMapActivity"
+    },
+    "core.serverNotification": {
+      "kind": "class",
+      "name": "com.grindrapp.android.network.websocket.model.WebSocketNotification$ServerNotification",
+      "fingerprint": "ServerNotification"
     },
     "retrofit.fail": {
       "kind": "class",
@@ -159,13 +164,33 @@
     }
   },
   "hooks": {
-    "DisableBoosting": { "status": "partial" },
-    "AntiBlock": { "status": "mapped" },
-    "ProfileDetails": { "status": "partial" },
-    "ChatIndicators": { "status": "mapped" },
-    "DisableShuffle": { "status": "skipped", "reason": "fingerprint absent on this DEX" },
-    "EmptyCalls": { "status": "skipped", "reason": "IndividualChatNavViewModel / isTalkBefore absent" },
-    "NotificationAlerts": { "status": "skipped", "reason": "notification_reminder_time absent" },
-    "ChatTerminal": { "status": "skipped", "reason": "chatMessageMetaData absent" }
+    "DisableBoosting": {
+      "status": "partial"
+    },
+    "AntiBlock": {
+      "status": "mapped"
+    },
+    "ProfileDetails": {
+      "status": "partial"
+    },
+    "ChatIndicators": {
+      "status": "mapped"
+    },
+    "DisableShuffle": {
+      "status": "skipped",
+      "reason": "fingerprint absent on this DEX"
+    },
+    "EmptyCalls": {
+      "status": "skipped",
+      "reason": "IndividualChatNavViewModel / isTalkBefore absent"
+    },
+    "NotificationAlerts": {
+      "status": "skipped",
+      "reason": "notification_reminder_time absent"
+    },
+    "ChatTerminal": {
+      "status": "skipped",
+      "reason": "chatMessageMetaData absent"
+    }
   }
 }

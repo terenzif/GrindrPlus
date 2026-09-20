@@ -1,6 +1,7 @@
 package com.grindrplus.utils
 
 import com.grindrplus.GrindrPlus
+import com.grindrplus.core.mapping.MappingDictionary
 import de.robv.android.xposed.XposedHelpers.callMethod
 import de.robv.android.xposed.XposedHelpers.getObjectField
 import java.lang.reflect.InvocationHandler
@@ -8,10 +9,15 @@ import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 
 object RetrofitUtils {
-    const val FAIL_CLASS_NAME = "q84" // search for '"Fail(failValue="'
-    const val SUCCESS_CLASS_NAME = "r84" // search for '"Success(successValue="'
-    const val SUCCESS_VALUE_NAME = "a" // renamed from: a in JADX
-    const val FAIL_VALUE_NAME = "a" // renamed from: a in JADX
+    // Prefer mapping pack; fallbacks = 26.16.1 (179451)
+    val FAIL_CLASS_NAME: String
+        get() = MappingDictionary.resolve("retrofit.fail", "q84") // Fail(failValue=
+    val SUCCESS_CLASS_NAME: String
+        get() = MappingDictionary.resolve("retrofit.success", "r84") // Success(successValue=
+    val SUCCESS_VALUE_NAME: String
+        get() = MappingDictionary.resolve("retrofit.successValue", "a")
+    val FAIL_VALUE_NAME: String
+        get() = MappingDictionary.resolve("retrofit.failValue", "a")
     const val RETROFIT_NAME = "retrofit2.Retrofit"
 
     fun findPOSTMethod(clazz: Class<*>, value: String): Method? {

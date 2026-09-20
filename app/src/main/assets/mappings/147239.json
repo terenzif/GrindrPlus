@@ -3,7 +3,7 @@
   "versionName": "25.20.0",
   "versionCode": 147239,
   "confidence": "historical-git",
-  "generatedFrom": "48d56cb Obfuscation.kt + GrindrPlus.kt + RetrofitUtils (pre-#63)",
+  "generatedFrom": "48d56cb Obfuscation.kt + GrindrPlus.kt + RetrofitUtils (pre-#63); + core.serverNotification",
   "symbols": {
     "core.userAgent": {
       "kind": "class",
@@ -36,6 +36,11 @@
     "core.browseExploreActivity": {
       "kind": "class",
       "name": "com.grindrapp.android.ui.browse.BrowseExploreMapActivity"
+    },
+    "core.serverNotification": {
+      "kind": "class",
+      "name": "com.grindrapp.android.network.websocket.model.WebSocketNotification$ServerNotification",
+      "fingerprint": "ServerNotification"
     },
     "retrofit.fail": {
       "kind": "class",
@@ -156,9 +161,17 @@
     }
   },
   "hooks": {
-    "DisableBoosting": { "status": "mapped" },
-    "AntiBlock": { "status": "mapped" },
-    "ProfileDetails": { "status": "mapped" },
-    "ChatIndicators": { "status": "mapped" }
+    "DisableBoosting": {
+      "status": "mapped"
+    },
+    "AntiBlock": {
+      "status": "mapped"
+    },
+    "ProfileDetails": {
+      "status": "mapped"
+    },
+    "ChatIndicators": {
+      "status": "mapped"
+    }
   }
 }

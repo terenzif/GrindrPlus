@@ -158,7 +158,8 @@ class ProfileDetails : Hook(
         }
 
         // iq3.c(double, approx, show, special, abbreviated, isFeet?) — isFeet null → SettingsPref.b()
-        findClass(Obfuscation.G.ProfileDetails.DISTANCE_UTILS).hook("c", HookStage.AFTER) { param ->
+        findClass(Obfuscation.G.ProfileDetails.DISTANCE_UTILS)
+            .hook(Obfuscation.G.ProfileDetails.DISTANCE_UTILS_METHOD, HookStage.AFTER) { param ->
             val distance = param.arg<Double>(0)
             val isFeet = param.argNullable<Boolean>(5) ?: run {
                 val settingsPref = getObjectField(param.thisObject(), "b")
