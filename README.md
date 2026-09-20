@@ -5,7 +5,7 @@
 <h1 align="center">GrindrPlus</h1>
 
 <p align="center">
-  Fork mantenuto da <a href="https://github.com/terenzif">@terenzif</a> — modulo Xposed / LSPosed per Grindr.
+  Fork maintained by <a href="https://github.com/terenzif">@terenzif</a> — Xposed / LSPosed module for Grindr.
 </p>
 
 <p align="center">
@@ -13,100 +13,100 @@
   <a href="https://github.com/terenzif/GrindrPlus/releases"><img src="https://img.shields.io/github/v/release/terenzif/GrindrPlus?include_prereleases&label=Release" alt="Release"></a>
 </p>
 
-## Cos’è questo fork
+## What this fork is
 
-Questo repository è il **fork attivo** di GrindrPlus dopo l’archiviazione del progetto upstream ([R0rt1z2/GrindrPlus](https://github.com/R0rt1z2/GrindrPlus)) e la fase PairIP / VM. Qui continuiamo supporto, mapping e rilasci per uso personale / lab.
+This repository is the **active fork** of GrindrPlus after the upstream project ([R0rt1z2/GrindrPlus](https://github.com/R0rt1z2/GrindrPlus)) was archived and after the PairIP / VM phase. Here we continue support, mappings, and releases for personal / lab use.
 
-**Direzione attuale (Fase 2):** target **Grindr 26.16.1** (`versionCode` 179451), con soft-fail per-hook e gate versione aggiornato. Baseline storica ancora documentata: **25.20.0**.
+**Current direction (Phase 2):** target **Grindr 26.16.1** (`versionCode` 179451), with per-hook soft-fail and an updated version gate. Historical baseline still documented: **25.20.0**.
 
-**In corso:** separazione **prodotto ↔ mapping** — pack JSON per `versionCode` sotto `app/src/main/assets/mappings/` e stub `MappingDictionary`, così un nuovo Grindr può richiedere un pack invece di un rebuild completo del core. I literal in `Obfuscation.kt` restano la fonte live finché la migrazione (Fase B) non è completa.
+**In progress:** **product ↔ mapping** separation — JSON packs per `versionCode` under `app/src/main/assets/mappings/` and a `MappingDictionary` stub, so a new Grindr release can need a pack instead of a full core rebuild. Literals in `Obfuscation.kt` remain the live source until the migration (Phase B) is complete.
 
-Il modulo **non** è affiliato a Grindr LLC. Usalo a tuo rischio.
+This module is **not** affiliated with Grindr LLC. Use at your own risk.
 
 ## Disclaimer
 
-Mod gratuito, senza garanzia. Non siamo responsabili di chat perse, ban, o altri problemi. Nessuna raccolta dati personali e nessuna pubblicità da parte di questo progetto — il codice è open source (GPL-3.0).
+Free mod, no warranty. We are not responsible for lost chats, bans, or other issues. This project does not collect personal data and does not serve ads — the code is open source (GPL-3.0).
 
 ## Download
 
-- Release di questo fork: [Releases](https://github.com/terenzif/GrindrPlus/releases)
-- Build CI: [Actions](https://github.com/terenzif/GrindrPlus/actions)
+- Releases from this fork: [Releases](https://github.com/terenzif/GrindrPlus/releases)
+- CI builds: [Actions](https://github.com/terenzif/GrindrPlus/actions)
 
-Ogni build supporta **una** versione Grindr specifica (oggi **26.16.1**). Un client diverso può non avviare il modulo o degradare singoli hook.
+Each build supports **one** specific Grindr version (currently **26.16.1**). A different client may fail to start the module or degrade individual hooks.
 
-## Installazione (LSPosed, consigliata)
+## Installation (LSPosed, recommended)
 
-**Requisiti:** root (Magisk / KernelSU) + [LSPosed](https://github.com/JingMatrix/LSPosed) funzionante (fork JingMatrix consigliato su Android recenti).
+**Requirements:** root (Magisk / KernelSU) + working [LSPosed](https://github.com/JingMatrix/LSPosed) (JingMatrix fork recommended on recent Android).
 
-1. Installa l’APK del modulo da [Releases](https://github.com/terenzif/GrindrPlus/releases) (o CI).
-2. Installa Grindr **26.16.1** (Play Store o bundle APKMirror + [SAI](https://github.com/Aefyr/SAI/releases)).
-3. Abilita il modulo in LSPosed e metti Grindr nello scope.
-4. Apri Grindr e verifica.
+1. Install the module APK from [Releases](https://github.com/terenzif/GrindrPlus/releases) (or CI).
+2. Install Grindr **26.16.1** (Play Store or APKMirror bundle + [SAI](https://github.com/Aefyr/SAI/releases)).
+3. Enable the module in LSPosed and add Grindr to the scope.
+4. Open Grindr and verify.
 
-**Verifica rapida:** long-press sulla tab **Browse** → popup di stato GrindrPlus; cascade senza limite di profili e senza ads di terze parti.
+**Quick check:** long-press the **Browse** tab → GrindrPlus status popup; unlimited cascade profiles and no third-party ads.
 
-> LSPatch / no-root esiste ancora nel codice manager, ma su questo fork il percorso **supportato e testato** è LSPosed. LSPatch porta limiti noti (login Google, mappe, stabilità).
+> LSPatch / no-root still exists in the manager code, but on this fork the **supported and tested** path is LSPosed. LSPatch has known limits (Google login, maps, stability).
 
-## Funzionalità (ereditate / in manutenzione)
+## Features (inherited / maintained)
 
 <details>
   <summary>Chat</summary>
 
-  - Console comandi (`/help`)
-  - Video call su chat nuove
-  - Nascondi indicatori di chat
-  - Elimina messaggi indipendentemente dall’età
+  - Command console (`/help`)
+  - Video calls on new chats
+  - Hide chat indicators
+  - Delete messages regardless of age
 </details>
 
 <details>
   <summary>Media</summary>
 
-  - Foto in scadenza illimitate
-  - Visualizza tutti gli album ricevuti
-  - Screenshot consentiti
+  - Unlimited expiring photos
+  - View all received albums
+  - Screenshots allowed
 </details>
 
 <details>
   <summary>Global</summary>
 
-  - Dettagli ban
+  - Ban details
   - Spoof Android ID
-  - Analytics ridotti
-  - Feature developer
-  - Impostazioni mod / gestione hook
-  - Disabilita update forzati
+  - Reduced analytics
+  - Developer features
+  - Mod settings / hook management
+  - Disable forced updates
 </details>
 
 <details>
   <summary>Profiles / Location / Premium</summary>
 
-  - BMI, boost indicator, copy profile ID, distanza, campi nascosti, online status, layout preferiti
-  - Teleport / spoof location / location salvate
-  - Cascade illimitata, Explore, filtri, no ads terze parti, frasi salvate, no boost upsell, hide views, incognito
+  - BMI, boost indicator, copy profile ID, distance, hidden fields, online status, favorites layout
+  - Teleport / spoof location / saved locations
+  - Unlimited cascade, Explore, filters, no third-party ads, saved phrases, no boost upsell, hide views, incognito
 </details>
 
-Alcuni hook su 26.16.1 sono **skipped** o **partial** se il fingerprint DEX non c’è più — vedi soft-fail in `HookManager`.
+Some hooks on 26.16.1 are **skipped** or **partial** when the DEX fingerprint is gone — see soft-fail in `HookManager`.
 
-## Bug noti (rilevanti)
+## Known issues (notable)
 
-- **Incognito:** instabile / si spegne da solo.
-- **“Viewed Me”:** server-side, non modificabile.
-- **Boost / Roaming:** disabilitati di default; riattiva disattivando l’hook “Disable Boosting”.
-- **Crash / album:** prova a disabilitare “Unlimited Albums”.
-- **Ad blocker:** profili vuoti → whitelist `cdn.cookielaw.org` o disabilita AdAway.
+- **Incognito:** unstable / turns itself off.
+- **“Viewed Me”:** server-side, not modifiable.
+- **Boost / Roaming:** disabled by default; re-enable by turning off the “Disable Boosting” hook.
+- **Crash / albums:** try disabling “Unlimited Albums”.
+- **Ad blocker:** empty profiles → whitelist `cdn.cookielaw.org` or disable AdAway.
 
-## Sviluppo
+## Development
 
-Vedi [docs/README.md](docs/README.md).
+See [docs/README.md](docs/README.md).
 
-Mapping packs: `app/src/main/assets/mappings/<versionCode>.json`. Loader: `com.grindrplus.core.mapping.MappingDictionary` (stub — non ancora collegato a `init`).
+Mapping packs: `app/src/main/assets/mappings/<versionCode>.json`. Loader: `com.grindrplus.core.mapping.MappingDictionary` (stub — not yet wired into `init`).
 
-## Crediti
+## Credits
 
-- Idea e mod originale: [ElJaviLuki/GrindrPlus](https://github.com/ElJaviLuki/GrindrPlus)
-- Riscrittura e manutenzione storica fino all’archivio: [R0rt1z2/GrindrPlus](https://github.com/R0rt1z2/GrindrPlus) e contributor
+- Original idea and mod: [ElJaviLuki/GrindrPlus](https://github.com/ElJaviLuki/GrindrPlus)
+- Rewrite and historical maintenance through archive: [R0rt1z2/GrindrPlus](https://github.com/R0rt1z2/GrindrPlus) and contributors
 - LSPosed / LSPatch: [JingMatrix](https://github.com/JingMatrix)
 
-## Licenza
+## License
 
-GPL-3.0 — vedi [LICENSE](LICENSE). Non ricopiare il progetto spacciandolo per proprio: cita upstream e questo fork.
+GPL-3.0 — see [LICENSE](LICENSE). Do not rebrand this project as your own: credit upstream and this fork.
