@@ -50,7 +50,9 @@ object Obfuscation {
             const val BLOCKED_PROFILES_OBSERVER = ""
             // Was ui.profileV2.g — RecyclerView ViewHolder with menu_actions is now r29
             const val PROFILE_VIEW_HOLDER = "r29"
-            const val DISTANCE_UTILS = "com.grindrapp.android.utils.DistanceUtils"
+            // Was com.grindrapp.android.utils.DistanceUtils — now interface under
+            // utils.distance; concrete impl is default-package iq3 (hook the impl)
+            const val DISTANCE_UTILS = "iq3"
             const val PROFILE_BAR_VIEW = "com.grindrapp.android.ui.profileV2.ProfileBarView"
             const val PROFILE_VIEW_STATE = "com.grindrapp.android.ui.profileV2.model.ProfileViewState"
             // ServerDrivenCascadeCacheState removed — CascadeProfileUiData is the cascade row model
