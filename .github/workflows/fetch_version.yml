@@ -1,5 +1,8 @@
 name: Fetch latest Grindr version
 
+# Play scrape telemetry only (latest_play.json). Never touches supported_target.json
+# or mapping packs. Commits only when versionName/versionCode actually change (P0).
+
 on:
   workflow_dispatch:
   schedule:
@@ -12,6 +15,10 @@ jobs:
   update-version:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      changed: ${{ steps.fetch.outputs.changed }}
+      versionName: ${{ steps.fetch.outputs.versionName }}
+      versionCode: ${{ steps.fetch.outputs.versionCode }}
 
     steps:
       - name: Checkout repository
@@ -27,20 +34,32 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests beautifulsoup4
 
-      - name: Run version fetcher script
+      - name: Fetch Play version (write only if NEW)
+        id: fetch
         run: |
-          # Writes latest_play.json (+ deprecated version.json mirror). Never touches supported_target.json.
-          python fetch_version.py --also-version-json
+          # Writes latest_play.json (+ optional deprecated version.json mirror).
+          # Never touches supported_target.json.
+          python fetch_version.py --also-version-json --github-output
 
       - name: Commit and push if changed
+        if: steps.fetch.outputs.changed == 'true'
         run: |
           set -euo pipefail
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add latest_play.json version.json
           if git diff --quiet && git diff --staged --quiet; then
-            echo "No version changes."
+            echo "Fetcher reported NEW but working tree clean — nothing to commit."
             exit 0
           fi
-          git commit -m "GrindrPlus: Fetch latest Play Grindr version"
+          NAME="${{ steps.fetch.outputs.versionName }}"
+          CODE="${{ steps.fetch.outputs.versionCode }}"
+          git commit -m "chore(play): latest Grindr ${NAME} (${CODE})"
           git push
+
+      - name: Skip commit (unchanged)
+        if: steps.fetch.outputs.changed != 'true'
+        run: |
+          echo "No Play version change — zero commits."
+          echo "versionName=${{ steps.fetch.outputs.versionName }}"
+          echo "versionCode=${{ steps.fetch.outputs.versionCode }}"

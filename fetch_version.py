@@ -3,15 +3,24 @@
 
 This is telemetry / spoof input only — it is NOT the supported hook target.
 Hook support is tracked in supported_target.json (and BuildConfig in app/build.gradle.kts).
+
+Writes files only when versionName or versionCode actually change (anti-noise).
+Never updates supported_target.json.
 """
+
+from __future__ import annotations
 
 import argparse
 import json
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union
+import sys
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union
 
 import requests
 from bs4 import BeautifulSoup
+
+VersionPayload = Dict[str, Union[str, int]]
 
 
 def get_latest_version() -> Tuple[str, str]:
@@ -30,7 +39,11 @@ def get_latest_version() -> Tuple[str, str]:
     base_url: str = url.split('/apk/')[0]
 
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
+        'User-Agent': (
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+            'AppleWebKit/537.36 (KHTML, like Gecko) '
+            'Chrome/114.0.0.0 Safari/537.36'
+        )
     }
 
     response: requests.Response = requests.get(url, headers=headers, timeout=30)
@@ -79,23 +92,40 @@ def get_latest_version() -> Tuple[str, str]:
     return app_version, str(build_number)
 
 
-def save_version_to_json(version: str, build: str, output_file: str) -> None:
-    """
-    Save version information to a JSON file.
-
-    Args:
-        version: The version name (e.g., "25.3.0")
-        build: The build number (e.g., "135731")
-        output_file: Path to the output JSON file
-    """
-    data: Dict[str, Union[str, int]] = {
-        'versionName': version,
-        'versionCode': int(build),
+def load_version_json(path: Path) -> Optional[VersionPayload]:
+    """Load an existing version JSON file, or None if missing/invalid."""
+    if not path.is_file():
+        return None
+    try:
+        with path.open(encoding='utf-8') as f:
+            data = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    if 'versionName' not in data or 'versionCode' not in data:
+        return None
+    return {
+        'versionName': str(data['versionName']),
+        'versionCode': int(data['versionCode']),
     }
 
-    with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=2)
 
+def same_version(a: Optional[VersionPayload], b: VersionPayload) -> bool:
+    """True when both payloads describe the same Play version."""
+    if a is None:
+        return False
+    return (
+        str(a['versionName']) == str(b['versionName'])
+        and int(a['versionCode']) == int(b['versionCode'])
+    )
+
+
+def save_version_to_json(payload: VersionPayload, output_file: Path) -> None:
+    """Write version information with a trailing newline."""
+    with output_file.open('w', encoding='utf-8') as f:
+        json.dump(payload, f, indent=2)
+        f.write('\n')
     print(f'Version information saved to {output_file}')
 
 
@@ -113,26 +143,79 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         '--also-version-json',
         action='store_true',
-        help='Also write version.json as a deprecated mirror of the Play scrape',
+        help=(
+            'Also mirror to version.json when the Play scrape changes '
+            '(deprecated consumers only; DisableUpdates uses latest_play.json)'
+        ),
+    )
+    parser.add_argument(
+        '--github-output',
+        action='store_true',
+        help='Append changed/versionName/versionCode lines to $GITHUB_OUTPUT',
     )
     return parser.parse_args()
 
 
-def main() -> None:
-    """Main function to fetch version information and save to file."""
+def write_github_output(
+    changed: bool, version_name: str, version_code: int
+) -> None:
+    """Emit workflow outputs when running under GitHub Actions."""
+    raw = os.environ.get('GITHUB_OUTPUT')
+    if not raw:
+        return
+    path = Path(raw)
+    with path.open('a', encoding='utf-8') as f:
+        f.write(f'changed={"true" if changed else "false"}\n')
+        f.write(f'versionName={version_name}\n')
+        f.write(f'versionCode={version_code}\n')
+
+
+def main() -> int:
+    """Fetch Play version; write files only on NEW versionCode/name."""
     args = parse_args()
+    output_path = Path(args.output)
+
     version, build = get_latest_version()
+    version_code = int(build)
+    payload: VersionPayload = {
+        'versionName': version,
+        'versionCode': version_code,
+    }
     print(f'App Version: {version}')
     print(f'Build Number: {build}')
-    save_version_to_json(version, build, args.output)
-    if args.also_version_json or args.output == 'latest_play.json':
-        # Keep deprecated version.json in sync with Play scrape for old consumers.
-        save_version_to_json(version, build, 'version.json')
+
+    existing = load_version_json(output_path)
+    changed = not same_version(existing, payload)
+
+    if not changed:
+        print(
+            f'UNCHANGED: {version} ({version_code}) already in {output_path}'
+        )
         print(
             'Note: supported_target.json is NOT updated by this script '
-            '(hook mappings must be updated manually).'
+            '(mapping packs / human decision).'
         )
+        if args.github_output:
+            write_github_output(False, version, version_code)
+        return 0
+
+    print(f'NEW: {version} ({version_code}) — writing {output_path}')
+    save_version_to_json(payload, output_path)
+
+    if args.also_version_json:
+        mirror = Path('version.json')
+        # Keep deprecated mirror in sync only when Play scrape changes.
+        save_version_to_json(payload, mirror)
+        print(f'Mirrored deprecated {mirror}')
+
+    print(
+        'Note: supported_target.json is NOT updated by this script '
+        '(mapping packs / human decision).'
+    )
+    if args.github_output:
+        write_github_output(True, version, version_code)
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
