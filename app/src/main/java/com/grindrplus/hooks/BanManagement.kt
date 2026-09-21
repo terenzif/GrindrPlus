@@ -16,6 +16,7 @@ import com.grindrplus.core.logd
 import com.grindrplus.core.loge
 import com.grindrplus.core.logi
 import com.grindrplus.core.logw
+import com.grindrplus.core.mapping.MappingDictionary
 import com.grindrplus.ui.Utils.copyToClipboard
 import com.grindrplus.utils.Hook
 import com.grindrplus.utils.HookStage
@@ -35,14 +36,19 @@ class BanManagement : Hook(
     "Ban management",
     "Provides comprehensive ban management tools (detailed ban info, etc.)"
 ) {
-    private val authServiceClass = "com.grindrapp.android.api.LoginRestService" // 'v3/users/password-validation'
+    private val authServiceClass: String
+        get() = MappingDictionary.resolve(
+            "BanManagement.LoginRestService",
+            "com.grindrapp.android.api.LoginRestService"
+        ) // 'v3/users/password-validation'
     private val materialButton = "com.google.android.material.button.MaterialButton"
     private val bannedFragment = "com.grindrapp.android.ui.account.banned.BannedFragment"
     // Device-id utility (Ej.m / dual fingerprint) not confidently remapped on 26.16.1 — skip override
-    private val deviceUtility = ""
-    private val bannedArgs = "ak0" // 'BannedArgs(bannedType='
+    private val deviceUtility: String
+        get() = MappingDictionary.resolve("BanManagement.deviceUtility", "")
+    private val bannedArgs: String
+        get() = MappingDictionary.resolve("BanManagement.bannedArgs", "ak0") // 'BannedArgs(bannedType='
     private var bannedInfo: JSONObject = JSONObject()
-
     @SuppressLint("DiscouragedApi")
     override fun init() {
         val authService = findClass(authServiceClass)

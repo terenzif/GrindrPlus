@@ -150,4 +150,37 @@ class MappingDictionaryTest {
         assertEquals(179451, MappingDictionary.current?.versionCode)
         assertEquals("lrc", MappingDictionary.resolve("core.userAgent", "fallback"))
     }
+
+    @Test
+    fun packSchema_resolvesAddSavedPhraseAndBannedArgs() {
+        val json = """
+            {
+              "schemaVersion": 1,
+              "versionName": "26.16.1",
+              "versionCode": 179451,
+              "confidence": "test",
+              "generatedFrom": "test",
+              "symbols": {
+                "core.userAgent": { "kind": "class", "name": "lrc" },
+                "core.deviceInfo": { "kind": "class", "name": "wh3" },
+                "BanManagement.bannedArgs": { "kind": "class", "name": "ak0" },
+                "LocalSavedPhrases.AddSavedPhraseResponse": {
+                  "kind": "class",
+                  "name": "com.grindrapp.android.chat.data.datasource.api.model.AddSavedPhraseResponse"
+                }
+              },
+              "hooks": {
+                "LocalSavedPhrases": { "status": "mapped" }
+              }
+            }
+            """.trimIndent()
+        val pack = MappingDictionary.decodeAndActivate(json, expectedVersionCode = 179451)
+        assertNotNull(pack)
+        assertEquals(
+            "com.grindrapp.android.chat.data.datasource.api.model.AddSavedPhraseResponse",
+            MappingDictionary.resolve("LocalSavedPhrases.AddSavedPhraseResponse", "legacy")
+        )
+        assertEquals("ak0", MappingDictionary.resolve("BanManagement.bannedArgs", ""))
+        assertEquals("mapped", MappingDictionary.current?.hooks?.get("LocalSavedPhrases")?.status)
+    }
 }

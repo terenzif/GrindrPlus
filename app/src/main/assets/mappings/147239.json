@@ -3,7 +3,7 @@
   "versionName": "25.20.0",
   "versionCode": 147239,
   "confidence": "historical-git",
-  "generatedFrom": "48d56cb Obfuscation.kt + GrindrPlus.kt + RetrofitUtils (pre-#63); + core.serverNotification",
+  "generatedFrom": "48d56cb Obfuscation.kt + GrindrPlus.kt + RetrofitUtils (pre-#63); + core.serverNotification + gap-fill soft-skips/AddSavedPhrase",
   "symbols": {
     "core.userAgent": {
       "kind": "class",
@@ -17,7 +17,7 @@
     },
     "core.deviceInfo": {
       "kind": "class",
-      "name": "u8.u",
+      "name": "u8.g",
       "fingerprint": "AdvertisingIdClient.Info(\"00000000-0000-0000-0000-000000000000\", true)"
     },
     "core.grindrLocationProvider": {
@@ -97,7 +97,8 @@
     },
     "DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP": {
       "kind": "class",
-      "name": ""
+      "name": "",
+      "note": "not resolved"
     },
     "DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP_METHOD": {
       "kind": "method",
@@ -158,6 +159,21 @@
     "ChatIndicators.CHAT_REST_SERVICE": {
       "kind": "class",
       "name": "com.grindrapp.android.chat.data.datasource.api.service.ChatRestService"
+    },
+    "LocalSavedPhrases.AddSavedPhraseResponse": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.api.model.AddSavedPhraseResponse",
+      "fingerprint": "chat.api.model legacy"
+    },
+    "LocalSavedPhrases.PhrasesRestService": {
+      "kind": "class",
+      "name": "",
+      "note": "FQN absent on this DEX"
+    },
+    "BanManagement.deviceUtility": {
+      "kind": "class",
+      "name": "",
+      "note": "not required on historical pack"
     }
   },
   "hooks": {
@@ -171,6 +187,9 @@
       "status": "mapped"
     },
     "ChatIndicators": {
+      "status": "mapped"
+    },
+    "LocalSavedPhrases": {
       "status": "mapped"
     }
   }
