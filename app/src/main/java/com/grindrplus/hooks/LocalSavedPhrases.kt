@@ -1,6 +1,11 @@
 package com.grindrplus.hooks
 
 import com.grindrplus.GrindrPlus
+import com.grindrplus.core.loge
+import com.grindrplus.core.logd
+import com.grindrplus.core.logi
+import com.grindrplus.core.logs
+import com.grindrplus.core.mapping.MappingDictionary
 import com.grindrplus.persistence.model.SavedPhraseEntity
 import com.grindrplus.utils.Hook
 import com.grindrplus.utils.HookStage
@@ -10,7 +15,6 @@ import com.grindrplus.utils.RetrofitUtils.isDELETE
 import com.grindrplus.utils.RetrofitUtils.isGET
 import com.grindrplus.utils.RetrofitUtils.isPOST
 import com.grindrplus.utils.hook
-import com.grindrplus.core.*
 import de.robv.android.xposed.XposedHelpers.getObjectField
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -22,16 +26,34 @@ class LocalSavedPhrases : Hook(
     "Local saved phrases",
     "Save unlimited phrases locally"
 ) {
-    private val phrasesRestService = "com.grindrapp.android.api.PhrasesRestService" // 'v3/me/prefs'
+    private val phrasesRestService: String
+        get() = MappingDictionary.resolve(
+            "LocalSavedPhrases.PhrasesRestService",
+            "com.grindrapp.android.api.PhrasesRestService"
+        ) // 'v3/me/prefs'
     private val createSuccessResult = RetrofitUtils.SUCCESS_CLASS_NAME // r84 'Success(successValue='
     private val chatRestService = "com.grindrapp.android.chat.data.datasource.api.service.ChatRestService"
-    private val addSavedPhraseResponse =
-        "com.grindrapp.android.chat.api.model.AddSavedPhraseResponse"
+    // 26.16.1+ moved under chat.data.datasource.api.model (legacy chat.api.model path is gone).
+    private val addSavedPhraseResponse: String
+        get() = MappingDictionary.resolve(
+            "LocalSavedPhrases.AddSavedPhraseResponse",
+            "com.grindrapp.android.chat.data.datasource.api.model.AddSavedPhraseResponse"
+        )
     private val phrasesResponse = "com.grindrapp.android.model.PhrasesResponse"
     private val phraseModel = "com.grindrapp.android.persistence.model.Phrase"
 
     override fun init() {
         logi("Initializing Local Saved Phrases Hook...")
+
+        if (addSavedPhraseResponse.isEmpty()) {
+            logi("Local saved phrases: AddSavedPhraseResponse remap skipped (absent on this DEX)")
+            return
+        }
+
+        if (phrasesRestService.isEmpty()) {
+            logi("Local saved phrases: PhrasesRestService remap skipped (absent on this DEX)")
+            return
+        }
 
         val chatRestServiceClass = findClass(chatRestService)
         val createSuccess = findClass(createSuccessResult).constructors.firstOrNull() ?: run {
@@ -65,7 +87,6 @@ class LocalSavedPhrases : Hook(
         createSuccess: Constructor<*>
     ): Any {
         val savedPhraseConstructor = findClass(addSavedPhraseResponse).constructors.first()
-
         val invocationHandler = Proxy.getInvocationHandler(originalService)
 
         return Proxy.newProxyInstance(

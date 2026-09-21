@@ -3,7 +3,7 @@
   "versionName": "26.16.1",
   "versionCode": 179451,
   "confidence": "static-jadx",
-  "generatedFrom": "Obfuscation.kt + GrindrPlus.kt + RetrofitUtils (post-#64 wire)",
+  "generatedFrom": "Obfuscation.kt + GrindrPlus.kt + RetrofitUtils + JADX 1.5.1 gap-fill (AddSavedPhraseResponse path) + soft-skips",
   "symbols": {
     "core.userAgent": {
       "kind": "class",
@@ -18,7 +18,7 @@
     "core.deviceInfo": {
       "kind": "class",
       "name": "wh3",
-      "fingerprint": "AdvertisingIdClient.Info(\"00000000-0000-0000-0000-000000000000\", true)"
+      "fingerprint": "field AdvertisingIdClient.Info"
     },
     "core.grindrLocationProvider": {
       "kind": "class",
@@ -28,7 +28,8 @@
     "core.serverDrivenCascadeRepo": {
       "kind": "class",
       "name": "us1",
-      "note": "was ServerDrivenCascadeRepo; CascadeService wrapper"
+      "note": "was ServerDrivenCascadeRepo; CascadeService wrapper",
+      "fingerprint": "field CascadeService"
     },
     "core.ageVerificationActivity": {
       "kind": "class",
@@ -94,7 +95,7 @@
     "DisableBoosting.SUBSCRIBE_FOR_BOOST_REDEEM": {
       "kind": "class",
       "name": "",
-      "note": "lambda not confidently re-resolved"
+      "note": "lambda not confidently resolved"
     },
     "DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP": {
       "kind": "class",
@@ -125,7 +126,7 @@
     "ProfileDetails.BLOCKED_PROFILES_OBSERVER": {
       "kind": "class",
       "name": "",
-      "note": "fingerprint not re-resolved"
+      "note": "Observer fingerprint not re-resolved"
     },
     "ProfileDetails.PROFILE_VIEW_HOLDER": {
       "kind": "class",
@@ -161,6 +162,46 @@
     "ChatIndicators.CHAT_REST_SERVICE": {
       "kind": "class",
       "name": "com.grindrapp.android.chat.data.datasource.api.service.ChatRestService"
+    },
+    "LocalSavedPhrases.AddSavedPhraseResponse": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.data.datasource.api.model.AddSavedPhraseResponse",
+      "fingerprint": "chat.data.datasource.api.model"
+    },
+    "LocalSavedPhrases.PhrasesRestService": {
+      "kind": "class",
+      "name": "com.grindrapp.android.api.PhrasesRestService"
+    },
+    "UnlimitedAlbums.AlbumsRestService": {
+      "kind": "class",
+      "name": "com.grindrapp.android.api.albums.AlbumsRestService"
+    },
+    "BanManagement.LoginRestService": {
+      "kind": "class",
+      "name": "com.grindrapp.android.api.LoginRestService"
+    },
+    "BanManagement.bannedArgs": {
+      "kind": "class",
+      "name": "ak0",
+      "fingerprint": "BannedArgs(bannedType="
+    },
+    "BanManagement.deviceUtility": {
+      "kind": "class",
+      "name": "",
+      "note": "dual fingerprint android_id+profile_tag_search_history not in one utility"
+    },
+    "ExpiringMedia.ExpiringImage": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.ui.model.chatmessage.body.ChatMessageBodyUiModel$ExpiringImage"
+    },
+    "ExpiringMedia.ExpiringPhotoStatusResponse": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.data.datasource.api.model.ExpiringPhotoStatusResponse"
+    },
+    "FeatureGranting.settingDistanceVisibilityViewModel": {
+      "kind": "class",
+      "name": "n5b",
+      "fingerprint": "UiState(distanceVisibility="
     }
   },
   "hooks": {
@@ -182,7 +223,7 @@
     },
     "EmptyCalls": {
       "status": "skipped",
-      "reason": "IndividualChatNavViewModel / isTalkBefore absent"
+      "reason": "IndividualChatNavViewModel/isTalkBefore absent"
     },
     "NotificationAlerts": {
       "status": "skipped",
@@ -191,6 +232,13 @@
     "ChatTerminal": {
       "status": "skipped",
       "reason": "chatMessageMetaData absent"
+    },
+    "LocalSavedPhrases": {
+      "status": "mapped"
+    },
+    "BanManagement": {
+      "status": "partial",
+      "reason": "deviceUtility skip"
     }
   }
 }
