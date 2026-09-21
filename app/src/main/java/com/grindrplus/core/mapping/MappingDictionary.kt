@@ -256,15 +256,16 @@ object MappingDictionary {
                     "GrindrPlus-MappingDictionary/1 (+https://github.com/terenzif/GrindrPlus)"
                 )
             }
+            val code = conn.responseCode
+            if (code !in 200..299) {
+                Logger.w(
+                    "Remote mapping pack HTTP $code for $url",
+                    LogSource.MODULE
+                )
+                runCatching { conn.errorStream?.close() }
+                return@runCatching null
+            }
             conn.inputStream.use { input ->
-                val code = conn.responseCode
-                if (code !in 200..299) {
-                    Logger.w(
-                        "Remote mapping pack HTTP $code for $url",
-                        LogSource.MODULE
-                    )
-                    return null
-                }
                 input.bufferedReader().readText()
             }
         }.getOrElse { err ->

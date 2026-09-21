@@ -292,7 +292,7 @@ fun AboutDialog(
                             )
 
                             Text(
-                                text = "R0rt1z2",
+                                text = "R0rt1z2/GrindrPlus",
                                 style = MaterialTheme.typography.bodyLarge.copy(
                                     color = MaterialTheme.colorScheme.primary
                                 ),
