@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
-// supported version: 25.20.0
+// supported version: 26.16.1
 class AntiBlock : Hook(
     "Anti Block",
     "Notifies you when someone blocks or unblocks you"
@@ -39,27 +39,27 @@ class AntiBlock : Hook(
     }
 
     override fun init() {
-        // do not invoke antiblock notification when the user is unblocking someone else
-        // search for '.setValue(new DialogMessage(116, null, 2, null));'
-        findClass(Obfuscation.G.AntiBlock.INDIVIDUAL_UNBLOCK_ACTIVITY_VIEW_MODEL)
-            .hook("R", HookStage.BEFORE) { param ->
-                GrindrPlus.shouldTriggerAntiblock = false
-            }
+        val unblockVm = Obfuscation.G.AntiBlock.INDIVIDUAL_UNBLOCK_ACTIVITY_VIEW_MODEL
+        if (unblockVm.isNotEmpty()) {
+            // was "R"; DialogMessage(116) lives in io6.L on 26.16.1
+            findClass(unblockVm)
+                .hook("L", HookStage.BEFORE) { param ->
+                    GrindrPlus.shouldTriggerAntiblock = false
+                }
 
-        // reenable antiblock notification after *above* is finished
-        // search for '.setValue(new DialogMessage(116, null, 2, null));'
-        findClass(Obfuscation.G.AntiBlock.INDIVIDUAL_UNBLOCK_ACTIVITY_VIEW_MODEL)
-            .hook("R", HookStage.AFTER) { param ->
-                scope.launch {
-                    try {
-                        delay(700) // Wait for WS to unblock
-                    } finally {
-                        withContext(NonCancellable) {
-                            GrindrPlus.shouldTriggerAntiblock = true
+            findClass(unblockVm)
+                .hook("L", HookStage.AFTER) { param ->
+                    scope.launch {
+                        try {
+                            delay(700) // Wait for WS to unblock
+                        } finally {
+                            withContext(NonCancellable) {
+                                GrindrPlus.shouldTriggerAntiblock = true
+                            }
                         }
                     }
                 }
-            }
+        }
 
         if (Config.get("force_old_anti_block_behavior", false) as Boolean) {
             findClass(Obfuscation.G.AntiBlock.CONVERSATION_DELETE_NOTIFICATION)

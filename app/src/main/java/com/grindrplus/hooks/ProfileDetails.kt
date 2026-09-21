@@ -25,7 +25,7 @@ import de.robv.android.xposed.XposedHelpers.setObjectField
 import java.util.ArrayList
 import kotlin.math.roundToInt
 
-// supported version: 25.20.0
+// supported version: 26.16.1
 class ProfileDetails : Hook(
 	"Profile details",
 	"Add extra fields and details to profiles"
@@ -34,47 +34,47 @@ class ProfileDetails : Hook(
 
     @SuppressLint("DefaultLocale")
     override fun init() {
-        findClass(Obfuscation.G.ProfileDetails.SERVER_DRIVEN_CASCADE_CACHED_STATE).hook("getItems", HookStage.AFTER) { param ->
-            (param.getResult() as List<*>)
-                .filter { (it?.javaClass?.name ?: "") == Obfuscation.G.ProfileDetails.SERVER_DRIVEN_CASCADE_CACHED_PROFILE }
-                .forEach {
-                    if (getObjectField(it, "isBoosting") as Boolean) {
-                        boostedProfilesList += callMethod(it, "getProfileId") as String
+        // ServerDrivenCascadeCacheState removed — track boosting from CascadeProfileUiData ctor
+        runCatching {
+            findClass(Obfuscation.G.ProfileDetails.CASCADE_PROFILE_UI_DATA)
+                .hookConstructor(HookStage.AFTER) { param ->
+                    val profile = param.thisObject()
+                    if (callMethod(profile, "isBoosting") as Boolean) {
+                        boostedProfilesList += callMethod(profile, "getProfileId") as String
                     }
                 }
+        }.onFailure {
+            logw("ProfileDetails CascadeProfileUiData: ${it.message}")
         }
 
-        findClass(Obfuscation.G.ProfileDetails.BLOCKED_PROFILES_OBSERVER).hook("onChanged", HookStage.AFTER) { param ->
-            // recently got merged into a case statement, so filter for the right argument type
-            if ((getObjectField(param.thisObject(), "a") as Int) != 0) return@hook
+        val blockedObserver = Obfuscation.G.ProfileDetails.BLOCKED_PROFILES_OBSERVER
+        if (blockedObserver.isNotEmpty()) {
+            findClass(blockedObserver).hook("onChanged", HookStage.AFTER) { param ->
+                // recently got merged into a case statement, so filter for the right argument type
+                if ((getObjectField(param.thisObject(), "a") as Int) != 0) return@hook
 
-			// what is the expected class?It is Object in the decompiled source
-            val obj = getObjectField(param.thisObject(), "b")
-			val profileList = getObjectField(obj, "o") as ArrayList<*>
+                // what is the expected class?It is Object in the decompiled source
+                val obj = getObjectField(param.thisObject(), "b")
+                val profileList = getObjectField(obj, "o") as ArrayList<*>
 
-            for (profile in profileList) {
-                val profileId = callMethod(profile, "getProfileId") as String
-                val displayName =
-                    (callMethod(profile, "getDisplayName") as? String)
-                        ?.takeIf { it.isNotEmpty() }
-                        ?.let { "$it ($profileId)" } ?: profileId
-                setObjectField(profile, "displayName", displayName)
+                for (profile in profileList) {
+                    val profileId = callMethod(profile, "getProfileId") as String
+                    val displayName =
+                        (callMethod(profile, "getDisplayName") as? String)
+                            ?.takeIf { it.isNotEmpty() }
+                            ?.let { "$it ($profileId)" } ?: profileId
+                    setObjectField(profile, "displayName", displayName)
+                }
             }
         }
 
-        findClass(Obfuscation.G.ProfileDetails.PROFILE_VIEW_HOLDER).hookConstructor(HookStage.AFTER) { param ->
-            val textView =
-                getObjectField(param.thisObject(), "a") as TextView
-
-            textView.setOnLongClickListener {
-                val text = textView.text.toString()
-                val profileId = if ("(" in text && ")" in text)
-                    text.substringAfter("(").substringBefore(")")
-                else text
-
-                copyToClipboard("Profile ID", profileId)
-                GrindrPlus.showToast(Toast.LENGTH_LONG, "Profile ID: $profileId")
-                true
+        val profileViewHolder = Obfuscation.G.ProfileDetails.PROFILE_VIEW_HOLDER
+        if (profileViewHolder.isNotEmpty()) {
+            // r29 uses view binding field b → o0d; long-press on display name remains via ProfileBarView
+            runCatching {
+                findClass(profileViewHolder)
+            }.onFailure {
+                logw("ProfileDetails PROFILE_VIEW_HOLDER: ${it.message}")
             }
         }
 
@@ -157,9 +157,14 @@ class ProfileDetails : Hook(
             }
         }
 
-        findClass(Obfuscation.G.ProfileDetails.DISTANCE_UTILS).hook("c", HookStage.AFTER) { param ->
+        // iq3.c(double, approx, show, special, abbreviated, isFeet?) — isFeet null → SettingsPref.b()
+        findClass(Obfuscation.G.ProfileDetails.DISTANCE_UTILS)
+            .hook(Obfuscation.G.ProfileDetails.DISTANCE_UTILS_METHOD, HookStage.AFTER) { param ->
             val distance = param.arg<Double>(0)
-            val isFeet = param.arg<Boolean>(2)
+            val isFeet = param.argNullable<Boolean>(5) ?: run {
+                val settingsPref = getObjectField(param.thisObject(), "b")
+                callMethod(settingsPref, "b") as Boolean
+            }
 
             param.setResult(
                 if (isFeet) {

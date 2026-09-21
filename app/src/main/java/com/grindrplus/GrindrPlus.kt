@@ -6,6 +6,8 @@ import android.app.Application
 import android.app.Application.ActivityLifecycleCallbacks
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -23,6 +25,7 @@ import com.grindrplus.core.Utils
 import com.grindrplus.core.Utils.handleImports
 import com.grindrplus.core.http.Client
 import com.grindrplus.core.http.Interceptor
+import com.grindrplus.core.mapping.MappingDictionary
 import com.grindrplus.persistence.GPDatabase
 import com.grindrplus.ui.DialogManager
 import com.grindrplus.utils.HookManager
@@ -76,15 +79,34 @@ object GrindrPlus {
     val currentActivity: Activity?
         get() = currentActivityRef?.get()
 
-    internal val userAgent = "Pb.e" // search for 'grindr3/'
-    internal val userSession = "com.grindrapp.android.usersession.b" // search for 'com.grindrapp.android.storage.UserSessionImpl$1'
-    private val deviceInfo =
-        "u8.u" // search for 'AdvertisingIdClient.Info("00000000-0000-0000-0000-000000000000", true)'
-    internal val grindrLocationProvider = "ff.e" // search for 'system settings insufficient for location request, attempting to resolve'
-    internal val serverDrivenCascadeRepo = "com.grindrapp.android.persistence.repository.ServerDrivenCascadeRepo"
-    internal val ageVerificationActivity = "com.grindrapp.android.ageverification.presentation.ui.AgeVerificationActivity"
-    internal val browseExploreActivity = "com.grindrapp.android.ui.browse.BrowseExploreMapActivity"
-    internal val serverNotification = "com.grindrapp.android.network.websocket.model.WebSocketNotification\$ServerNotification"
+    // Core class names: prefer active mapping pack; fallback literals = Grindr 26.16.1 (179451).
+    // JADX puts default-package R8 classes under "defpackage" in sources; runtime names are short DEX names.
+    internal val userAgent: String
+        get() = MappingDictionary.resolve("core.userAgent", "lrc") // search for 'grindr3/'
+    internal val userSession: String
+        get() = MappingDictionary.resolve("core.userSession", "atc") // implements UserSession
+    private val deviceInfo: String
+        get() = MappingDictionary.resolve("core.deviceInfo", "wh3")
+    internal val grindrLocationProvider: String
+        get() = MappingDictionary.resolve("core.grindrLocationProvider", "sw5")
+    // Was ServerDrivenCascadeRepo. On 26.16.1 cascade data layer is default-package us1.
+    internal val serverDrivenCascadeRepo: String
+        get() = MappingDictionary.resolve("core.serverDrivenCascadeRepo", "us1")
+    internal val ageVerificationActivity: String
+        get() = MappingDictionary.resolve(
+            "core.ageVerificationActivity",
+            "com.grindrapp.android.ageverification.presentation.ui.AgeVerificationActivity"
+        )
+    internal val browseExploreActivity: String
+        get() = MappingDictionary.resolve(
+            "core.browseExploreActivity",
+            "com.grindrapp.android.ui.browse.BrowseExploreMapActivity"
+        )
+    internal val serverNotification: String
+        get() = MappingDictionary.resolve(
+            "core.serverNotification",
+            "com.grindrapp.android.network.websocket.model.WebSocketNotification\$ServerNotification"
+        )
 
     private val ioScope = CoroutineScope(Dispatchers.IO)
     private val taskScheduer = TaskScheduler(ioScope)
@@ -110,6 +132,8 @@ object GrindrPlus {
 
         Logger.initialize(context, bridgeClient, true)
         Logger.i("Initializing GrindrPlus...", LogSource.MODULE)
+
+        loadMappingPack(modulePath, application)
 
         DialogManager.checkVersionCodes(context, versionCodes, versionNames)
 
@@ -181,10 +205,11 @@ object GrindrPlus {
             setupInstanceManager()
             setupServerNotificationHook()
         } catch (t: Throwable) {
-            Logger.e("Failed to hook critical classes: ${t.message}", LogSource.MODULE)
+            // Soft-fail: InstanceManager already skips missing classes per-name. Do not abort
+            // before HookManager — MVP hooks must still initialize.
+            Logger.e("Failed to hook critical classes (continuing to HookManager): ${t.message}", LogSource.MODULE)
             Logger.writeRaw(t.stackTraceToString())
             showToast(Toast.LENGTH_LONG, "Failed to hook critical classes: ${t.message}")
-            return
         }
 
         NetworkRepository.fetchRemoteData(splineDataEndpoint) { points ->
@@ -285,18 +310,62 @@ object GrindrPlus {
         })
     }
 
+    private fun loadMappingPack(modulePath: String, application: Application) {
+        val versionCode = installedVersionCode(application)
+        val pack = MappingDictionary.loadFromModuleApk(modulePath, versionCode)
+        if (pack != null) {
+            Logger.i(
+                "Mapping pack loaded: ${pack.versionName} (code ${pack.versionCode}), " +
+                    "${pack.symbols.size} symbols, confidence=${pack.confidence}",
+                LogSource.MODULE
+            )
+        } else {
+            Logger.w(
+                "No mapping pack for versionCode=$versionCode — using compile-time literals",
+                LogSource.MODULE
+            )
+        }
+    }
+
+    private fun installedVersionCode(application: Application): Int {
+        return try {
+            val pkgInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                application.packageManager.getPackageInfo(
+                    application.packageName,
+                    PackageManager.PackageInfoFlags.of(0)
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                application.packageManager.getPackageInfo(application.packageName, 0)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                pkgInfo.longVersionCode.toInt()
+            } else {
+                @Suppress("DEPRECATION")
+                pkgInfo.versionCode
+            }
+        } catch (t: Throwable) {
+            Logger.e("Failed to read installed versionCode: ${t.message}", LogSource.MODULE)
+            0
+        }
+    }
+
     private fun setupInstanceManager() {
         if (isInstanceManagerInitialized) {
             Logger.d("InstanceManager already initialized, skipping", LogSource.MODULE)
             return
         }
 
-        instanceManager.hookClassConstructors(
+        val hooked = instanceManager.hookClassConstructors(
             userAgent,
             userSession,
             deviceInfo,
             grindrLocationProvider,
             serverDrivenCascadeRepo
+        )
+        Logger.i(
+            "InstanceManager hooked ${hooked.size}/5 classes: ${hooked.joinToString()}",
+            LogSource.MODULE
         )
 
         instanceManager.setCallback(userSession) { uSession ->

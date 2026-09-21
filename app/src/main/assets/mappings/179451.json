@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "versionName": "26.16.1",
+  "versionCode": 179451,
+  "confidence": "static-jadx",
+  "generatedFrom": "Obfuscation.kt + GrindrPlus.kt + RetrofitUtils (post-#64 wire)",
+  "symbols": {
+    "core.userAgent": {
+      "kind": "class",
+      "name": "lrc",
+      "fingerprint": "grindr3/"
+    },
+    "core.userSession": {
+      "kind": "class",
+      "name": "atc",
+      "fingerprint": "implements UserSession"
+    },
+    "core.deviceInfo": {
+      "kind": "class",
+      "name": "wh3",
+      "fingerprint": "AdvertisingIdClient.Info(\"00000000-0000-0000-0000-000000000000\", true)"
+    },
+    "core.grindrLocationProvider": {
+      "kind": "class",
+      "name": "sw5",
+      "fingerprint": "system settings insufficient for location request, attempting to resolve"
+    },
+    "core.serverDrivenCascadeRepo": {
+      "kind": "class",
+      "name": "us1",
+      "note": "was ServerDrivenCascadeRepo; CascadeService wrapper"
+    },
+    "core.ageVerificationActivity": {
+      "kind": "class",
+      "name": "com.grindrapp.android.ageverification.presentation.ui.AgeVerificationActivity"
+    },
+    "core.browseExploreActivity": {
+      "kind": "class",
+      "name": "com.grindrapp.android.ui.browse.BrowseExploreMapActivity"
+    },
+    "core.serverNotification": {
+      "kind": "class",
+      "name": "com.grindrapp.android.network.websocket.model.WebSocketNotification$ServerNotification",
+      "fingerprint": "ServerNotification"
+    },
+    "retrofit.fail": {
+      "kind": "class",
+      "name": "q84",
+      "fingerprint": "Fail(failValue="
+    },
+    "retrofit.success": {
+      "kind": "class",
+      "name": "r84",
+      "fingerprint": "Success(successValue="
+    },
+    "retrofit.successValue": {
+      "kind": "field",
+      "name": "a"
+    },
+    "retrofit.failValue": {
+      "kind": "field",
+      "name": "a"
+    },
+    "DisableBoosting.DRAWER_PROFILE_UI_STATE": {
+      "kind": "class",
+      "name": "com.grindrapp.android.ui.drawer.model.DrawerProfileUiState",
+      "fingerprint": "DrawerProfileUiState(showBoostMeButton="
+    },
+    "DisableBoosting.RADAR_UI_MODEL": {
+      "kind": "class",
+      "name": "dc9",
+      "fingerprint": "RadarUiModel(roamButton="
+    },
+    "DisableBoosting.FAB_UI_MODEL": {
+      "kind": "class",
+      "name": "com.grindrapp.android.boost2.presentation.model.FabUiModel"
+    },
+    "DisableBoosting.RIGHT_NOW_MICROS_FAB_UI_MODEL": {
+      "kind": "class",
+      "name": "com.grindrapp.android.rightnow.presentation.model.RightNowMicrosFabUiModel"
+    },
+    "DisableBoosting.BOOST_STATE_CLASS": {
+      "kind": "class",
+      "name": "com.grindrapp.android.ui.drawer.model.MicrosDrawerItemState$Unavailable"
+    },
+    "DisableBoosting.NAVBAR_CLASS": {
+      "kind": "class",
+      "name": "com.grindrapp.android.home.presentation.model.HomeScreenBottomNavigationUiModel"
+    },
+    "DisableBoosting.SMALL_PERSISTENT_VECTOR": {
+      "kind": "class",
+      "name": "kotlinx.collections.immutable.implementations.immutableList.SmallPersistentVector"
+    },
+    "DisableBoosting.SUBSCRIBE_FOR_BOOST_REDEEM": {
+      "kind": "class",
+      "name": "",
+      "note": "lambda not confidently re-resolved"
+    },
+    "DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP": {
+      "kind": "class",
+      "name": "h76"
+    },
+    "DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP_METHOD": {
+      "kind": "method",
+      "name": "emit"
+    },
+    "AntiBlock.CHAT_DELETE_CONVERSATION_PLUGIN": {
+      "kind": "class",
+      "name": "d32",
+      "fingerprint": "Deleting conversations"
+    },
+    "AntiBlock.INBOX_FRAGMENT_V2_DELETE_CONVERSATIONS": {
+      "kind": "class",
+      "name": "dz2",
+      "fingerprint": "chat_read_receipt"
+    },
+    "AntiBlock.INDIVIDUAL_UNBLOCK_ACTIVITY_VIEW_MODEL": {
+      "kind": "class",
+      "name": "io6"
+    },
+    "AntiBlock.CONVERSATION_DELETE_NOTIFICATION": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.model.ConversationDeleteNotification"
+    },
+    "ProfileDetails.BLOCKED_PROFILES_OBSERVER": {
+      "kind": "class",
+      "name": "",
+      "note": "fingerprint not re-resolved"
+    },
+    "ProfileDetails.PROFILE_VIEW_HOLDER": {
+      "kind": "class",
+      "name": "r29"
+    },
+    "ProfileDetails.DISTANCE_UTILS": {
+      "kind": "class",
+      "name": "iq3",
+      "method": "c",
+      "note": "concrete impl of utils.distance.DistanceUtils"
+    },
+    "ProfileDetails.PROFILE_BAR_VIEW": {
+      "kind": "class",
+      "name": "com.grindrapp.android.ui.profileV2.ProfileBarView"
+    },
+    "ProfileDetails.PROFILE_VIEW_STATE": {
+      "kind": "class",
+      "name": "com.grindrapp.android.ui.profileV2.model.ProfileViewState"
+    },
+    "ProfileDetails.SERVER_DRIVEN_CASCADE_CACHED_STATE": {
+      "kind": "class",
+      "name": "",
+      "note": "removed; use CascadeProfileUiData"
+    },
+    "ProfileDetails.SERVER_DRIVEN_CASCADE_CACHED_PROFILE": {
+      "kind": "class",
+      "name": "com.grindrapp.android.persistence.model.serverdrivencascade.CascadeProfileUiData"
+    },
+    "ProfileDetails.CASCADE_PROFILE_UI_DATA": {
+      "kind": "class",
+      "name": "com.grindrapp.android.persistence.model.serverdrivencascade.CascadeProfileUiData"
+    },
+    "ChatIndicators.CHAT_REST_SERVICE": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.data.datasource.api.service.ChatRestService"
+    }
+  },
+  "hooks": {
+    "DisableBoosting": {
+      "status": "partial"
+    },
+    "AntiBlock": {
+      "status": "mapped"
+    },
+    "ProfileDetails": {
+      "status": "partial"
+    },
+    "ChatIndicators": {
+      "status": "mapped"
+    },
+    "DisableShuffle": {
+      "status": "skipped",
+      "reason": "fingerprint absent on this DEX"
+    },
+    "EmptyCalls": {
+      "status": "skipped",
+      "reason": "IndividualChatNavViewModel / isTalkBefore absent"
+    },
+    "NotificationAlerts": {
+      "status": "skipped",
+      "reason": "notification_reminder_time absent"
+    },
+    "ChatTerminal": {
+      "status": "skipped",
+      "reason": "chatMessageMetaData absent"
+    }
+  }
+}

@@ -4,6 +4,7 @@ import com.grindrplus.GrindrPlus
 import com.grindrplus.persistence.model.SavedPhraseEntity
 import com.grindrplus.utils.Hook
 import com.grindrplus.utils.HookStage
+import com.grindrplus.utils.RetrofitUtils
 import com.grindrplus.utils.RetrofitUtils.RETROFIT_NAME
 import com.grindrplus.utils.RetrofitUtils.isDELETE
 import com.grindrplus.utils.RetrofitUtils.isGET
@@ -21,8 +22,8 @@ class LocalSavedPhrases : Hook(
     "Local saved phrases",
     "Save unlimited phrases locally"
 ) {
-    private val phrasesRestService = "J8.k" // search for 'v3/me/prefs'
-    private val createSuccessResult = "Yf.a\$b" // search for 'Success(successValue='
+    private val phrasesRestService = "com.grindrapp.android.api.PhrasesRestService" // 'v3/me/prefs'
+    private val createSuccessResult = RetrofitUtils.SUCCESS_CLASS_NAME // r84 'Success(successValue='
     private val chatRestService = "com.grindrapp.android.chat.data.datasource.api.service.ChatRestService"
     private val addSavedPhraseResponse =
         "com.grindrapp.android.chat.api.model.AddSavedPhraseResponse"

@@ -21,41 +21,45 @@ class AlwaysOnline :
         try {
             val serverDrivenCascadeRepoInstance =
                 GrindrPlus.instanceManager.getInstance<Any>(GrindrPlus.serverDrivenCascadeRepo)
+                    ?: throw IllegalStateException(
+                        "Cascade repo instance ${GrindrPlus.serverDrivenCascadeRepo} not captured yet"
+                    )
             val grindrLocationProviderInstance =
                 GrindrPlus.instanceManager.getInstance<Any>(GrindrPlus.grindrLocationProvider)
+                    ?: throw IllegalStateException(
+                        "Location provider ${GrindrPlus.grindrLocationProvider} not captured yet"
+                    )
 
-            val location = getObjectField(grindrLocationProviderInstance, "e")
+            val location = getObjectField(grindrLocationProviderInstance, "d")
             val latitude = callMethod(location, "getLatitude") as Double
             val longitude = callMethod(location, "getLongitude") as Double
             val geoHash = coordsToGeoHash(latitude, longitude)
 
-            val methodName = "fetchCascadePage"
+            // 26.16.1: us1.a(lat, lon, useNearbyGeoHash, …) → CascadeService.getCascadePage
+            // (replaces fetchCascadePage(geoHash, …) on deleted ServerDrivenCascadeRepo).
             val method =
-                serverDrivenCascadeRepoInstance!!.javaClass.methods.firstOrNull {
-                    it.name == methodName
-                } ?: throw IllegalStateException("Unable to find $methodName method")
-
-            val params = arrayOf<Any?>(
-                geoHash,
-                null,
-                false, false, false, false,
-                null, null, null,
-                null, null, null, null,
-                null, null, null, null,
-                null, null, null, null,
-                false,
-                1,
-                null, null,
-                false, false, false,
-                null,
-                false
-            )
+                serverDrivenCascadeRepoInstance.javaClass.methods.firstOrNull { m ->
+                    m.name == "a" &&
+                        m.parameterTypes.size == 9 &&
+                        m.parameterTypes[0] == Double::class.javaPrimitiveType &&
+                        m.parameterTypes[1] == Double::class.javaPrimitiveType
+                } ?: throw IllegalStateException(
+                    "Unable to find us1.a(lat,lon,…) cascade fetch method (geoHash=$geoHash)"
+                )
 
             val result = callSuspendFunction { continuation ->
-                method.invoke(serverDrivenCascadeRepoInstance, *params, continuation)
+                method.invoke(
+                    serverDrivenCascadeRepoInstance,
+                    latitude,
+                    longitude,
+                    false, // use nearby geohash path as "page" rather than explore
+                    null, null, null, null, // optional map bounds
+                    null, // page size hint
+                    continuation
+                )
             }
 
-            if (result.toString().contains("Success")) {
+            if (result != null && !result.toString().contains("Failure")) {
                 logi("AlwaysOnline task executed successfully")
             } else {
                 loge("AlwaysOnline task failed: $result")

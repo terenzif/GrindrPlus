@@ -9,8 +9,9 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        val grindrVersionName = listOf("25.20.0")
-        val grindrVersionCode = listOf(147239)
+        // Supported hook target (see supported_target.json). Not the same as Play scrape.
+        val grindrVersionName = listOf("26.16.1")
+        val grindrVersionCode = listOf(179451)
         val gitCommitHash = getGitCommitHash() ?: "unknown"
 
         applicationId = "com.grindrplus"

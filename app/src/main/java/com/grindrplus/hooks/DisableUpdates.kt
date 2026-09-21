@@ -13,16 +13,17 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 
-// supported version: 25.20.0
+// supported version: 26.16.1
 class DisableUpdates : Hook(
     "Disable updates",
     "Disable forced updates"
 ) {
+    // Play scrape (latest_play.json), NOT supported_target.json — used to spoof "already latest"
     private val versionInfoEndpoint =
-        "https://raw.githubusercontent.com/R0rt1z2/GrindrPlus/master/version.json"
+        "https://raw.githubusercontent.com/terenzif/grindrplus/master/latest_play.json"
     private val appUpdateInfo = "com.google.android.play.core.appupdate.AppUpdateInfo"
     private val appUpdateZzm = "com.google.android.play.core.appupdate.zzm" // search for 'requestUpdateInfo(%s)'
-	private val appUpgradeManager = "jf.n" // search for 'Uri.parse("market://details?id=com.grindrapp.android");'
+    private val appUpgradeManager = "xa0" // search for 'Uri.parse("market://details?id=com.grindrapp.android");' + deprecation_message
     private val appConfiguration = "com.grindrapp.android.platform.config.AppConfiguration"
     private var versionCode: Int = 0
     private var versionName: String = ""
@@ -39,7 +40,7 @@ class DisableUpdates : Hook(
             }
 
         findClass(appUpgradeManager) // showDeprecatedVersionDialog()
-			// search for '.setMessage(R.string.deprecation_message);'
+            // search for '.setMessage(R.string.deprecation_message);'
             .hook("b", HookStage.BEFORE) { param ->
                 param.setResult(null)
             }
@@ -99,8 +100,9 @@ class DisableUpdates : Hook(
         ).versionName.toString()
 
         if (compareVersions(versionName, currentVersion) > 0) {
+            // AppConfiguration version field is `f` on 26.16.1 (was `d` on 25.20.0)
             findClass(appConfiguration).hookConstructor(HookStage.AFTER) { param ->
-                setObjectField(param.thisObject(), "d", "$versionName.$versionCode")
+                setObjectField(param.thisObject(), "f", "$versionName.$versionCode")
             }
 
             findClass(GrindrPlus.userAgent).hookConstructor(HookStage.AFTER) { param ->
