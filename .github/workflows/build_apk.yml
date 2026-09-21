@@ -126,6 +126,14 @@ jobs:
             "${RELEASE_APK}"
           "${ANDROID_HOME}/build-tools/${BT}/apksigner" verify "${RELEASE_APK}"
           rm -f /tmp/keystore.p12
+          # apksigner signs in-place; Gradle still named it *-release-unsigned.apk
+          case "$RELEASE_APK" in
+            *-unsigned.apk) SIGNED_APK="${RELEASE_APK%-unsigned.apk}.apk" ;;
+            *) SIGNED_APK="${RELEASE_APK%.apk}-signed.apk" ;;
+          esac
+          mv "$RELEASE_APK" "$SIGNED_APK"
+          echo "RELEASE_APK=$SIGNED_APK" >> "$GITHUB_ENV"
+          echo "Signed release renamed to $(basename "$SIGNED_APK")"
 
       - name: Upload debug artifact
         uses: actions/upload-artifact@v4
