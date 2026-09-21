@@ -48,10 +48,8 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v4
-        with:
-          packages: platform-tools
+      # Runner-provided Android SDK (same approach as CodeQL). Do not use
+      # android-actions/setup-android — legacy `tools` package breaks sdkmanager.
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
