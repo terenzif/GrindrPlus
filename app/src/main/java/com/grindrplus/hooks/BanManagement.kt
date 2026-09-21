@@ -51,7 +51,19 @@ class BanManagement : Hook(
     private var bannedInfo: JSONObject = JSONObject()
     @SuppressLint("DiscouragedApi")
     override fun init() {
-        val authService = findClass(authServiceClass)
+        // Empty MappingDictionary name = explicit soft-skip (scaffolding packs).
+        if (authServiceClass.isEmpty()) {
+            logi("Ban management: LoginRestService remap skipped (absent on this DEX)")
+            return
+        }
+
+        val authService = try {
+            findClass(authServiceClass)
+        } catch (t: Throwable) {
+            logi("Ban management: LoginRestService not found ($authServiceClass) — soft-skip")
+            Logger.writeRaw(t.stackTraceToString())
+            return
+        }
 
         RetrofitUtils.hookService(
             authService,
@@ -90,6 +102,11 @@ class BanManagement : Hook(
             }
         } else {
             logi("Ban management: deviceUtility remap skipped (fingerprint not found on 26.16.1)")
+        }
+
+        if (bannedArgs.isEmpty()) {
+            logi("Ban management: bannedArgs remap skipped (absent on this DEX)")
+            return
         }
 
         // ak0(bannedType, bannedReason, email, phoneNumber, dialCode, isBanAutomated, bannedSubReason, authAnalyticsParams)

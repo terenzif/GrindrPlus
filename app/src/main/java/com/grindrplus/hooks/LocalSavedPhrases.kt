@@ -50,6 +50,11 @@ class LocalSavedPhrases : Hook(
             return
         }
 
+        if (phrasesRestService.isEmpty()) {
+            logi("Local saved phrases: PhrasesRestService remap skipped (absent on this DEX)")
+            return
+        }
+
         val chatRestServiceClass = findClass(chatRestService)
         val createSuccess = findClass(createSuccessResult).constructors.firstOrNull() ?: run {
             loge("Failed to find Success result constructor (check obfuscation)")

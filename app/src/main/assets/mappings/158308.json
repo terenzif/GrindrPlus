@@ -181,32 +181,32 @@
     "DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP": {
       "kind": "class",
       "name": "",
-      "note": "not resolved for this versionCode \u2014 soft-skip (do not use 26.16.1 literal fallback)"
+      "note": "not resolved for this versionCode — soft-skip (do not use 26.16.1 literal fallback)"
     },
     "AntiBlock.CHAT_DELETE_CONVERSATION_PLUGIN": {
       "kind": "class",
       "name": "",
-      "note": "not resolved for this versionCode \u2014 soft-skip (do not use 26.16.1 literal fallback)"
+      "note": "not resolved for this versionCode — soft-skip (do not use 26.16.1 literal fallback)"
     },
     "AntiBlock.INBOX_FRAGMENT_V2_DELETE_CONVERSATIONS": {
       "kind": "class",
       "name": "",
-      "note": "not resolved for this versionCode \u2014 soft-skip (do not use 26.16.1 literal fallback)"
+      "note": "not resolved for this versionCode — soft-skip (do not use 26.16.1 literal fallback)"
     },
     "AntiBlock.INDIVIDUAL_UNBLOCK_ACTIVITY_VIEW_MODEL": {
       "kind": "class",
       "name": "",
-      "note": "not resolved for this versionCode \u2014 soft-skip (do not use 26.16.1 literal fallback)"
+      "note": "not resolved for this versionCode — soft-skip (do not use 26.16.1 literal fallback)"
     },
     "ProfileDetails.PROFILE_VIEW_HOLDER": {
       "kind": "class",
       "name": "",
-      "note": "not resolved for this versionCode \u2014 soft-skip (do not use 26.16.1 literal fallback)"
+      "note": "not resolved for this versionCode — soft-skip (do not use 26.16.1 literal fallback)"
     },
     "ProfileDetails.DISTANCE_UTILS": {
       "kind": "class",
       "name": "",
-      "note": "not resolved for this versionCode \u2014 soft-skip (do not use 26.16.1 literal fallback)"
+      "note": "not resolved for this versionCode — soft-skip (do not use 26.16.1 literal fallback)"
     }
   },
   "hooks": {
@@ -225,7 +225,8 @@
       "status": "unverified"
     },
     "LocalSavedPhrases": {
-      "status": "mapped"
+      "status": "skipped",
+      "reason": "PhrasesRestService absent on this DEX"
     },
     "DisableBoosting": {
       "status": "partial"
@@ -237,7 +238,8 @@
       "status": "partial"
     },
     "ChatIndicators": {
-      "status": "mapped"
+      "status": "skipped",
+      "reason": "CHAT_REST_SERVICE absent on this DEX"
     }
   }
 }

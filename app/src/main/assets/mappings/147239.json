@@ -190,7 +190,8 @@
       "status": "mapped"
     },
     "LocalSavedPhrases": {
-      "status": "mapped"
+      "status": "skipped",
+      "reason": "PhrasesRestService absent on this DEX"
     }
   }
 }
