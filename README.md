@@ -19,7 +19,7 @@ This repository is the **active fork** of GrindrPlus after the upstream project 
 
 **Current direction (Phase 2):** target **Grindr 26.16.1** (`versionCode` 179451), with per-hook soft-fail and an updated version gate. Historical baseline still documented: **25.20.0**.
 
-**In progress:** **product ↔ mapping** separation — JSON packs per `versionCode` under `app/src/main/assets/mappings/` and a `MappingDictionary` stub, so a new Grindr release can need a pack instead of a full core rebuild. Literals in `Obfuscation.kt` remain the live source until the migration (Phase B) is complete.
+**In progress:** **product ↔ mapping** separation — JSON packs per `versionCode` under `app/src/main/assets/mappings/`. `MappingDictionary` loads the pack for the installed Grindr `versionCode` at module init (from the module APK). `Obfuscation` / core / Retrofit lookups prefer the pack and fall back to compile-time literals when no pack is present.
 
 This module is **not** affiliated with Grindr LLC. Use at your own risk.
 
@@ -99,7 +99,7 @@ Some hooks on 26.16.1 are **skipped** or **partial** when the DEX fingerprint is
 
 See [docs/README.md](docs/README.md).
 
-Mapping packs: `app/src/main/assets/mappings/<versionCode>.json`. Loader: `com.grindrplus.core.mapping.MappingDictionary` (stub — not yet wired into `init`).
+Mapping packs: `app/src/main/assets/mappings/<versionCode>.json`. Loader: `com.grindrplus.core.mapping.MappingDictionary` (wired in `GrindrPlus.init`; soft-fail to literals if the pack is missing).
 
 ## Credits
 
