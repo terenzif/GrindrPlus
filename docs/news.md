@@ -16,7 +16,7 @@ Wiki is **enabled** (`has_wiki: true`) but the `.wiki.git` repo does **not** exi
 2. Title: `Home`
 3. Paste the body from the stub below → Save.
 4. Optionally add a `News` page linking to Releases.
-5. Open a tiny PR: set `Constants.NEWS_PAGE_URL = Constants.NEWS_WIKI_URL` (or the literal wiki URL).
+5. Open a tiny PR: change the **initializer** of `Constants.NEWS_PAGE_URL` to the wiki URL string (same value as `NEWS_WIKI_URL`) — it is a `const val`, not a reassignment.
 
 ### Home.md stub (copy-paste)
 
