@@ -30,8 +30,9 @@ Free mod, no warranty. We are not responsible for lost chats, bans, or other iss
 
 ## Download & news
 
-- Releases / APKs (also the in-app **News** link): [Releases](https://github.com/terenzif/GrindrPlus/releases)
-- News stub / wiki plan: [docs/news.md](docs/news.md) · wiki (once Home exists): [Wiki](https://github.com/terenzif/GrindrPlus/wiki)
+- Releases / APKs: [Releases](https://github.com/terenzif/GrindrPlus/releases)
+- In-app **News** tab: [Wiki](https://github.com/terenzif/GrindrPlus/wiki)
+- News (in-app): [Wiki](https://github.com/terenzif/GrindrPlus/wiki) · [docs/news.md](docs/news.md)
 - CI: [Verify](https://github.com/terenzif/GrindrPlus/actions/workflows/verify.yml) · [Build & Release](https://github.com/terenzif/GrindrPlus/actions/workflows/build_apk.yml)
 
 Each build supports **one** primary Grindr version (currently **26.16.1**). Extra versions are handled via mapping packs (bundled and/or remote), not a universal binary.

@@ -29,11 +29,10 @@ object Constants {
         "https://raw.githubusercontent.com/terenzif/GrindrPlus/refs/heads/master/spline.json"
 
     /**
-     * In-app News tab external link.
-     * Wiki is preferred long-term; until a wiki Home exists, Releases is the clean default.
+     * In-app News tab external link (wiki Home; Releases remain download channel).
      */
-    const val NEWS_PAGE_URL = "https://github.com/terenzif/GrindrPlus/releases"
+    const val NEWS_PAGE_URL = "https://github.com/terenzif/GrindrPlus/wiki"
 
-    /** Optional wiki landing (create Home.md once in GitHub UI to activate). */
+    /** Same as [NEWS_PAGE_URL] — kept for docs / alternate call sites. */
     const val NEWS_WIKI_URL = "https://github.com/terenzif/GrindrPlus/wiki"
 }

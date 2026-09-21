@@ -85,7 +85,7 @@ fun NotificationScreen(innerPadding: PaddingValues) {
                 )
 
                 MarkdownText(
-                    markdown = "Fork news & releases for <b>terenzif/GrindrPlus</b>. Tap <b>here</b> to open GitHub Releases (wiki preferred once Home exists).",
+                    markdown = "Fork news for <b>terenzif/GrindrPlus</b>. Tap <b>here</b> to open the GitHub wiki.",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
