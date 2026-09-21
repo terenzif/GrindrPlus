@@ -312,7 +312,12 @@ object GrindrPlus {
 
     private fun loadMappingPack(modulePath: String, application: Application) {
         val versionCode = installedVersionCode(application)
-        val pack = MappingDictionary.loadFromModuleApk(modulePath, versionCode)
+        // Remote → disk cache → bundled assets → literals (all soft-fail).
+        val pack = MappingDictionary.loadForVersion(
+            modulePath = modulePath,
+            versionCode = versionCode,
+            cacheDir = application.filesDir,
+        )
         if (pack != null) {
             Logger.i(
                 "Mapping pack loaded: ${pack.versionName} (code ${pack.versionCode}), " +

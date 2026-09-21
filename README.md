@@ -9,7 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/terenzif/GrindrPlus/actions"><img src="https://img.shields.io/github/actions/workflow/status/terenzif/GrindrPlus/build_apk.yml?branch=master&logo=github&label=Build" alt="Build"></a>
+  <a href="https://github.com/terenzif/GrindrPlus/actions/workflows/verify.yml"><img src="https://img.shields.io/github/actions/workflow/status/terenzif/GrindrPlus/verify.yml?branch=master&logo=github&label=Verify" alt="Verify"></a>
+  <a href="https://github.com/terenzif/GrindrPlus/actions/workflows/build_apk.yml"><img src="https://img.shields.io/github/actions/workflow/status/terenzif/GrindrPlus/build_apk.yml?branch=master&logo=github&label=Build" alt="Build"></a>
   <a href="https://github.com/terenzif/GrindrPlus/releases"><img src="https://img.shields.io/github/v/release/terenzif/GrindrPlus?include_prereleases&label=Release" alt="Release"></a>
 </p>
 
@@ -17,9 +18,9 @@
 
 This repository is the **active fork** of GrindrPlus after the upstream project ([R0rt1z2/GrindrPlus](https://github.com/R0rt1z2/GrindrPlus)) was archived and after the PairIP / VM phase. Here we continue support, mappings, and releases for personal / lab use.
 
-**Current direction (Phase 2):** target **Grindr 26.16.1** (`versionCode` 179451), with per-hook soft-fail and an updated version gate. Historical baseline still documented: **25.20.0**.
+**Current target:** Grindr **26.16.1** (`versionCode` 179451), with per-hook soft-fail and an updated version gate. Historical baseline still documented: **25.20.0**.
 
-**In progress:** **product ↔ mapping** separation — JSON packs per `versionCode` under `app/src/main/assets/mappings/`. `MappingDictionary` loads the pack for the installed Grindr `versionCode` at module init (from the module APK). `Obfuscation` / core / Retrofit lookups prefer the pack and fall back to compile-time literals when no pack is present.
+**Mapping packs:** JSON per `versionCode` under `app/src/main/assets/mappings/` (bundled offline) **and** remotely from GitHub `mapping-packs/` so a new Grindr build can get a remapped pack **without** a full module APK rebuild. Loader: `MappingDictionary` — remote → device cache → assets → compile-time literals (all soft-fail). Details: [docs/remote-mapping-packs.md](docs/remote-mapping-packs.md).
 
 This module is **not** affiliated with Grindr LLC. Use at your own risk.
 
@@ -27,18 +28,19 @@ This module is **not** affiliated with Grindr LLC. Use at your own risk.
 
 Free mod, no warranty. We are not responsible for lost chats, bans, or other issues. This project does not collect personal data and does not serve ads — the code is open source (GPL-3.0).
 
-## Download
+## Download & news
 
-- Releases from this fork: [Releases](https://github.com/terenzif/GrindrPlus/releases)
-- CI builds: [Actions](https://github.com/terenzif/GrindrPlus/actions)
+- Releases / APKs (also the in-app **News** link): [Releases](https://github.com/terenzif/GrindrPlus/releases)
+- News stub / wiki plan: [docs/news.md](docs/news.md) · wiki (once Home exists): [Wiki](https://github.com/terenzif/GrindrPlus/wiki)
+- CI: [Verify](https://github.com/terenzif/GrindrPlus/actions/workflows/verify.yml) · [Build & Release](https://github.com/terenzif/GrindrPlus/actions/workflows/build_apk.yml)
 
-Each build supports **one** specific Grindr version (currently **26.16.1**). A different client may fail to start the module or degrade individual hooks.
+Each build supports **one** primary Grindr version (currently **26.16.1**). Extra versions are handled via mapping packs (bundled and/or remote), not a universal binary.
 
 ## Installation (LSPosed, recommended)
 
 **Requirements:** root (Magisk / KernelSU) + working [LSPosed](https://github.com/JingMatrix/LSPosed) (JingMatrix fork recommended on recent Android).
 
-1. Install the module APK from [Releases](https://github.com/terenzif/GrindrPlus/releases) (or CI).
+1. Install the module APK from [Releases](https://github.com/terenzif/GrindrPlus/releases) (or CI artifacts).
 2. Install Grindr **26.16.1** (Play Store or APKMirror bundle + [SAI](https://github.com/Aefyr/SAI/releases)).
 3. Enable the module in LSPosed and add Grindr to the scope.
 4. Open Grindr and verify.
@@ -99,12 +101,16 @@ Some hooks on 26.16.1 are **skipped** or **partial** when the DEX fingerprint is
 
 See [docs/README.md](docs/README.md).
 
-Mapping packs: `app/src/main/assets/mappings/<versionCode>.json`. Loader: `com.grindrplus.core.mapping.MappingDictionary` (wired in `GrindrPlus.init`; soft-fail to literals if the pack is missing).
+- Mapping packs (bundled): `app/src/main/assets/mappings/<versionCode>.json`
+- Mapping packs (remote publish path): `mapping-packs/<versionCode>.json` — [docs/remote-mapping-packs.md](docs/remote-mapping-packs.md)
+- Loader: `com.grindrplus.core.mapping.MappingDictionary` (wired in `GrindrPlus.init`)
+- Fork CI notes: Project store `docs/github-actions-fork.md` (when present) / workflows under `.github/workflows/`
 
 ## Credits
 
 - Original idea and mod: [ElJaviLuki/GrindrPlus](https://github.com/ElJaviLuki/GrindrPlus)
 - Rewrite and historical maintenance through archive: [R0rt1z2/GrindrPlus](https://github.com/R0rt1z2/GrindrPlus) and contributors
+- Current fork maintenance: [terenzif/GrindrPlus](https://github.com/terenzif/GrindrPlus)
 - LSPosed / LSPatch: [JingMatrix](https://github.com/JingMatrix)
 
 ## License

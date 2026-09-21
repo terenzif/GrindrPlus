@@ -1,21 +1,43 @@
-name: Fetch News from Telegram and dump to a json
+name: Fetch News from Telegram
+
+# Optional Telegram → news.json mirror for the in-app News tab.
+# Soft-skips when TELEGRAM_BOT_TOKEN is unset (fork default).
+# Primary user-facing news link is the GitHub Releases / docs news page — not upstream.
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/1 * * * *'
+    # Hourly is enough; former */1 hammered the API and failed without secrets.
+    - cron: "0 * * * *"
+
+permissions:
+  contents: write
 
 jobs:
   fetch-news:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Skip when Telegram secret missing
+        id: gate
+        run: |
+          if [ -z "${{ secrets.TELEGRAM_BOT_TOKEN }}" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::TELEGRAM_BOT_TOKEN not configured — skipping news fetch (fork-friendly)."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Fetch updates and append to news.json
+        if: steps.gate.outputs.skip != 'true'
         run: |
-          curl -s "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/getUpdates?offset=-20" \
+          set -euo pipefail
+          test -f news.json || echo '[]' > news.json
+          curl -fsS "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/getUpdates?offset=-20" \
           | jq '[.result[]
                   | select(.channel_post != null)
                   | {
@@ -31,11 +53,12 @@ jobs:
             | ($old + $new)
             | unique_by(.message_id)
           ' - news.json > news.tmp.json
-
           mv news.tmp.json news.json
 
       - name: Commit and push if changed
+        if: steps.gate.outputs.skip != 'true'
         run: |
+          set -euo pipefail
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add news.json

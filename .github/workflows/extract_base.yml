@@ -8,44 +8,45 @@ on:
         required: true
         default: ""
 
+permissions:
+  contents: read
+
 jobs:
   extract-and-upload:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Create working directory
-      run: mkdir extracted_bundle
+      - name: Create working directory
+        run: mkdir extracted_bundle
 
-    - name: Download bundle
-      run: |
-        echo "Downloading bundle from ${{ github.event.inputs.bundle_url }}"
-        curl -L -o extracted_bundle/bundle.zip "${{ github.event.inputs.bundle_url }}"
+      - name: Download bundle
+        run: |
+          set -euo pipefail
+          echo "Downloading bundle from ${{ github.event.inputs.bundle_url }}"
+          curl -fsSL -o extracted_bundle/bundle.zip "${{ github.event.inputs.bundle_url }}"
 
-    - name: Extract bundle
-      run: |
-        unzip extracted_bundle/bundle.zip -d extracted_bundle
+      - name: Extract bundle
+        run: unzip extracted_bundle/bundle.zip -d extracted_bundle
 
-    - name: List extracted files
-      run: |
-        echo "Contents of the extracted folder:"
-        ls extracted_bundle
+      - name: List extracted files
+        run: ls -la extracted_bundle
 
-    - name: Locate and upload base APK
-      run: |
-        if [ -f extracted_bundle/base.apk ]; then
-          echo "base.apk found. Preparing to upload..."
-        else
-          echo "base.apk not found. Make sure the bundle contains this file."
-          exit 1
-        fi
-      shell: bash
+      - name: Locate base APK
+        run: |
+          set -euo pipefail
+          if [ -f extracted_bundle/base.apk ]; then
+            echo "base.apk found."
+          else
+            echo "base.apk not found. Make sure the bundle contains this file."
+            exit 1
+          fi
 
-    - name: Upload base APK
-      if: success()
-      uses: actions/upload-artifact@v3
-      with:
-        name: base.apk
-        path: extracted_bundle/base.apk
+      - name: Upload base APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: base.apk
+          path: extracted_bundle/base.apk

@@ -273,21 +273,40 @@ fun AboutDialog(
 
                         Row {
                             Text(
-                                text = "R0rt1z2",
+                                text = "terenzif",
                                 style = MaterialTheme.typography.bodyLarge.copy(
                                     color = MaterialTheme.colorScheme.primary
                                 ),
                                 modifier = Modifier.clickable {
                                     val intent = Intent(
                                         Intent.ACTION_VIEW,
-                                        "https://github.com/R0rt1z2".toUri()
+                                        "https://github.com/terenzif/GrindrPlus".toUri()
                                     )
                                     context.startActivity(intent)
                                 }
                             )
 
                             Text(
-                                text = " and ",
+                                text = " (fork) · ",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+
+                            Text(
+                                text = "R0rt1z2/GrindrPlus",
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    color = MaterialTheme.colorScheme.primary
+                                ),
+                                modifier = Modifier.clickable {
+                                    val intent = Intent(
+                                        Intent.ACTION_VIEW,
+                                        "https://github.com/R0rt1z2/GrindrPlus".toUri()
+                                    )
+                                    context.startActivity(intent)
+                                }
+                            )
+
+                            Text(
+                                text = " / ",
                                 style = MaterialTheme.typography.bodyLarge
                             )
 

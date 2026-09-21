@@ -1,5 +1,7 @@
 package com.grindrplus.core.mapping
 
+import java.io.File
+import kotlin.io.path.createTempDirectory
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -183,4 +185,100 @@ class MappingDictionaryTest {
         assertEquals("ak0", MappingDictionary.resolve("BanManagement.bannedArgs", ""))
         assertEquals("mapped", MappingDictionary.current?.hooks?.get("LocalSavedPhrases")?.status)
     }
+
+    @Test
+    fun loadForVersion_usesValidCacheWhenRemoteDisabled() {
+        val cacheDir = createTempDirectory(prefix = "gp-map-cache-ok").toFile()
+        try {
+            val versionCode = 179451
+            val json = """
+                {
+                  "schemaVersion": 1,
+                  "versionName": "26.16.1",
+                  "versionCode": 179451,
+                  "confidence": "test",
+                  "generatedFrom": "cache-test",
+                  "symbols": {
+                    "core.userAgent": { "kind": "class", "name": "fromCache" }
+                  },
+                  "hooks": {}
+                }
+            """.trimIndent()
+            val file = File(File(cacheDir, "mapping-packs-cache"), "$versionCode.json")
+            file.parentFile?.mkdirs()
+            file.writeText(json)
+
+            val pack = MappingDictionary.loadForVersion(
+                modulePath = "/nonexistent/module.apk",
+                versionCode = versionCode,
+                cacheDir = cacheDir,
+                fetchRemote = false
+            )
+            assertNotNull(pack)
+            assertEquals(179451, MappingDictionary.current?.versionCode)
+            assertEquals("fromCache", MappingDictionary.resolve("core.userAgent", "literal"))
+        } finally {
+            cacheDir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun loadForVersion_softFailsMalformedCacheAndKeepsLiterals() {
+        val cacheDir = createTempDirectory(prefix = "gp-map-cache-bad").toFile()
+        try {
+            val versionCode = 179451
+            val file = File(File(cacheDir, "mapping-packs-cache"), "$versionCode.json")
+            file.parentFile?.mkdirs()
+            file.writeText("{ not valid json")
+
+            val pack = MappingDictionary.loadForVersion(
+                modulePath = "/nonexistent/module.apk",
+                versionCode = versionCode,
+                cacheDir = cacheDir,
+                fetchRemote = false
+            )
+            assertNull(pack)
+            assertNull(MappingDictionary.current)
+            assertEquals("literal", MappingDictionary.resolve("core.userAgent", "literal"))
+        } finally {
+            cacheDir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun loadForVersion_softFailsVersionMismatchInCache() {
+        val cacheDir = createTempDirectory(prefix = "gp-map-cache-mismatch").toFile()
+        try {
+            val versionCode = 179451
+            val json = """
+                {
+                  "schemaVersion": 1,
+                  "versionName": "t",
+                  "versionCode": 999,
+                  "confidence": "test",
+                  "generatedFrom": "cache-test",
+                  "symbols": {
+                    "core.userAgent": { "kind": "class", "name": "wrong" }
+                  },
+                  "hooks": {}
+                }
+            """.trimIndent()
+            val file = File(File(cacheDir, "mapping-packs-cache"), "$versionCode.json")
+            file.parentFile?.mkdirs()
+            file.writeText(json)
+
+            val pack = MappingDictionary.loadForVersion(
+                modulePath = "/nonexistent/module.apk",
+                versionCode = versionCode,
+                cacheDir = cacheDir,
+                fetchRemote = false
+            )
+            assertNull(pack)
+            assertNull(MappingDictionary.current)
+            assertEquals("literal", MappingDictionary.resolve("core.userAgent", "literal"))
+        } finally {
+            cacheDir.deleteRecursively()
+        }
+    }
+
 }

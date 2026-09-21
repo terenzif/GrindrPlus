@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import com.grindrplus.core.Constants
 import com.grindrplus.manager.fetchNotifs
 import com.grindrplus.manager.tgMessages
 import dev.jeziellago.compose.markdowntext.MarkdownText
@@ -69,7 +70,7 @@ fun NotificationScreen(innerPadding: PaddingValues) {
                 .padding(16.dp)
                 .clickable {
                     context.startActivity(Intent(Intent.ACTION_VIEW).apply {
-                        data = "https://t.me/grindrplusci".toUri()
+                        data = Constants.NEWS_PAGE_URL.toUri()
                     })
                 },
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -84,7 +85,7 @@ fun NotificationScreen(innerPadding: PaddingValues) {
                 )
 
                 MarkdownText(
-                    markdown = "This is a mirror of our Telegram channel, click <b>here</b> to join.",
+                    markdown = "Fork news & releases for <b>terenzif/GrindrPlus</b>. Tap <b>here</b> to open GitHub Releases (wiki preferred once Home exists).",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
