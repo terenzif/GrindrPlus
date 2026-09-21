@@ -88,11 +88,16 @@ jobs:
 
       - name: Detect signing secrets
         id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ] && \
-             [ -n "${{ secrets.KEY_ALIAS }}" ] && \
-             [ -n "${{ secrets.KEYSTORE_PASSWORD }}" ] && \
-             [ -n "${{ secrets.KEY_PASSWORD }}" ]; then
+          if [ -n "$KEYSTORE_BASE64" ] && \
+             [ -n "$KEY_ALIAS" ] && \
+             [ -n "$KEYSTORE_PASSWORD" ] && \
+             [ -n "$KEY_PASSWORD" ]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
