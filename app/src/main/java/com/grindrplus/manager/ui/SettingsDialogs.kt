@@ -273,6 +273,25 @@ fun AboutDialog(
 
                         Row {
                             Text(
+                                text = "terenzif",
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    color = MaterialTheme.colorScheme.primary
+                                ),
+                                modifier = Modifier.clickable {
+                                    val intent = Intent(
+                                        Intent.ACTION_VIEW,
+                                        "https://github.com/terenzif/GrindrPlus".toUri()
+                                    )
+                                    context.startActivity(intent)
+                                }
+                            )
+
+                            Text(
+                                text = " (fork) · ",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+
+                            Text(
                                 text = "R0rt1z2",
                                 style = MaterialTheme.typography.bodyLarge.copy(
                                     color = MaterialTheme.colorScheme.primary
@@ -280,14 +299,14 @@ fun AboutDialog(
                                 modifier = Modifier.clickable {
                                     val intent = Intent(
                                         Intent.ACTION_VIEW,
-                                        "https://github.com/R0rt1z2".toUri()
+                                        "https://github.com/R0rt1z2/GrindrPlus".toUri()
                                     )
                                     context.startActivity(intent)
                                 }
                             )
 
                             Text(
-                                text = " and ",
+                                text = " / ",
                                 style = MaterialTheme.typography.bodyLarge
                             )
 

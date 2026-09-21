@@ -28,9 +28,10 @@ Deprioritize style nits, rename bikesheds, and “support every Grindr version i
 
 ### Mapping packs
 
-- Packs live under `app/src/main/assets/mappings/<versionCode>.json`.
+- Bundled packs live under `app/src/main/assets/mappings/<versionCode>.json`; remote copies under repo `mapping-packs/`.
 - Runtime loader: `com.grindrplus.core.mapping.MappingDictionary`.
-- At Xposed init, load via **`loadFromModuleApk(modulePath, versionCode)`** (module APK zip). Do **not** require `GrindrPlus.context.assets` for packs — that `Context` is Grindr’s, not the module’s. `load(context, …)` is for manager app / tests only.
+- Preferred init path: **`loadForVersion(modulePath, versionCode, cacheDir)`** — order is **remote → device cache → module APK assets → literals**. Soft-fails on network/parse/I/O (log + continue). `loadFromModuleApk` remains the assets-only step inside that chain.
+- Do **not** require `GrindrPlus.context.assets` for packs — that `Context` is Grindr’s, not the module’s. `load(context, …)` is for manager app / tests only.
 - `Obfuscation` / core / Retrofit resolve through `MappingDictionary.resolve(key, fallback)` with compile-time literal fallbacks.
 - Pack contract: empty symbol `name` (`""`) means **explicit soft-skip** (same idea as empty Obfuscation strings). Callers must check `isNotEmpty()` / skip **before** `findClass`.
 
@@ -60,7 +61,7 @@ When reviewing Kotlin hooks, mapping JSON, or init paths:
 - [ ] Pack `versionCode` matches filename and embedded field; `schemaVersion` compatible with loader.
 - [ ] Pack keys stay stable (`core.userAgent`, `BanManagement.bannedArgs`, …); only `name` / method fields change across versions.
 - [ ] Hook `status` values (`mapped` / `partial` / `skipped` / `unverified`) match reality; skipped symbols have a short `reason`.
-- [ ] Init still prefers `loadFromModuleApk` for in-process Xposed; no regression to Grindr `context.assets` for module packs.
+- [ ] Init uses `loadForVersion` (remote→cache→assets→literals) or at least `loadFromModuleApk` for in-process Xposed; no regression to Grindr `context.assets` for module packs.
 - [ ] No suggestion to remove device lock, commit secrets, or check in PIN / credential files.
 - [ ] README/docs changes stay English and accurate vs soft-fail / single-target versioning.
 

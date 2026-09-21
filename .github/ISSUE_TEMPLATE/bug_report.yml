@@ -2,9 +2,8 @@ name: 🐞 Bug Report
 description:  Create a report about something that is not working
 title: "[BUG]: "
 labels: ["bug"]
-projects: ["R0rt1z2/GrindrPlus"]
 assignees:
-  - R0rt1z2
+  - terenzif
 body:
   - type: markdown
     attributes:
@@ -20,7 +19,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Please search to see if an issue already exists for the bug you encountered. You can search existing issues [here](https://github.com/R0rt1z2/GrindrPlus/issues).
+        Please search to see if an issue already exists for the bug you encountered. You can search existing issues [here](https://github.com/terenzif/GrindrPlus/issues).
 
   - type: checkboxes
     id: existing-issue

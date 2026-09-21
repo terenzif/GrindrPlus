@@ -34,8 +34,8 @@ class HomeViewModel : ViewModel() {
     companion object {
         private val TAG = HomeViewModel::class.simpleName
 
-        private const val CONTRIBUTORS_URL = "https://api.github.com/repos/R0rt1z2/GrindrPlus/contributors"
-        private const val RELEASES_URL = "https://api.github.com/repos/R0rt1z2/GrindrPlus/releases"
+        private const val CONTRIBUTORS_URL = "https://api.github.com/repos/terenzif/GrindrPlus/contributors"
+        private const val RELEASES_URL = "https://api.github.com/repos/terenzif/GrindrPlus/releases"
         // Reuse the HTTP client across requests
         private val client = OkHttpClient()
     }

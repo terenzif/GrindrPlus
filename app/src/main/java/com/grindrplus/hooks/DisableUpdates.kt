@@ -20,7 +20,7 @@ class DisableUpdates : Hook(
 ) {
     // Play scrape (latest_play.json), NOT supported_target.json — used to spoof "already latest"
     private val versionInfoEndpoint =
-        "https://raw.githubusercontent.com/terenzif/grindrplus/master/latest_play.json"
+        "https://raw.githubusercontent.com/terenzif/GrindrPlus/master/latest_play.json"
     private val appUpdateInfo = "com.google.android.play.core.appupdate.AppUpdateInfo"
     private val appUpdateZzm = "com.google.android.play.core.appupdate.zzm" // search for 'requestUpdateInfo(%s)'
     private val appUpgradeManager = "xa0" // search for 'Uri.parse("market://details?id=com.grindrapp.android");' + deprecation_message

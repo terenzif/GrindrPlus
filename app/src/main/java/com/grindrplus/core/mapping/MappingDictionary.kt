@@ -5,23 +5,72 @@ import com.grindrplus.core.LogSource
 import com.grindrplus.core.Logger
 import org.json.JSONObject
 import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.zip.ZipFile
 
 /**
- * Runtime loader for versioned mapping packs under `assets/mappings/<versionCode>.json`.
+ * Runtime loader for versioned mapping packs under `assets/mappings/<versionCode>.json`
+ * and optionally from a remote GitHub URL (see [DEFAULT_REMOTE_BASE_URL]).
  *
- * Prefer [loadFromModuleApk] at Xposed init: [Context.getAssets] belongs to Grindr, not the module.
+ * Prefer [loadForVersion] at Xposed init: remote → disk cache → module APK assets → literals.
  * Soft-fail: missing/invalid packs leave [current] null so callers fall back to compile-time literals.
  */
 object MappingDictionary {
     private const val ASSET_DIR = "mappings"
     private const val SCHEMA_VERSION = 1
+    private const val CACHE_SUBDIR = "mapping-packs-cache"
+    private const val REMOTE_CONNECT_TIMEOUT_MS = 3_000
+    private const val REMOTE_READ_TIMEOUT_MS = 3_000
+
+    /**
+     * Default remote base (no trailing slash). Override via [loadForVersion] `remoteBaseUrl`
+     * or a one-line file `mapping_pack_base_url.txt` under the cache parent (filesDir).
+     *
+     * Pack URL: `{base}/{versionCode}.json`
+     */
+    const val DEFAULT_REMOTE_BASE_URL =
+        "https://raw.githubusercontent.com/terenzif/GrindrPlus/master/mapping-packs"
 
     @Volatile
     private var active: MappingPack? = null
 
     val current: MappingPack?
         get() = active
+
+    /**
+     * Load order for device [versionCode]:
+     * 1. remote JSON (soft-fail network/parse)
+     * 2. on-device file cache
+     * 3. module APK assets ([loadFromModuleApk])
+     *
+     * Never throws for I/O / network — returns null so init can continue with literals.
+     */
+    fun loadForVersion(
+        modulePath: String,
+        versionCode: Int,
+        cacheDir: File,
+        remoteBaseUrl: String = DEFAULT_REMOTE_BASE_URL,
+        fetchRemote: Boolean = true,
+    ): MappingPack? {
+        val resolvedBase = resolveRemoteBaseUrl(cacheDir, remoteBaseUrl)
+        if (fetchRemote) {
+            fetchRemotePack(resolvedBase, versionCode)?.let { json ->
+                decodeAndActivate(json, versionCode)?.let { pack ->
+                    writeCache(cacheDir, versionCode, json)
+                    Logger.i(
+                        "Mapping pack loaded from remote ($resolvedBase/$versionCode.json)",
+                        LogSource.MODULE
+                    )
+                    return pack
+                }
+            }
+        }
+
+        loadFromCache(cacheDir, versionCode)?.let { return it }
+
+        return loadFromModuleApk(modulePath, versionCode)
+    }
 
     /**
      * Load pack for [versionCode] from the module APK on disk (LSPosed / Xposed path).
@@ -48,7 +97,7 @@ object MappingDictionary {
 
     /**
      * Load pack for [versionCode] from [context] assets (manager app / tests).
-     * Prefer [loadFromModuleApk] when running inside Grindr via Xposed.
+     * Prefer [loadFromModuleApk] / [loadForVersion] when running inside Grindr via Xposed.
      */
     fun load(context: Context, versionCode: Int): MappingPack? {
         val assetPath = "$ASSET_DIR/$versionCode.json"
@@ -179,5 +228,85 @@ object MappingDictionary {
             symbols = symbols,
             hooks = hooks,
         )
+    }
+
+    private fun resolveRemoteBaseUrl(cacheDir: File, fallback: String): String {
+        val overrideFile = File(cacheDir, "mapping_pack_base_url.txt")
+        val fromFile = runCatching {
+            if (overrideFile.isFile) {
+                overrideFile.readText().lineSequence().firstOrNull()?.trim().orEmpty()
+            } else {
+                ""
+            }
+        }.getOrDefault("")
+        val base = fromFile.ifEmpty { fallback }.trimEnd('/')
+        return base
+    }
+
+    private fun fetchRemotePack(baseUrl: String, versionCode: Int): String? {
+        val url = "$baseUrl/$versionCode.json"
+        return runCatching {
+            val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                connectTimeout = REMOTE_CONNECT_TIMEOUT_MS
+                readTimeout = REMOTE_READ_TIMEOUT_MS
+                requestMethod = "GET"
+                instanceFollowRedirects = true
+                setRequestProperty(
+                    "User-Agent",
+                    "GrindrPlus-MappingDictionary/1 (+https://github.com/terenzif/GrindrPlus)"
+                )
+            }
+            conn.inputStream.use { input ->
+                val code = conn.responseCode
+                if (code !in 200..299) {
+                    Logger.w(
+                        "Remote mapping pack HTTP $code for $url",
+                        LogSource.MODULE
+                    )
+                    return null
+                }
+                input.bufferedReader().readText()
+            }
+        }.getOrElse { err ->
+            Logger.w(
+                "Remote mapping pack fetch failed for versionCode=$versionCode: ${err.message}",
+                LogSource.MODULE
+            )
+            null
+        }
+    }
+
+    private fun cacheFile(cacheDir: File, versionCode: Int): File =
+        File(File(cacheDir, CACHE_SUBDIR), "$versionCode.json")
+
+    private fun writeCache(cacheDir: File, versionCode: Int, json: String) {
+        runCatching {
+            val file = cacheFile(cacheDir, versionCode)
+            file.parentFile?.mkdirs()
+            file.writeText(json)
+        }.onFailure { err ->
+            Logger.w(
+                "Failed to cache mapping pack versionCode=$versionCode: ${err.message}",
+                LogSource.MODULE
+            )
+        }
+    }
+
+    private fun loadFromCache(cacheDir: File, versionCode: Int): MappingPack? {
+        val file = cacheFile(cacheDir, versionCode)
+        if (!file.isFile) return null
+        val json = runCatching { file.readText() }.getOrElse { err ->
+            Logger.w(
+                "Mapping pack cache read failed for versionCode=$versionCode: ${err.message}",
+                LogSource.MODULE
+            )
+            return null
+        }
+        return decodeAndActivate(json, versionCode)?.also {
+            Logger.i(
+                "Mapping pack loaded from device cache (versionCode=$versionCode)",
+                LogSource.MODULE
+            )
+        }
     }
 }

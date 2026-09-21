@@ -26,5 +26,14 @@ object Constants {
     )
 
     const val SPLINE_DATA_ENDPOINT =
-        "https://raw.githubusercontent.com/terenzif/grindrplus/refs/heads/master/spline.json"
+        "https://raw.githubusercontent.com/terenzif/GrindrPlus/refs/heads/master/spline.json"
+
+    /**
+     * In-app News tab external link.
+     * Wiki is preferred long-term; until a wiki Home exists, Releases is the clean default.
+     */
+    const val NEWS_PAGE_URL = "https://github.com/terenzif/GrindrPlus/releases"
+
+    /** Optional wiki landing (create Home.md once in GitHub UI to activate). */
+    const val NEWS_WIKI_URL = "https://github.com/terenzif/GrindrPlus/wiki"
 }
