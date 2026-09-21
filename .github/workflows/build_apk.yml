@@ -101,19 +101,26 @@ jobs:
 
       - name: Sign release APK
         if: steps.signing.outputs.available == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > /tmp/keystore.jks
+          # PKCS12 keystore (secrets: KEYSTORE_*). Write as .p12 for apksigner.
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > /tmp/keystore.p12
           BT=$(ls "${ANDROID_HOME}/build-tools" | sort -V | tail -n1)
           "${ANDROID_HOME}/build-tools/${BT}/apksigner" sign \
-            --ks /tmp/keystore.jks \
-            --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
-            --ks-pass "pass:${{ secrets.KEYSTORE_PASSWORD }}" \
-            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
+            --ks /tmp/keystore.p12 \
+            --ks-type PKCS12 \
+            --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass "pass:${KEYSTORE_PASSWORD}" \
+            --key-pass "pass:${KEY_PASSWORD}" \
             --out "${RELEASE_APK}" \
             "${RELEASE_APK}"
           "${ANDROID_HOME}/build-tools/${BT}/apksigner" verify "${RELEASE_APK}"
-          rm -f /tmp/keystore.jks
+          rm -f /tmp/keystore.p12
 
       - name: Upload debug artifact
         uses: actions/upload-artifact@v4
