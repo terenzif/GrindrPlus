@@ -3,6 +3,9 @@
 ## Dev env setup
 Read here how to [set up dev environment](env_setup.md)
 
+## Release signing
+Fork CI signing secrets and post-`apksigner` artifact names: [release-signing.md](release-signing.md)
+
 ## Patches
 Patches are located in `com.grindrplus.hooks` package. 
 When targeting an obfuscated class/method, leave a comment with some sensible code snippet 

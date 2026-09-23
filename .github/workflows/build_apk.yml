@@ -105,6 +105,7 @@ jobs:
           fi
 
       - name: Sign release APK
+        id: sign
         if: steps.signing.outputs.available == 'true'
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
@@ -131,8 +132,21 @@ jobs:
             *-unsigned.apk) SIGNED_APK="${RELEASE_APK%-unsigned.apk}.apk" ;;
             *) SIGNED_APK="${RELEASE_APK%.apk}-signed.apk" ;;
           esac
-          mv "$RELEASE_APK" "$SIGNED_APK"
+          if [ "$SIGNED_APK" = "$RELEASE_APK" ]; then
+            echo "::error::Signed APK path unexpectedly unchanged: $RELEASE_APK"
+            exit 1
+          fi
+          mv -n "$RELEASE_APK" "$SIGNED_APK"
+          test -f "$SIGNED_APK"
+          test ! -e "$RELEASE_APK"
+          case "$(basename "$SIGNED_APK")" in
+            *-unsigned.apk)
+              echo "::error::Rename failed; still unsigned-named: $SIGNED_APK"
+              exit 1
+              ;;
+          esac
           echo "RELEASE_APK=$SIGNED_APK" >> "$GITHUB_ENV"
+          echo "release_apk=$SIGNED_APK" >> "$GITHUB_OUTPUT"
           echo "Signed release renamed to $(basename "$SIGNED_APK")"
 
       - name: Upload debug artifact
