@@ -233,9 +233,8 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
         } else {
             MessageBanner(
                 text = "• LSPatch embeds the module into Grindr (no LSPosed needed)\n" +
-                    "• Upstream APK hosts are offline — use Custom Files: Grindr APK " +
-                    "(Aurora Store) + mod from GitHub Releases\n" +
-                    "• Remote mapping packs still apply after patch (same loader as LSPosed)\n" +
+                    "• Grindr APK: Aurora Store / SAI → Custom Files (we do not host Grindr)\n" +
+                    "• Module: GitHub Releases; mappings stay remote/bundled (no re-patch for new packs)\n" +
                     "• Don't close the app mid-install; Grindr may crash on first launch",
                 isVisible = warningBannerVisible,
                 isPulsating = isInstalling || isCloning,
@@ -486,13 +485,13 @@ private fun startInstallation(
 ) {
     if (version.grindrUrl.isBlank() || version.modUrl.isBlank()) {
         addLog(
-            "Manifest entry missing Grindr and/or mod URL. Use Custom Files: " +
-                "Grindr APK from Aurora Store + module APK from GitHub Releases.",
+            "Pick Grindr + mod via Custom Files (Aurora / SAI + Releases). " +
+                "This fork does not download Grindr from a CDN.",
             LogType.ERROR
         )
         showToast(
             context,
-            "No hosted Grindr APK — use Custom Files (Aurora + Releases)."
+            "Use Custom Files: Grindr (Aurora) + mod (Releases)."
         )
         onCompleted(false)
         return

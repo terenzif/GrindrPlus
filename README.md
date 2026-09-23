@@ -48,7 +48,7 @@ Each build supports **one** primary Grindr version (currently **26.16.1**). Extr
 
 **Quick check:** long-press the **Browse** tab → GrindrPlus status popup; unlimited cascade profiles and no third-party ads.
 
-> **LSPatch tab** (manager bottom nav): embeds the module into Grindr without LSPosed. Upstream `gplusapks.airdns.org` hosts are **offline** on this fork — use **Custom Files** (Grindr from Aurora Store + module from Releases). Remote mapping packs still load after patch. Known limits: Google login, maps, stability. Preferred path remains LSPosed above. Details: [docs/manager-ui-lspatch.md](docs/manager-ui-lspatch.md).
+> **LSPatch tab** (manager bottom nav): embeds the module into Grindr without LSPosed. No Grindr CDN — use **Custom Files** with Grindr from Aurora Store + module from Releases; mappings stay remote/bundled (no APK hosting needed). Known limits: Google login, maps, stability. Preferred path remains LSPosed above. Details: [docs/manager-ui-lspatch.md](docs/manager-ui-lspatch.md).
 
 ## Features (inherited / maintained)
 

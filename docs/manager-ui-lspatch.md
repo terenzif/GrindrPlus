@@ -2,38 +2,36 @@
 
 Bottom nav (this fork): **LSPatch · Block Log · Home · News · Settings**.
 
+## What was `airdns`?
+
+Upstream GrindrPlus (`R0rt1z2`) hosted Grindr + mod APKs on **`gplusapks.airdns.org`** so the manager could one-click download both from `manifest.json`. That was **their** CDN — not something this fork needs or replaces.
+
+**We do not host Grindr APKs.** F.Ter already pulls Grindr via Aurora Store (or SAI). Module APKs come from **GitHub Releases**. Mapping packs are already **bundled + remote** (`mapping-packs/`). No ad-hoc APK hosting.
+
 ## Does LSPatch still work?
 
-**Partially.** The embedded LSPatch pipeline (`org.lsposed.patch.LSPatch`, `InstallScreen` → `Installation` → `PatchApkStep`) is still in the APK and can patch Grindr + module when you supply both APKs.
+Yes, as a **local patch** flow: pick Grindr APK + module APK → LSPatch embeds → install. The pipeline (`InstallScreen` → `Installation` → `PatchApkStep`) is unchanged.
 
-What broke on this fork:
-
-| Piece | Status |
+| Input | Source on this fork |
 | --- | --- |
-| Upstream `gplusapks.airdns.org` hosts in old `manifest.json` | **Offline** (connect timeout) |
-| One-click Install from hosted Grindr URL | **Unavailable** — Grindr APK is not hosted on this repo |
-| Module APK URL | **OK** — GitHub Releases (`manifest.json` points at latest smoke/signed build) |
-| Custom Files (pick Grindr + mod) | **Supported** path for LSPatch on this fork |
+| Grindr APK | Aurora Store / SAI (local file — Custom Files) |
+| Module APK | [Releases](https://github.com/terenzif/GrindrPlus/releases) (or Custom Files) |
+| Mappings | Remote → cache → assets → literals (no LSPatch re-run needed for new packs) |
+
+`manifest.json` lists the current tip version and the **mod** URL only (Grindr URL left empty on purpose). Install then routes you to Custom Files for the Grindr APK you already downloaded.
 
 ## Remote mapping packs + LSPatch
 
-Yes — they compose.
+They compose: after patch/install, init still runs `MappingDictionary.loadForVersion`. Publishing `mapping-packs/<versionCode>.json` does not require re-LSPatching.
 
-1. LSPatch embeds the GrindrPlus module into a Grindr APK (or you use LSPosed with a separate module install).
-2. At Grindr process init, `MappingDictionary.loadForVersion` runs: **remote → device cache → bundled assets → literals**.
-3. Publishing a new pack under `mapping-packs/<versionCode>.json` does **not** require re-running LSPatch or reinstalling the module, as long as the module binary already contains the remote loader (current builds).
+LSPosed remains preferred when available; LSPatch is the no-LSPosed path.
 
-LSPosed remains the **recommended** path (fewer Google/maps issues). Use LSPatch when you cannot run LSPosed.
+## How to use LSPatch here
 
-## How to use LSPatch on this fork
+1. Grindr **26.16.1** via Aurora Store (or SAI bundle) — save the APK/bundle.
+2. Module APK from Releases (or let the tip row’s mod URL download).
+3. Manager → **LSPatch** → **Custom Files** → Grindr + mod → install.
 
-1. Download Grindr **26.16.1** via Aurora Store (or SAI bundle).
-2. Download the module APK from [Releases](https://github.com/terenzif/GrindrPlus/releases).
-3. Manager → **LSPatch** → **Custom Files** → select both → install.
-4. After first launch, remote packs can refresh mappings for that Grindr `versionCode`.
-
-`manifest.json` keeps a `v4.7.2-26.16.1` entry with an empty Grindr URL and the Releases mod URL so the selector shows the current tip; Install refuses empty Grindr URL and tells you to use Custom Files.
-
-## News tab (related)
+## News tab
 
 See [news.md](news.md) — wiki + Releases, not Telegram.
