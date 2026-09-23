@@ -85,6 +85,7 @@ dependencies {
     implementation(libs.androidx.coordinatorlayout)
     implementation(libs.material)
     implementation(libs.square.okhttp)
+    implementation(libs.gplayapi)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.runtime.android)

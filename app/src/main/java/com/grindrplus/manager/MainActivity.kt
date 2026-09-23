@@ -518,7 +518,7 @@ class MainActivity : ComponentActivity() {
                                 )
 
                                 Text(
-                                    text = "• If you were using LSPatch previously, open the LSPatch tab and install with Custom Files (Grindr from Aurora Store + module from Releases), or switch to LSPosed JingMatrix.",
+                                    text = "• If you were using LSPatch previously, open the LSPatch tab (Play download or Custom Files), or switch to LSPosed JingMatrix.",
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(bottom = 12.dp)
                                 )

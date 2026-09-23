@@ -48,7 +48,7 @@ Each build supports **one** primary Grindr version (currently **26.16.1**). Extr
 
 **Quick check:** long-press the **Browse** tab → GrindrPlus status popup; unlimited cascade profiles and no third-party ads.
 
-> **LSPatch tab** (manager bottom nav): embeds the module into Grindr without LSPosed. No Grindr CDN — use **Custom Files** with Grindr from Aurora Store + module from Releases; mappings stay remote/bundled (no APK hosting needed). Known limits: Google login, maps, stability. Preferred path remains LSPosed above. Details: [docs/manager-ui-lspatch.md](docs/manager-ui-lspatch.md).
+> **LSPatch tab** (manager bottom nav): embeds the module into Grindr without LSPosed. Grindr is downloaded **in-app via Play** (Aurora OSS `gplayapi` / anonymous dispenser — not the Aurora Store app). Module from Releases; mappings remote/bundled. Custom Files = offline fallback. Known limits: Google login, maps, stability. Preferred path remains LSPosed above. Details: [docs/manager-ui-lspatch.md](docs/manager-ui-lspatch.md).
 
 ## Features (inherited / maintained)
 
