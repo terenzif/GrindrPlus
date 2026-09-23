@@ -31,8 +31,8 @@ Free mod, no warranty. We are not responsible for lost chats, bans, or other iss
 ## Download & news
 
 - Releases / APKs: [Releases](https://github.com/terenzif/GrindrPlus/releases)
-- In-app **News** tab: [Wiki](https://github.com/terenzif/GrindrPlus/wiki)
-- News (in-app): [Wiki](https://github.com/terenzif/GrindrPlus/wiki) · [docs/news.md](docs/news.md)
+- In-app **News** tab: wiki CTA + GitHub Releases list (no Telegram feed) — [docs/news.md](docs/news.md)
+- Wiki: [terenzif/GrindrPlus/wiki](https://github.com/terenzif/GrindrPlus/wiki)
 - CI: [Verify](https://github.com/terenzif/GrindrPlus/actions/workflows/verify.yml) · [Build & Release](https://github.com/terenzif/GrindrPlus/actions/workflows/build_apk.yml)
 
 Each build supports **one** primary Grindr version (currently **26.16.1**). Extra versions are handled via mapping packs (bundled and/or remote), not a universal binary.
@@ -48,7 +48,7 @@ Each build supports **one** primary Grindr version (currently **26.16.1**). Extr
 
 **Quick check:** long-press the **Browse** tab → GrindrPlus status popup; unlimited cascade profiles and no third-party ads.
 
-> LSPatch / no-root still exists in the manager code, but on this fork the **supported and tested** path is LSPosed. LSPatch has known limits (Google login, maps, stability).
+> **LSPatch tab** (manager bottom nav): embeds the module into Grindr without LSPosed. Grindr is downloaded **in-app via Play** (Aurora OSS `gplayapi` / anonymous dispenser — not the Aurora Store app). Module from Releases; mappings remote/bundled. Custom Files = offline fallback. Known limits: Google login, maps, stability. Preferred path remains LSPosed above. Details: [docs/manager-ui-lspatch.md](docs/manager-ui-lspatch.md).
 
 ## Features (inherited / maintained)
 

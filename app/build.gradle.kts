@@ -85,6 +85,10 @@ dependencies {
     implementation(libs.androidx.coordinatorlayout)
     implementation(libs.material)
     implementation(libs.square.okhttp)
+    // lspatch.jar already embeds Gson; gplayapi's transitive Gson duplicates at dex merge.
+    implementation(libs.gplayapi) {
+        exclude(group = "com.google.code.gson", module = "gson")
+    }
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.runtime.android)

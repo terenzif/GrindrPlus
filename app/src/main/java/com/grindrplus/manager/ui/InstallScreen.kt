@@ -232,7 +232,11 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
             }
         } else {
             MessageBanner(
-                text = "• Don't close the app while installation is in progress\n• Grindr WILL crash on first launch after installation",
+                text = "• LSPatch embeds the module into Grindr (no LSPosed needed)\n" +
+                    "• Grindr downloads via Play (Aurora/gplayapi protocol — not the Aurora app)\n" +
+                    "• Module from GitHub Releases; mappings stay remote/bundled\n" +
+                    "• Custom Files still works as offline fallback\n" +
+                    "• Don't close the app mid-install; Grindr may crash on first launch",
                 isVisible = warningBannerVisible,
                 isPulsating = isInstalling || isCloning,
                 modifier = Modifier.fillMaxWidth(),
@@ -242,7 +246,9 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
 
             if (isLSPosed()) {
                 MessageBanner(
-                    text = "We detected that you are using LSPosed. Only use this screen to create clones, not to install the modded Grindr.",
+                    text = "LSPosed detected — preferred path: install the module APK from " +
+                        "Releases (Home / News). Use this LSPatch tab only for clones, " +
+                        "not for embedding. Remote mapping packs work with LSPosed without LSPatch.",
                     isVisible = rootedBannerVisible,
                     isPulsating = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -478,6 +484,23 @@ private fun startInstallation(
     context: Activity,
     print: Print
 ) {
+    if (version.modUrl.isBlank()) {
+        addLog(
+            "Manifest entry missing mod URL. Use Custom Files or fix manifest.json.",
+            LogType.ERROR
+        )
+        showToast(context, "Missing module download URL.")
+        onCompleted(false)
+        return
+    }
+
+    if (version.grindrUrl.isBlank()) {
+        addLog(
+            "No Grindr CDN URL — will download from Play (gplayapi / Aurora protocol).",
+            LogType.INFO
+        )
+    }
+
     onStarted()
 
     addLog("Starting installation for version ${version.modVer}...", LogType.INFO)

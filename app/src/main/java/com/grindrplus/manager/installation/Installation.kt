@@ -9,6 +9,7 @@ import com.grindrplus.manager.installation.steps.DownloadStep
 import com.grindrplus.manager.installation.steps.ExtractBundleStep
 import com.grindrplus.manager.installation.steps.InstallApkStep
 import com.grindrplus.manager.installation.steps.PatchApkStep
+import com.grindrplus.manager.installation.steps.PlayGrindrDownloadStep
 import com.grindrplus.manager.installation.steps.SignClonedGrindrApk
 import com.grindrplus.manager.utils.KeyStoreUtils
 import kotlinx.coroutines.CancellationException
@@ -39,10 +40,18 @@ class Installation(
 
     private val installStep = InstallApkStep(outputDir)
     private val patchApkStep = PatchApkStep(unzipFolder, outputDir, modFile, keyStoreUtils.keyStore, mapsApiKey)
+
+    /** Grindr: Play (gplayapi / Aurora protocol) when URL blank; else HTTP CDN URL. */
+    private val grindrDownloadStep = if (grindrUrl.isBlank()) {
+        PlayGrindrDownloadStep(bundleFile)
+    } else {
+        DownloadStep(bundleFile, grindrUrl, "Grindr bundle")
+    }
+
     private val commonSteps = listOf(
         // Order matters
         CheckStorageSpaceStep(folder),
-        DownloadStep(bundleFile, grindrUrl, "Grindr bundle"),
+        grindrDownloadStep,
         DownloadStep(modFile, modUrl, "mod"),
         ExtractBundleStep(bundleFile, unzipFolder),
     )

@@ -8,11 +8,11 @@ import androidx.core.app.NotificationCompat
 import com.google.gson.JsonParser
 import com.grindrplus.R
 import com.grindrplus.core.Config
+import com.grindrplus.core.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
-import java.io.IOException
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
@@ -22,59 +22,83 @@ class GPlusMessage(
     val timestamp: Long
 )
 
-const val CHANNEL_PING_URL = "https://raw.githubusercontent.com/terenzif/GrindrPlus/refs/heads/master/news.json"
+/**
+ * Lightweight announcement feed for BridgeService push checks.
+ * Not Telegram — fork-maintained JSON on GitHub. News UI uses Releases + wiki.
+ */
+const val CHANNEL_PING_URL =
+    "https://raw.githubusercontent.com/terenzif/GrindrPlus/refs/heads/master/news.json"
+
 val tgMessages = MutableStateFlow<List<GPlusMessage>>(listOf())
 
 suspend fun fetchNotifs(context: Context) = withContext(Dispatchers.IO) {
-    val client = OkHttpClient.Builder()
-        .callTimeout(1000.seconds.toJavaDuration()).build()
+    try {
+        val client = OkHttpClient.Builder()
+            .callTimeout(30.seconds.toJavaDuration())
+            .connectTimeout(10.seconds.toJavaDuration())
+            .readTimeout(15.seconds.toJavaDuration())
+            .build()
 
-    val request = okhttp3.Request.Builder()
-        .url(CHANNEL_PING_URL)
-        .header(
-            "User-Agent",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
-        )
-        .build()
+        val request = okhttp3.Request.Builder()
+            .url(CHANNEL_PING_URL)
+            .header(
+                "User-Agent",
+                "GrindrPlus/terenzif (Android; news-ping)"
+            )
+            .build()
 
-    client.newCall(request).execute().use { response ->
-        if (!response.isSuccessful) throw IOException("Unexpected code $response")
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                Logger.w("fetchNotifs soft-fail: HTTP ${response.code}")
+                return@use
+            }
 
-        tgMessages.value =
-            JsonParser.parseString(response.body!!.string()).asJsonArray
-                .map { it.asJsonObject }
-                .map { obj ->
-                    GPlusMessage(
-                        obj.get("message_id").asString,
-                        obj.get("text").asString,
-                        obj.get("date").asLong
-                    )
+            val body = response.body?.string().orEmpty()
+            if (body.isBlank()) {
+                Logger.w("fetchNotifs soft-fail: empty body")
+                return@use
+            }
+
+            tgMessages.value =
+                JsonParser.parseString(body).asJsonArray
+                    .map { it.asJsonObject }
+                    .map { obj ->
+                        GPlusMessage(
+                            obj.get("message_id").asString,
+                            obj.get("text").asString,
+                            obj.get("date").asLong
+                        )
+                    }
+                    .filterNot { it.content.isBlank() }
+                    .sortedBy { it.id }.toList()
+
+            val msg = tgMessages.value.lastOrNull() ?: return@use
+            if (Config.get("last_push_id", "") != msg.id) {
+                Config.put("last_push_id", msg.id)
+                if (msg.content.contains("#push")) {
+                    sendNotification(context, msg.content.replace("#push", "").trim())
+                } else {
+                    sendNotification(context)
                 }
-                .filterNot { it.content.isBlank() }
-                .sortedBy { it.id }.toList()
-
-        val msg = tgMessages.value.lastOrNull() ?: return@use
-        if (Config.get("last_push_id", "") != msg.id) {
-            Config.put("last_push_id", msg.id)
-            if (msg.content.contains("#push"))
-                sendNotification(context, msg.content.replace("#push", "").trim())
-            else sendNotification(context)
+            }
         }
+    } catch (e: Exception) {
+        Logger.w("fetchNotifs soft-fail: ${e.message}")
     }
 }
 
 fun sendNotification(
     context: Context,
-    msg: String = "New message from GrindrPlus! Open News tab to read."
+    msg: String = "GrindrPlus update — open News for wiki & Releases."
 ) {
-    val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    val nm = context.getSystemService(NotificationManager::class.java)
 
     val channel = android.app.NotificationChannel(
         "update_gplus",
         "GPlus Updates",
         NotificationManager.IMPORTANCE_HIGH
     ).apply {
-        description = "Notifications for GPlus communications"
+        description = "Notifications for GrindrPlus fork updates"
     }
 
     nm.createNotificationChannel(channel)
@@ -93,5 +117,5 @@ fun sendNotification(
         )
         setAutoCancel(true)
         setPriority(NotificationCompat.PRIORITY_MAX)
-    }.also { nm.notify(1, it.build()) }
+    }.build().also { nm.notify(1, it) }
 }
