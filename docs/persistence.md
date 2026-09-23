@@ -22,8 +22,14 @@ store `docs/pre-5.0-stability-db-plan.md` + audit `internal/db-crash-stability-a
 
 ## Host Grindr SQLite
 
-`DatabaseHelper` opens `*grindr_user*.db` in the Grindr app. Writes here race with Grindr — treat as fragile (Track C of the plan: soft-fail + prefer read-only).
+`DatabaseHelper` opens `*grindr_user*.db` in the Grindr app process.
 
+**Policy (Track C soft-fail):**
+- Missing DB / lock / I/O → empty list, `-1` / `0`, or `false` + log — **never** throw into hooks
+- Reads: `OPEN_READONLY`
+- Writes: short `OPEN_READWRITE` (still races with Grindr; prefer HTTP/API mutations when possible)
+
+See `isUserDatabasePresent()` for pre-login checks.
 ## Config
 
 Manager external files: `grindrplus.json` via bridge (not Room). Atomic write is a planned fix.
