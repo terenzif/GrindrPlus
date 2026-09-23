@@ -27,7 +27,7 @@ import com.grindrplus.persistence.model.TeleportLocationEntity
         BlockEventEntity::class
     ],
     version = 6,
-    exportSchema = false
+    exportSchema = true
 )
 @TypeConverters(DateConverter::class)
 abstract class GPDatabase : RoomDatabase() {

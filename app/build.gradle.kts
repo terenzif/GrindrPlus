@@ -65,6 +65,16 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    // Exported Room schemas for MigrationTestHelper (see app/schemas/).
+    sourceSets {
+        getByName("androidTest") {
+            assets.srcDir("$projectDir/schemas")
+        }
+        getByName("test") {
+            assets.srcDir("$projectDir/schemas")
+        }
+    }
     
     // Replacement for applicationVariants logic
     defaultConfig {
@@ -76,6 +86,11 @@ kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
+}
+
+// Room schema JSON for migration CI / MigrationTestHelper (Track B static verify).
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
