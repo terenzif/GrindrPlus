@@ -360,7 +360,7 @@ class SettingsViewModel(
                     TextSetting(
                         id = "custom_manifest",
                         title = "Custom Manifest URL",
-                        description = "Use a custom manifest URL when using Grindr Plus with LSPatch",
+                        description = "Custom LSPatch manifest URL (mod + optional Grindr APK links). Default: this fork's manifest.json",
                         value = Config.get("custom_manifest", DATA_URL) as String,
                         onValueChange = {
                             viewModelScope.launch {

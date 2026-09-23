@@ -232,7 +232,11 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
             }
         } else {
             MessageBanner(
-                text = "• Don't close the app while installation is in progress\n• Grindr WILL crash on first launch after installation",
+                text = "• LSPatch embeds the module into Grindr (no LSPosed needed)\n" +
+                    "• Upstream APK hosts are offline — use Custom Files: Grindr APK " +
+                    "(Aurora Store) + mod from GitHub Releases\n" +
+                    "• Remote mapping packs still apply after patch (same loader as LSPosed)\n" +
+                    "• Don't close the app mid-install; Grindr may crash on first launch",
                 isVisible = warningBannerVisible,
                 isPulsating = isInstalling || isCloning,
                 modifier = Modifier.fillMaxWidth(),
@@ -242,7 +246,9 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
 
             if (isLSPosed()) {
                 MessageBanner(
-                    text = "We detected that you are using LSPosed. Only use this screen to create clones, not to install the modded Grindr.",
+                    text = "LSPosed detected — preferred path: install the module APK from " +
+                        "Releases (Home / News). Use this LSPatch tab only for clones, " +
+                        "not for embedding. Remote mapping packs work with LSPosed without LSPatch.",
                     isVisible = rootedBannerVisible,
                     isPulsating = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -478,6 +484,20 @@ private fun startInstallation(
     context: Activity,
     print: Print
 ) {
+    if (version.grindrUrl.isBlank() || version.modUrl.isBlank()) {
+        addLog(
+            "Manifest entry missing Grindr and/or mod URL. Use Custom Files: " +
+                "Grindr APK from Aurora Store + module APK from GitHub Releases.",
+            LogType.ERROR
+        )
+        showToast(
+            context,
+            "No hosted Grindr APK — use Custom Files (Aurora + Releases)."
+        )
+        onCompleted(false)
+        return
+    }
+
     onStarted()
 
     addLog("Starting installation for version ${version.modVer}...", LogType.INFO)

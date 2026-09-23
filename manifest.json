@@ -1,10 +1,6 @@
 {
-    "v4.7.2-25.20.0": [
-        "https://gplusapks.airdns.org:32734/apks/com.grindrapp.android_25.20.0-147239_4arch_7dpi_15lang_7f2afb69164ea5e9f6d57b585893a02f_apkmirror.com.apkm",
-        "https://gplusapks.airdns.org:32734/apks/GPlus_v4.7.2-25.20.0.apk"
-    ],
-    "v4.7.1-25.20.0": [
-        "https://gplusapks.airdns.org:32734/apks/com.grindrapp.android_25.20.0-147239_4arch_7dpi_15lang_7f2afb69164ea5e9f6d57b585893a02f_apkmirror.com.apkm",
-        "https://gplusapks.airdns.org:32734/apks/GPlus_v4.7.1-25.20.0_08fbe1b-release.apk"
+    "v4.7.2-26.16.1": [
+        "",
+        "https://github.com/terenzif/GrindrPlus/releases/download/build-keystore-smoke/GPlus_v4.7.2-26.16.1_c331a5d-release-unsigned.apk"
     ]
 }

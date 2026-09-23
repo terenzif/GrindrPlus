@@ -111,7 +111,7 @@ sealed class MainNavItem(
         MainNavItem(Icons.Filled.Settings, "Settings", { SettingsScreen() })
 
     data object InstallPage :
-        MainNavItem(Icons.Rounded.Download, "Install", { InstallPage(it, this) })
+        MainNavItem(Icons.Rounded.Download, "LSPatch", { InstallPage(it, this) })
 
     data object Home : MainNavItem(Icons.Rounded.Home, "Home", { HomeScreen(this) })
 
@@ -518,7 +518,7 @@ class MainActivity : ComponentActivity() {
                                 )
 
                                 Text(
-                                    text = "• If you were using LSPatch previously, go to the Install section and install the latest version.",
+                                    text = "• If you were using LSPatch previously, open the LSPatch tab and install with Custom Files (Grindr from Aurora Store + module from Releases), or switch to LSPosed JingMatrix.",
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(bottom = 12.dp)
                                 )
