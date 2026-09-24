@@ -1,7 +1,7 @@
 [
   {
-    "message_id": "fork-wiki-1",
-    "text": "<b>terenzif/GrindrPlus</b><br>News is on the <b>GitHub wiki</b> (tap the card above). APKs: <b>Releases</b>. Mapping packs update from GitHub without rebuilding the module — works with <b>LSPosed</b> and <b>LSPatch</b>. #push",
-    "date": 1758364800
+    "message_id": "fork-2026-09-24",
+    "text": "<b>2026-09-24 — Fork status</b><br><br><b>terenzif/GrindrPlus</b> keeps GrindrPlus alive on current Grindr without coupling every release to a client bump.<br><br><b>Done:</b> remote mapping packs, fork CI + signing, wiki News, LSPatch Play download (best-effort; 403 → Custom Files).<br><br><b>In progress:</b> crash soft-fail / Room DB hardening, manager UX (News ≠ Home, About layout), deeper 26.16.1 pack.<br><br><b>Tip:</b> Grindr 26.16.1 / 179451 — APKs on Releases. Full write-up on the wiki News page.",
+    "date": 1758700800
   }
 ]

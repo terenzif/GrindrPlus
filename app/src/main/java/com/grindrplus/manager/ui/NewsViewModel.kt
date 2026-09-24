@@ -5,20 +5,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.grindrplus.core.Logger
+import com.grindrplus.manager.CHANNEL_PING_URL
+import com.grindrplus.manager.GPlusMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
-import java.time.Instant
+import java.util.concurrent.TimeUnit
 
 /**
- * News tab: GitHub Releases for this fork (not Telegram).
- * Soft-fails on network/parse — UI shows empty list + wiki card.
+ * News tab: fork announcements from [CHANNEL_PING_URL] (`news.json`), not GitHub Releases
+ * (those stay on Home). Soft-fail on network/parse.
  */
 class NewsViewModel : ViewModel() {
-    val releases = mutableStateListOf<Release>()
+    val messages = mutableStateListOf<GPlusMessage>()
     val isLoading = mutableStateOf(true)
     val errorMessage = mutableStateOf<String?>(null)
 
@@ -26,12 +28,13 @@ class NewsViewModel : ViewModel() {
 
     companion object {
         private const val TAG = "NewsViewModel"
-        private const val RELEASES_URL =
-            "https://api.github.com/repos/terenzif/GrindrPlus/releases"
-        private val client = OkHttpClient()
+        private val client = OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(20, TimeUnit.SECONDS)
+            .build()
     }
 
-    fun fetchReleases(forceRefresh: Boolean = false) {
+    fun fetchNews(forceRefresh: Boolean = false) {
         if (hasFetched && !forceRefresh) return
         if (forceRefresh) {
             hasFetched = false
@@ -44,8 +47,8 @@ class NewsViewModel : ViewModel() {
             try {
                 val body = withContext(Dispatchers.IO) {
                     val request = Request.Builder()
-                        .url(RELEASES_URL)
-                        .header("Accept", "application/vnd.github.v3+json")
+                        .url(CHANNEL_PING_URL)
+                        .header("User-Agent", "GrindrPlus/terenzif (Android; news)")
                         .build()
                     client.newCall(request).execute().use { response ->
                         if (!response.isSuccessful) {
@@ -55,11 +58,11 @@ class NewsViewModel : ViewModel() {
                             ?: throw Exception("Empty response body")
                     }
                 }
-                val parsed = parseReleases(body)
-                releases.clear()
-                releases.addAll(parsed)
+                val parsed = parseMessages(body)
+                messages.clear()
+                messages.addAll(parsed)
             } catch (e: Exception) {
-                Logger.w("$TAG: soft-fail fetching releases: ${e.message}")
+                Logger.w("$TAG: soft-fail fetching news: ${e.message}")
                 errorMessage.value = e.message
             } finally {
                 isLoading.value = false
@@ -67,27 +70,18 @@ class NewsViewModel : ViewModel() {
         }
     }
 
-    private fun parseReleases(jsonContent: String): List<Release> {
+    private fun parseMessages(jsonContent: String): List<GPlusMessage> {
         val jsonArray = JSONArray(jsonContent)
-        val result = mutableListOf<Release>()
+        val result = mutableListOf<GPlusMessage>()
         for (i in 0 until jsonArray.length()) {
-            val release = jsonArray.getJSONObject(i)
-            val name = if (!release.isNull("name") && release.getString("name").isNotBlank()) {
-                release.getString("name")
-            } else {
-                release.getString("tag_name")
+            val obj = jsonArray.getJSONObject(i)
+            val id = obj.optString("message_id").ifBlank { i.toString() }
+            val text = obj.optString("text")
+            val date = obj.optLong("date", 0L)
+            if (text.isNotBlank()) {
+                result.add(GPlusMessage(id, text, date))
             }
-            val description = if (!release.isNull("body")) {
-                release.getString("body")
-            } else {
-                "No description"
-            }
-            val authorObj = release.getJSONObject("author")
-            val author = authorObj.getString("login")
-            val avatarUrl = authorObj.getString("avatar_url")
-            val publishedAt = Instant.parse(release.getString("published_at"))
-            result.add(Release(name, description, author, avatarUrl, publishedAt))
         }
-        return result.sortedByDescending { it.publishedAt }
+        return result.sortedByDescending { it.timestamp }
     }
 }

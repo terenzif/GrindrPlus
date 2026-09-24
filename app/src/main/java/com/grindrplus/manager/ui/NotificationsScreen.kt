@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -25,16 +26,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.grindrplus.core.Constants
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
+import com.grindrplus.manager.GPlusMessage
+import dev.jeziellago.compose.markdowntext.MarkdownText
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun NotificationScreen(
@@ -44,10 +47,10 @@ fun NotificationScreen(
     val context = LocalContext.current
     val isLoading by viewModel.isLoading
     val errorMessage by viewModel.errorMessage
-    val releases = viewModel.releases
+    val messages = viewModel.messages
 
     LaunchedEffect(Unit) {
-        viewModel.fetchReleases()
+        viewModel.fetchNews()
     }
 
     Column(
@@ -68,15 +71,15 @@ fun NotificationScreen(
         ) {
             Column {
                 Text(
-                    text = "News & Updates",
+                    text = "News",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(16.dp),
                 )
 
                 Text(
-                    text = "Fork news for terenzif/GrindrPlus. Tap to open the GitHub wiki. " +
-                        "APKs are on Releases (list below).",
+                    text = "Fork announcements for terenzif/GrindrPlus. Tap to open the wiki News page. " +
+                        "Home shows Releases — this tab does not.",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
@@ -86,7 +89,7 @@ fun NotificationScreen(
         }
 
         when {
-            isLoading && releases.isEmpty() -> {
+            isLoading && messages.isEmpty() -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -95,20 +98,20 @@ fun NotificationScreen(
                 }
             }
 
-            releases.isEmpty() -> {
+            messages.isEmpty() -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = errorMessage?.let { "Could not load releases" }
-                                ?: "No releases yet — open the wiki",
+                            text = errorMessage?.let { "Could not load news" }
+                                ?: "No news yet — open the wiki",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        TextButton(onClick = { viewModel.fetchReleases(forceRefresh = true) }) {
+                        TextButton(onClick = { viewModel.fetchNews(forceRefresh = true) }) {
                             Text("Retry")
                         }
                     }
@@ -116,10 +119,6 @@ fun NotificationScreen(
             }
 
             else -> {
-                val formatter = remember {
-                    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-                        .withZone(ZoneId.systemDefault())
-                }
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -127,40 +126,44 @@ fun NotificationScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(vertical = 8.dp)
                 ) {
-                    items(releases, key = { it.name + it.publishedAt }) { release ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    context.startActivity(Intent(Intent.ACTION_VIEW).apply {
-                                        data = "https://github.com/terenzif/GrindrPlus/releases".toUri()
-                                    })
-                                },
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(
-                                    text = release.name,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                                Text(
-                                    text = formatter.format(release.publishedAt),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = release.description.trim().ifBlank { "No notes" },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    maxLines = 4,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                        }
+                    items(messages, key = { it.id }) { message ->
+                        NewsMessageCard(message = message)
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun NewsMessageCard(message: GPlusMessage) {
+    val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
+    val formattedTime = remember(message.timestamp) {
+        if (message.timestamp > 0L) {
+            dateFormat.format(Date(message.timestamp * 1000))
+        } else {
+            ""
+        }
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            if (formattedTime.isNotEmpty()) {
+                Text(
+                    text = formattedTime,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+            MarkdownText(
+                markdown = message.content,
+                syntaxHighlightColor = Color.Transparent,
+            )
         }
     }
 }

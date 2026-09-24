@@ -228,7 +228,7 @@ fun AboutDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
-                .fillMaxWidth(1f)
+                .fillMaxWidth()
                 .padding(16.dp),
             shape = MaterialTheme.shapes.large
         ) {
@@ -241,124 +241,90 @@ fun AboutDialog(
                     style = MaterialTheme.typography.headlineMedium
                 )
 
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "terenzif fork",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
+                Surface(
+                    modifier = Modifier.size(56.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.primaryContainer
                 ) {
-                    Surface(
-                        modifier = Modifier.size(56.dp),
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = "App Icon",
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "Made with ❤️ by",
-                            style = MaterialTheme.typography.bodyLarge
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "About",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(32.dp)
                         )
-
-                        Row {
-                            Text(
-                                text = "terenzif",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    color = MaterialTheme.colorScheme.primary
-                                ),
-                                modifier = Modifier.clickable {
-                                    val intent = Intent(
-                                        Intent.ACTION_VIEW,
-                                        "https://github.com/terenzif/GrindrPlus".toUri()
-                                    )
-                                    context.startActivity(intent)
-                                }
-                            )
-
-                            Text(
-                                text = " (fork) · ",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-
-                            Text(
-                                text = "R0rt1z2/GrindrPlus",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    color = MaterialTheme.colorScheme.primary
-                                ),
-                                modifier = Modifier.clickable {
-                                    val intent = Intent(
-                                        Intent.ACTION_VIEW,
-                                        "https://github.com/R0rt1z2/GrindrPlus".toUri()
-                                    )
-                                    context.startActivity(intent)
-                                }
-                            )
-
-                            Text(
-                                text = " / ",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-
-                            Text(
-                                text = "Rattly",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    color = MaterialTheme.colorScheme.primary
-                                ),
-                                modifier = Modifier.clickable {
-                                    val intent = Intent(
-                                        Intent.ACTION_VIEW,
-                                        "https://github.com/Rattlyy".toUri()
-                                    )
-                                    context.startActivity(intent)
-                                }
-                            )
-                        }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Made with ❤ by terenzif",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.clickable {
+                        context.startActivity(
+                            Intent(
+                                Intent.ACTION_VIEW,
+                                "https://github.com/terenzif/GrindrPlus".toUri()
+                            )
+                        )
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Based on archived upstream R0rt1z2/GrindrPlus (Rattly et al.)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            context.startActivity(
+                                Intent(
+                                    Intent.ACTION_VIEW,
+                                    "https://github.com/R0rt1z2/GrindrPlus".toUri()
+                                )
+                            )
+                        },
+                )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Button(
                         onClick = onDismiss,
                         modifier = Modifier
                             .weight(1f)
-                            .height(56.dp),
+                            .height(48.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     ) {
-                        Text(
-                            "Close",
-                            style = MaterialTheme.typography.titleMedium
-                        )
+                        Text("Close", maxLines = 1)
                     }
 
                     Button(
                         onClick = onViewSourceCode,
                         modifier = Modifier
                             .weight(1f)
-                            .height(56.dp)
+                            .height(48.dp)
                     ) {
-                        Text(
-                            "Source",
-                            style = MaterialTheme.typography.titleMedium
-                        )
+                        Text("Source", maxLines = 1)
                     }
                 }
             }
