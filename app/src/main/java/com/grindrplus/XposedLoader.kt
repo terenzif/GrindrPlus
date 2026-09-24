@@ -32,9 +32,17 @@ class XposedLoader : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
         if (!lpparam.packageName.contains(GRINDR_PACKAGE_NAME)) return
 
-        spoofSignatures(lpparam)
+        try {
+            spoofSignatures(lpparam)
+        } catch (t: Throwable) {
+            Log.e("GrindrPlus", "spoofSignatures failed (continuing init): ${t.message}", t)
+        }
         if (BuildConfig.DEBUG) {
-            sslUnpinning(lpparam)
+            try {
+                sslUnpinning(lpparam)
+            } catch (t: Throwable) {
+                Log.w("GrindrPlus", "sslUnpinning failed: ${t.message}")
+            }
         }
 
         Application::class.java.hook("attach", HookStage.AFTER) {
