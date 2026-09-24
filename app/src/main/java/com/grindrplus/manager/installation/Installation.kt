@@ -2,7 +2,7 @@ package com.grindrplus.manager.installation
 
 import android.content.Context
 import android.widget.Toast
-import com.grindrplus.manager.MainActivity.Companion.plausible
+import com.grindrplus.manager.ForkAnalytics
 import com.grindrplus.manager.installation.steps.CheckStorageSpaceStep
 import com.grindrplus.manager.installation.steps.CloneGrindrStep
 import com.grindrplus.manager.installation.steps.DownloadStep
@@ -107,7 +107,7 @@ class Installation(
         print: Print,
     ) = try {
         withContext(Dispatchers.IO) {
-            plausible?.pageView("app://grindrplus/$operationName")
+            ForkAnalytics.pageView("/$operationName", title = operationName)
 
             val time = measureTimeMillis {
                 for (step in steps) {
@@ -121,10 +121,9 @@ class Installation(
                 }
             }
 
-            plausible?.event(
+            ForkAnalytics.event(
                 "${operationName}_success",
-                "app://grindrplus/${operationName}_success",
-                props = mapOf("time" to time)
+                props = mapOf("time" to time),
             )
 
             onSuccess()
@@ -132,17 +131,13 @@ class Installation(
     } catch (e: CancellationException) {
         print("$operationName was cancelled")
         showToast("$operationName was cancelled")
-        plausible?.event(
-            "${operationName}_cancelled",
-            "app://grindrplus/${operationName}_cancelled"
-        )
+        ForkAnalytics.event("${operationName}_cancelled")
         throw e
     } catch (e: Exception) {
         val errorMsg = "$operationName failed: ${e.localizedMessage}"
-        plausible?.event(
+        ForkAnalytics.event(
             "${operationName}_failed",
-            "app://grindrplus/${operationName}_failure",
-            props = mapOf("error" to e.message)
+            props = mapOf("error" to e.message),
         )
         print(errorMsg)
         showToast(errorMsg)

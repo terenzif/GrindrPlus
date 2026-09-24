@@ -26,13 +26,13 @@ This module is **not** affiliated with Grindr LLC. Use at your own risk.
 
 ## Disclaimer
 
-Free mod, no warranty. We are not responsible for lost chats, bans, or other issues. This project does not collect personal data and does not serve ads — the code is open source (GPL-3.0). Optional anonymous manager analytics are **off by default** and only fire when both the user opts in and [`analytics.json`](analytics.json) on this repo points at an endpoint the maintainers control — see [docs/analytics.md](docs/analytics.md).
+Free mod, no warranty. We are not responsible for lost chats, bans, or other issues. This project does not collect personal data and does not serve ads — the code is open source (GPL-3.0). Optional anonymous manager analytics are **off by default** and use **GoatCounter** only when the user opts in and [`analytics.json`](analytics.json) on this repo enables a site the maintainers control — see [docs/analytics.md](docs/analytics.md).
 
 ## Download & news
 
 - Releases / APKs: [Releases](https://github.com/terenzif/GrindrPlus/releases)
 - In-app **News** tab: wiki CTA + GitHub Releases list (no Telegram feed) — [docs/news.md](docs/news.md)
-- Analytics (opt-in, repo-controlled; optional public dashboard via `public_url`): [docs/analytics.md](docs/analytics.md) · [`analytics.json`](analytics.json)
+- Analytics (opt-in GoatCounter; public dashboard via `public_url`): [docs/analytics.md](docs/analytics.md) · [`analytics.json`](analytics.json)
 - Wiki: [terenzif/GrindrPlus/wiki](https://github.com/terenzif/GrindrPlus/wiki)
 - CI: [Verify](https://github.com/terenzif/GrindrPlus/actions/workflows/verify.yml) · [Build & Release](https://github.com/terenzif/GrindrPlus/actions/workflows/build_apk.yml)
 

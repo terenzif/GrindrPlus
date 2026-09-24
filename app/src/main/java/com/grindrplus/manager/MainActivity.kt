@@ -84,9 +84,6 @@ import com.grindrplus.manager.utils.FileOperationHandler
 import com.grindrplus.manager.utils.isLSPosed
 import com.grindrplus.utils.HookManager
 import com.grindrplus.utils.TaskManager
-import com.onebusaway.plausible.android.AndroidResourcePlausibleConfig
-import com.onebusaway.plausible.android.NetworkFirstPlausibleClient
-import com.onebusaway.plausible.android.Plausible
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -131,7 +128,6 @@ sealed class MainNavItem(
 
 class MainActivity : ComponentActivity() {
     companion object {
-        var plausible: Plausible? = null
         val showUninstallDialog = mutableStateOf(false)
     }
 
@@ -266,39 +262,31 @@ class MainActivity : ComponentActivity() {
                         if (Config.get("analytics", false) as Boolean) {
                             val remote = AnalyticsConfigLoader.fetch()
                             if (remote.isReady) {
-                                val config = AndroidResourcePlausibleConfig(this@MainActivity).also {
-                                    it.domain = remote.domain
-                                    it.host = remote.host
-                                    it.enable = true
-                                }
-
-                                withContext(Dispatchers.Main) {
-                                    plausible = Plausible(
-                                        config = config,
-                                        client = NetworkFirstPlausibleClient(config)
-                                    )
-                                }
-
-                                plausible?.enable(true)
-                                plausible?.pageView(
-                                    "app://grindrplus/home",
-                                    props = mapOf("android_version" to Build.VERSION.SDK_INT)
+                                ForkAnalytics.client = GoatCounterClient(
+                                    siteBase = remote.site,
+                                    context = this@MainActivity,
                                 )
-                                Logger.i(
-                                    "Analytics enabled → ${remote.domain} @ ${remote.host}"
+                                ForkAnalytics.pageView(
+                                    "/home",
+                                    title = "GrindrPlus home",
+                                    props = mapOf("android_version" to Build.VERSION.SDK_INT),
                                 )
+                                Logger.i("Analytics enabled → GoatCounter ${remote.site}")
                             } else {
+                                ForkAnalytics.client = null
                                 Logger.i(
                                     "Analytics opt-in on, but analytics.json is disabled " +
-                                        "or missing host/domain — no telemetry"
+                                        "or site missing — no telemetry"
                                 )
                             }
+                        } else {
+                            ForkAnalytics.client = null
                         }
 
                         if (Config.get("first_launch", true) as Boolean) {
                             firstLaunchDialog = true
                             patchInfoDialog = true
-                            plausible?.pageView("app://grindrplus/first_launch")
+                            ForkAnalytics.pageView("/first_launch", title = "First launch")
                             Config.put("first_launch", false)
                         }
                     }
@@ -394,9 +382,8 @@ class MainActivity : ComponentActivity() {
                                     text =
                                         "Anonymous usage analytics are off by default. " +
                                             "If you enable them in Settings, events go only to " +
-                                            "the endpoint configured in this fork’s " +
-                                            "analytics.json on GitHub — not to third-party " +
-                                            "upstream hosts.",
+                                            "the GoatCounter site configured in this fork’s " +
+                                            "analytics.json on GitHub (public dashboard).",
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(bottom = 16.dp)
                                 )

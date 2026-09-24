@@ -374,8 +374,8 @@ class SettingsViewModel(
                         id = "analytics",
                         title = "Opt-in analytics",
                         description = "Off by default. Sends anonymous app-open / install " +
-                            "events only if analytics.json on this fork’s GitHub is enabled " +
-                            "with a host you control (see docs/analytics.md)",
+                            "events to this fork’s GoatCounter site when analytics.json " +
+                            "on GitHub is enabled (see docs/analytics.md)",
                         isChecked = Config.get("analytics", false) as Boolean,
                         onCheckedChange = {
                             viewModelScope.launch {

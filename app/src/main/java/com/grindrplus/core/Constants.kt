@@ -28,7 +28,7 @@ object Constants {
     const val SPLINE_DATA_ENDPOINT =
         "https://raw.githubusercontent.com/terenzif/GrindrPlus/refs/heads/master/spline.json"
 
-    /** Remote opt-in analytics control (`enabled` / Plausible host+domain). */
+    /** Remote opt-in analytics control (GoatCounter site URL). */
     const val ANALYTICS_CONFIG_ENDPOINT =
         "https://raw.githubusercontent.com/terenzif/GrindrPlus/refs/heads/master/analytics.json"
 

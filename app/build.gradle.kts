@@ -112,7 +112,6 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.compose.markdown)
-    implementation(libs.plausible.android.sdk)
     implementation(libs.timber)
     implementation(libs.fetch2)
     implementation(libs.fetch2okhttp)

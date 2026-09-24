@@ -1,13 +1,13 @@
 {
   "enabled": false,
-  "host": "",
-  "domain": "",
+  "provider": "goatcounter",
+  "site": "",
   "public_url": "",
   "docs": "https://github.com/terenzif/GrindrPlus/blob/master/docs/analytics.md",
   "events": [
-    "app open (pageView home)",
-    "first_launch",
-    "install success / fail / cancel"
+    "/home",
+    "/first_launch",
+    "install_success / install_failed / install_cancelled (events)"
   ],
-  "note": "Fork-controlled Plausible endpoint. Keep enabled=false until host+domain point at an instance you own. Set public_url to a Plausible shared/public dashboard link so the community can view stats without login. Empty host = no telemetry from the app."
+  "note": "Set site to https://YOURCODE.goatcounter.com and enabled=true after creating the GoatCounter site. public_url is the dashboard people can open without login (usually the same as site). No API tokens — the app uses the public /count pixel."
 }
