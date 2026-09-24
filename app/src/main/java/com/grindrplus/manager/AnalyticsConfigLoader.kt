@@ -18,6 +18,7 @@ data class AnalyticsRemoteConfig(
     val host: String,
     val domain: String,
     val docsUrl: String,
+    val publicUrl: String = "",
 ) {
     val isReady: Boolean
         get() = enabled && host.isNotBlank() && domain.isNotBlank()
@@ -51,6 +52,7 @@ object AnalyticsConfigLoader {
                     domain = obj.optString("domain", "").trim(),
                     docsUrl = obj.optString("docs", Constants.ANALYTICS_DOCS_URL).trim()
                         .ifBlank { Constants.ANALYTICS_DOCS_URL },
+                    publicUrl = obj.optString("public_url", "").trim(),
                 )
             }
         } catch (e: Exception) {
@@ -64,5 +66,6 @@ object AnalyticsConfigLoader {
         host = "",
         domain = "",
         docsUrl = Constants.ANALYTICS_DOCS_URL,
+        publicUrl = "",
     )
 }

@@ -2,11 +2,12 @@
   "enabled": false,
   "host": "",
   "domain": "",
+  "public_url": "",
   "docs": "https://github.com/terenzif/GrindrPlus/blob/master/docs/analytics.md",
   "events": [
     "app open (pageView home)",
     "first_launch",
     "install success / fail / cancel"
   ],
-  "note": "Fork-controlled Plausible (or compatible) endpoint. Keep enabled=false until you set host+domain to an instance you own. Empty host = no telemetry from the app."
+  "note": "Fork-controlled Plausible endpoint. Keep enabled=false until host+domain point at an instance you own. Set public_url to a Plausible shared/public dashboard link so the community can view stats without login. Empty host = no telemetry from the app."
 }
