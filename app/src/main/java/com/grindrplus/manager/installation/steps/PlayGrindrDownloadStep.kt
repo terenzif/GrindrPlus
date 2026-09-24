@@ -35,14 +35,15 @@ class PlayGrindrDownloadStep(
             return
         }
 
-        print("Authenticating with Play (anonymous dispenser, Aurora protocol)...")
+        print("Authenticating with Play (anonymous dispenser)...")
         val http = PlayHttpClient()
         val auth = try {
             PlayStoreSession.buildAnonymousAuth(context, http)
         } catch (e: Exception) {
             throw IOException(
-                "Play anonymous auth failed (${e.message}). " +
-                    "Check network / Cloudflare, or use Custom Files with a local Grindr APK.",
+                "Play auth failed (${e.message}). " +
+                    "If you see HTTP 403/429, Cloudflare blocked the dispenser — " +
+                    "use Custom Files (Grindr APK from storage) instead of retrying.",
                 e
             )
         }

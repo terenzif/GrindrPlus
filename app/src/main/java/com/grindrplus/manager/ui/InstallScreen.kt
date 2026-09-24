@@ -233,9 +233,8 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
         } else {
             MessageBanner(
                 text = "• LSPatch embeds the module into Grindr (no LSPosed needed)\n" +
-                    "• Grindr downloads via Play (Aurora/gplayapi protocol — not the Aurora app)\n" +
+                    "• Grindr: Play download (best-effort) — if auth shows 403/429, use Custom Files\n" +
                     "• Module from GitHub Releases; mappings stay remote/bundled\n" +
-                    "• Custom Files still works as offline fallback\n" +
                     "• Don't close the app mid-install; Grindr may crash on first launch",
                 isVisible = warningBannerVisible,
                 isPulsating = isInstalling || isCloning,

@@ -8,19 +8,15 @@ Upstream GrindrPlus hosted Grindr + mod APKs on **`gplusapks.airdns.org`** for o
 
 ## Grindr download engine (in-app)
 
-LSPatch install uses **Aurora OSS `gplayapi`** — the same Play Store protocol Aurora Store uses:
+LSPatch install uses **Aurora OSS `gplayapi`** for Play delivery when the manifest Grindr URL is blank:
 
-1. Anonymous auth via Aurora dispenser (`https://auroraoss.com/api/auth`)
+1. Anonymous auth via token dispenser (`https://auroraoss.com/api/auth`)
 2. App details + purchase/delivery for `com.grindrapp.android`
-3. Download split APKs from Play CDN, zip → existing `ExtractBundleStep` / LSPatch pipeline
+3. Download split APKs from Play CDN → zip → `ExtractBundleStep`
 
-Implemented in:
+**Cloudflare 403/429:** the public dispenser often blocks non–Aurora-Store clients or rate-limits retries. The manager rotates store-like User-Agents; if auth still fails, use **Custom Files** (local Grindr APK) — do not hammer Install. The Aurora maintainer asks third-party apps not to treat their dispenser as a permanent CDN; Custom Files remains the reliable path.
 
-- `manager/play/PlayHttpClient.kt` — real `postAuth` (library default stubs it)
-- `manager/play/PlayStoreSession.kt` — anonymous session
-- `manager/installation/steps/PlayGrindrDownloadStep.kt` — used when `manifest.json` Grindr URL is blank
-
-**Not** launching the Aurora Store app. Custom Files remains an offline fallback.
+Implemented in `PlayHttpClient`, `PlayStoreSession`, `PlayGrindrDownloadStep`.
 
 Module APK still comes from GitHub Releases (`manifest.json` mod URL). Mapping packs stay remote/bundled (`MappingDictionary.loadForVersion`).
 

@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
  * (returns 444); Aurora Store ships its own client — we do the same here.
  */
 class PlayHttpClient(
-    private val userAgent: String = "com.grindrplus-manager-play",
+    @Volatile var userAgent: String = "com.aurora.store-4.7.4-76",
 ) : IHttpClient {
 
     private val _responseCode = MutableStateFlow(100)
