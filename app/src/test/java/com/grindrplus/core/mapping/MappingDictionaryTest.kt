@@ -281,4 +281,63 @@ class MappingDictionaryTest {
         }
     }
 
+    @Test
+    fun hasCompleteCore_requiresAllFiveSymbols() {
+        assertTrue(!MappingDictionary.hasCompleteCore(null))
+
+        val incomplete = MappingDictionary.parsePack(
+            JSONObject(
+                """
+                {
+                  "schemaVersion": 1,
+                  "versionName": "t",
+                  "versionCode": 1,
+                  "confidence": "test",
+                  "generatedFrom": "test",
+                  "symbols": {
+                    "core.userAgent": { "kind": "class", "name": "a" },
+                    "core.userSession": { "kind": "class", "name": "b" },
+                    "core.deviceInfo": { "kind": "class", "name": "" }
+                  },
+                  "hooks": {}
+                }
+                """.trimIndent()
+            )
+        )
+        assertTrue(!MappingDictionary.hasCompleteCore(incomplete))
+        assertTrue(
+            MappingDictionary.missingCoreKeys(incomplete).containsAll(
+                listOf(
+                    "core.deviceInfo",
+                    "core.grindrLocationProvider",
+                    "core.serverDrivenCascadeRepo",
+                )
+            )
+        )
+
+        val complete = MappingDictionary.parsePack(
+            JSONObject(
+                """
+                {
+                  "schemaVersion": 1,
+                  "versionName": "t",
+                  "versionCode": 1,
+                  "confidence": "test",
+                  "generatedFrom": "test",
+                  "symbols": {
+                    "core.userAgent": { "kind": "class", "name": "a" },
+                    "core.userSession": { "kind": "class", "name": "b" },
+                    "core.deviceInfo": { "kind": "class", "name": "c" },
+                    "core.grindrLocationProvider": { "kind": "class", "name": "d" },
+                    "core.serverDrivenCascadeRepo": { "kind": "class", "name": "e" }
+                  },
+                  "hooks": {}
+                }
+                """.trimIndent()
+            )
+        )
+        assertTrue(MappingDictionary.hasCompleteCore(complete))
+        assertTrue(MappingDictionary.missingCoreKeys(complete).isEmpty())
+    }
+
 }

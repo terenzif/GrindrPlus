@@ -32,12 +32,37 @@ object MappingDictionary {
     const val DEFAULT_REMOTE_BASE_URL =
         "https://raw.githubusercontent.com/terenzif/GrindrPlus/master/mapping-packs"
 
+    /** Core symbols required for a pack to count as usable (ready-for-lab gate). */
+    val CORE_SYMBOL_KEYS: List<String> = listOf(
+        "core.userAgent",
+        "core.userSession",
+        "core.deviceInfo",
+        "core.grindrLocationProvider",
+        "core.serverDrivenCascadeRepo",
+    )
+
     @Volatile
     private var active: MappingPack? = null
 
     val current: MappingPack?
         get() = active
 
+    /**
+     * Whether [pack] (or the active pack) has non-empty names for every [CORE_SYMBOL_KEYS] entry.
+     */
+    fun hasCompleteCore(pack: MappingPack? = active): Boolean {
+        if (pack == null) return false
+        return CORE_SYMBOL_KEYS.all { key ->
+            pack.symbols[key]?.name?.isNotEmpty() == true
+        }
+    }
+
+    fun missingCoreKeys(pack: MappingPack? = active): List<String> {
+        if (pack == null) return CORE_SYMBOL_KEYS
+        return CORE_SYMBOL_KEYS.filter { key ->
+            pack.symbols[key]?.name.isNullOrEmpty()
+        }
+    }
     /**
      * Load order for device [versionCode]:
      * 1. remote JSON (soft-fail network/parse)

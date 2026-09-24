@@ -16,6 +16,9 @@ import com.grindrplus.core.Utils
 object DialogManager {
     @Volatile var shouldShowVersionMismatchDialog = false
     @Volatile var shouldShowBridgeConnectionError = false
+    /** No pack / incomplete core mapping for the installed Grindr build. */
+    @Volatile var shouldShowMappingMissingDialog = false
+    @Volatile var mappingMissingDetail: String? = null
     @Volatile var hasCheckedVersions = false
 
     fun checkVersionCodes(context: Context, versionCodes: IntArray, versionNames: Array<String>) {
@@ -35,6 +38,9 @@ object DialogManager {
             val expectedInfo = "${versionNames.joinToString(", ")} " +
                     "(code: ${versionCodes.joinToString(", ")})"
             shouldShowVersionMismatchDialog = true
+            // Version gate already explains incompatibility — don't also spam mapping dialog.
+            shouldShowMappingMissingDialog = false
+            mappingMissingDetail = null
             Logger.w("Version mismatch detected. Installed: $installedInfo, Required: $expectedInfo", LogSource.MODULE)
         }
 
@@ -71,6 +77,35 @@ object DialogManager {
         } catch (e: Exception) {
             Logger.e("Failed to show version mismatch dialog: ${e.message}", LogSource.MODULE)
             Utils.showToast(Toast.LENGTH_LONG, "Version mismatch detected. Please install a compatible Grindr version.", activity)
+        }
+    }
+
+    fun showMappingMissingDialog(activity: Activity) {
+        try {
+            val detail = mappingMissingDetail
+                ?: "No usable mapping pack for this Grindr build."
+            val dialog = AlertDialog.Builder(activity)
+                .setTitle("GrindrPlus: Mapping Missing")
+                .setMessage(
+                    "$detail\n\n" +
+                        "Features may not work or may crash hooks.\n\n" +
+                        "• Prefer a supported Grindr version (see module target), or\n" +
+                        "• Wait for a mapping pack for this versionCode on GitHub, then restart Grindr.\n\n" +
+                        "Packs: github.com/terenzif/GrindrPlus/tree/master/mapping-packs"
+                )
+                .setPositiveButton("OK") { d, _ -> d.dismiss() }
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setCancelable(true)
+                .create()
+            dialog.show()
+            Logger.i("Mapping-missing dialog shown: $detail", LogSource.MODULE)
+        } catch (e: Exception) {
+            Logger.e("Failed to show mapping-missing dialog: ${e.message}", LogSource.MODULE)
+            Utils.showToast(
+                Toast.LENGTH_LONG,
+                mappingMissingDetail ?: "GrindrPlus: no mapping pack for this Grindr version",
+                activity,
+            )
         }
     }
 

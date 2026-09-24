@@ -281,6 +281,10 @@ object GrindrPlus {
                         DialogManager.showVersionMismatchDialog(activity)
                         DialogManager.shouldShowVersionMismatchDialog = false
                     }
+                    DialogManager.shouldShowMappingMissingDialog -> {
+                        DialogManager.showMappingMissingDialog(activity)
+                        DialogManager.shouldShowMappingMissingDialog = false
+                    }
                 }
 
                 if (isImportingSomething) {
@@ -312,6 +316,7 @@ object GrindrPlus {
 
     private fun loadMappingPack(modulePath: String, application: Application) {
         val versionCode = installedVersionCode(application)
+        val versionName = installedVersionName(application)
         // Remote → disk cache → bundled assets → literals (all soft-fail).
         val pack = MappingDictionary.loadForVersion(
             modulePath = modulePath,
@@ -324,11 +329,38 @@ object GrindrPlus {
                     "${pack.symbols.size} symbols, confidence=${pack.confidence}",
                 LogSource.MODULE
             )
+            val missingCore = MappingDictionary.missingCoreKeys(pack)
+            if (missingCore.isNotEmpty()) {
+                val detail =
+                    "Mapping pack for Grindr $versionName (code $versionCode) is incomplete.\n" +
+                        "Missing core symbols: ${missingCore.joinToString(", ")}"
+                Logger.w(detail, LogSource.MODULE)
+                // Don't stack on top of the hard version-mismatch dialog.
+                if (!DialogManager.shouldShowVersionMismatchDialog) {
+                    DialogManager.mappingMissingDetail = detail
+                    DialogManager.shouldShowMappingMissingDialog = true
+                    showToast(Toast.LENGTH_LONG, "GrindrPlus: mapping incomplete for $versionName")
+                }
+            }
         } else {
-            Logger.w(
-                "No mapping pack for versionCode=$versionCode — using compile-time literals",
-                LogSource.MODULE
-            )
+            val detail =
+                "No mapping pack found for Grindr $versionName (code $versionCode).\n" +
+                    "Falling back to compile-time literals (likely wrong for this build)."
+            Logger.w(detail, LogSource.MODULE)
+            if (!DialogManager.shouldShowVersionMismatchDialog) {
+                DialogManager.mappingMissingDetail = detail
+                DialogManager.shouldShowMappingMissingDialog = true
+                showToast(Toast.LENGTH_LONG, "GrindrPlus: no mapping for $versionName ($versionCode)")
+            }
+        }
+    }
+
+    private fun installedVersionName(application: Application): String {
+        return try {
+            application.packageManager.getPackageInfo(application.packageName, 0).versionName
+                ?: "unknown"
+        } catch (_: Exception) {
+            "unknown"
         }
     }
 
