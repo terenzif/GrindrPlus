@@ -34,10 +34,25 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.grindrplus.core.Constants
 import com.grindrplus.manager.GPlusMessage
+import com.grindrplus.manager.plainTextFromNewsHtml
 import dev.jeziellago.compose.markdowntext.MarkdownText
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+/** Best-effort Telegram HTML → markdown for the News list. */
+private fun htmlishToMarkdown(raw: String): String {
+    var s = raw.replace("#push", "", ignoreCase = true)
+    s = s.replace(Regex("<br\\s*/?>", RegexOption.IGNORE_CASE), "\n")
+    s = s.replace(Regex("</?b>", RegexOption.IGNORE_CASE), "**")
+    s = s.replace(Regex("</?strong>", RegexOption.IGNORE_CASE), "**")
+    s = s.replace(Regex("</?i>", RegexOption.IGNORE_CASE), "_")
+    s = s.replace(Regex("</?em>", RegexOption.IGNORE_CASE), "_")
+    s = s.replace(Regex("<a\\s+href=\"([^\"]+)\"[^>]*>(.*?)</a>", RegexOption.IGNORE_CASE), "[$2]($1)")
+    // Drop any remaining tags; keep readable text
+    s = s.replace(Regex("<[^>]+>"), "")
+    return s.trim().ifBlank { plainTextFromNewsHtml(raw) }
+}
 
 @Composable
 fun NotificationScreen(
@@ -161,7 +176,8 @@ private fun NewsMessageCard(message: GPlusMessage) {
                 Spacer(modifier = Modifier.height(4.dp))
             }
             MarkdownText(
-                markdown = message.content,
+                // news.json may contain Telegram-style HTML; MarkdownText expects markdown.
+                markdown = htmlishToMarkdown(message.content),
                 syntaxHighlightColor = Color.Transparent,
             )
         }

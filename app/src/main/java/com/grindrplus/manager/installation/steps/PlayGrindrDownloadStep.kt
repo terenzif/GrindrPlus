@@ -23,11 +23,12 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 /**
- * Downloads Grindr split APKs from Google Play using Aurora OSS [gplayapi]
- * (anonymous dispenser + purchase/delivery), then zips them for [ExtractBundleStep].
+ * Downloads Grindr split APKs from Google Play using Aurora OSS [gplayapi], then zips them
+ * for [ExtractBundleStep].
  *
- * Mirrors Aurora Store's [PurchaseHelper] usage: acquire → purchase (optional cert hash) →
- * delivery, with **fresh anonymous sessions** on delivery status 3 (AppNotPurchased).
+ * Auth: **local Google account** (AccountManager Play token) when available, else anonymous
+ * dispenser — same split Aurora Store uses for Google vs Anonymous login. Purchase mirrors
+ * Aurora (`acquire` → purchase → delivery) with session rotation + installed-APK fallback.
  */
 class PlayGrindrDownloadStep(
     private val bundleFile: File,
@@ -42,16 +43,44 @@ class PlayGrindrDownloadStep(
             return
         }
 
-        print("Authenticating with Play (anonymous dispenser)...")
+        print(
+            "Authenticating with Play " +
+                "(local Google/AccountManager→AC2DM→AAS, else anonymous dispenser)..."
+        )
         val http = PlayHttpClient()
+        var localEmails = com.grindrplus.manager.play.PlayLocalAccountAuth
+            .googleAccountEmails(context)
+        if (localEmails.isNotEmpty()) {
+            print("On-device Google account(s): ${localEmails.joinToString()}")
+        } else {
+            print(
+                "No Google accounts visible to this app yet (Android account visibility). " +
+                    "A picker may appear — select the account you use in Play Store."
+            )
+        }
         var auth = try {
-            PlayStoreSession.buildAnonymousAuth(context, http)
+            PlayStoreSession.buildPreferredAuth(context, http, preferLocal = true)
         } catch (e: Exception) {
             throw IOException(
                 "Play auth failed (${e.message}). " +
                     "If you see HTTP 403/429, Cloudflare blocked the dispenser — " +
-                    "use Custom Files (Grindr APK from storage) instead of retrying.",
+                    "use Custom Files (Grindr APK from storage) instead of retrying. " +
+                    "If prompted for Google account access, approve and tap Install again.",
                 e
+            )
+        }
+        localEmails = com.grindrplus.manager.play.PlayLocalAccountAuth
+            .googleAccountEmails(context)
+        if (!auth.isAnonymous) {
+            print("Using on-device Google account: ${auth.email} (personal Play session)")
+        } else {
+            print(
+                "Using anonymous dispenser session: ${auth.email}" +
+                    if (localEmails.isNotEmpty()) {
+                        " — local token failed; approve Google consent if shown, then retry"
+                    } else {
+                        " — pick a Google account on retry for personal Play access"
+                    }
             )
         }
 
@@ -186,8 +215,9 @@ class PlayGrindrDownloadStep(
 
     /**
      * Aurora Store binds [PurchaseHelper] to a session and refreshes on spoof/auth drift.
-     * Anonymous dispenser accounts are a lottery for some apps (status 3) — rotate sessions
-     * like picking another dispenser token, and try offerType / cert-hash variants.
+     * Personal (local) sessions: try offerType / cert-hash variants once — do **not** fall
+     * back to anonymous rotation (that reintroduces the dating-app status-3 lottery).
+     * Anonymous: rotate dispenser accounts like picking another lottery ticket.
      */
     private fun purchaseWithRetries(
         context: Context,
@@ -200,10 +230,14 @@ class PlayGrindrDownloadStep(
     ): List<PlayFile> {
         var auth = initialAuth
         var lastError: Exception? = null
+        val maxRotations = if (initialAuth.isAnonymous) MAX_AUTH_ROTATIONS else 1
 
-        repeat(MAX_AUTH_ROTATIONS) { rotation ->
+        repeat(maxRotations) { rotation ->
             if (rotation > 0) {
-                print("Rotating anonymous Play session (attempt ${rotation + 1}/$MAX_AUTH_ROTATIONS)...")
+                print(
+                    "Rotating Play session (attempt ${rotation + 1}/$maxRotations, " +
+                        "anonymous dispenser)..."
+                )
                 auth = try {
                     PlayStoreSession.buildAnonymousAuth(context, http)
                 } catch (e: Exception) {
@@ -256,17 +290,25 @@ class PlayGrindrDownloadStep(
                     }
                 }
             }
-            // Status 3 is usually the anonymous-account lottery → next dispenser session
-            if (hitStatus3) {
+            if (hitStatus3 && auth.isAnonymous) {
                 print("All offer/cert variants hit status 3 for this session — rotating account")
+            } else if (hitStatus3 && !auth.isAnonymous) {
+                print(
+                    "Personal account still got status 3 — not rotating to anonymous. " +
+                        "Check that this Google account can open Grindr in Play Store."
+                )
             }
         }
 
+        val kind = if (initialAuth.isAnonymous) {
+            "$MAX_AUTH_ROTATIONS anonymous session(s)"
+        } else {
+            "personal account ${initialAuth.email}"
+        }
         throw IOException(
-            "Play purchase/delivery failed after $MAX_AUTH_ROTATIONS anonymous session(s): " +
+            "Play purchase/delivery failed after $kind: " +
                 (lastError?.message ?: "unknown") +
-                ". Aurora Store hits the same status-3 lottery on some anonymous accounts — " +
-                "retry Install, or use Custom Files with a local Grindr APK.",
+                ". Retry Install (approve Google consent if prompted), or use Custom Files.",
             lastError
         )
     }

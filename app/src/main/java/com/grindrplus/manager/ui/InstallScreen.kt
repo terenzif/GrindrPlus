@@ -2,6 +2,7 @@ package com.grindrplus.manager.ui
 
 import android.app.Activity
 import android.content.Context
+import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.widget.Toast
@@ -133,6 +134,7 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
         addLog("Starting custom installation with version name: $customVersionName...", LogType.INFO)
 
         activityScope.launch {
+            var success = false
             try {
                 val bundleFile = createTempFileFromUri(context, customBundleUri!!, "grindr-$customVersionName.zip")
                 val modFile = createTempFileFromUri(context, customModUri!!, "mod-$customVersionName.zip")
@@ -157,11 +159,12 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
 
                 addLog("Custom installation completed successfully!", LogType.SUCCESS)
                 showToast(context, "Installation complete!")
-                installationSuccessful = true
+                success = true
             } catch (e: Exception) {
                 handleInstallationError(e, context)
             } finally {
                 isInstalling = false
+                installationSuccessful = success
             }
         }
     }
@@ -505,6 +508,7 @@ private fun startInstallation(
     addLog("Starting installation for version ${version.modVer}...", LogType.INFO)
 
     activityScope.launch {
+        var success = false
         try {
             val mapsApiKey = (Config.get("maps_api_key", "") as String).ifBlank { null }
 
@@ -524,10 +528,12 @@ private fun startInstallation(
 
             addLog("Installation completed successfully!", LogType.SUCCESS)
             showToast(context, "Installation complete!")
-            onCompleted(true)
+            success = true
         } catch (e: Exception) {
             handleInstallationError(e, context)
-            onCompleted(false)
+        } finally {
+            // Always clear "Installing..." even if the package installer hung then timed out.
+            onCompleted(success)
         }
     }
 }
@@ -548,11 +554,30 @@ private fun handleInstallationError(e: Exception, context: Context) {
     val errorMessage = "ERROR: ${e.localizedMessage ?: "Unknown error"}"
     addLog(errorMessage, LogType.ERROR)
 
-    if (errorMessage.contains("INCOMPATIBLE") || e.message?.contains("INCOMPATIBLE") == true) {
+    val detail = listOfNotNull(e.message, e.localizedMessage, errorMessage)
+        .joinToString(" ")
+    val detailUpper = detail.uppercase()
+    val statusCode = Regex("""\(code:\s*(-?\d+)\)""", RegexOption.IGNORE_CASE)
+        .find(detail)
+        ?.groupValues
+        ?.getOrNull(1)
+        ?.toIntOrNull()
+    val signatureConflict =
+        detailUpper.contains("INCOMPATIBLE") ||
+            detailUpper.contains("CONFLICT") ||
+            detailUpper.contains("SIGNATURE") ||
+            detailUpper.contains("UPDATE_FAILED_VERIFICATION") ||
+            statusCode == PackageInstaller.STATUS_FAILURE_CONFLICT ||
+            statusCode == PackageInstaller.STATUS_FAILURE_INCOMPATIBLE
+
+    if (signatureConflict) {
         if (context is MainActivity) {
             context.runOnUiThread { MainActivity.showUninstallDialog.value = true }
         } else {
-            showToast(context, "Installation failed: Signature mismatch. Please uninstall Grindr first.")
+            showToast(
+                context,
+                "Installation failed: signature mismatch. Uninstall Grindr first, then retry."
+            )
         }
     } else {
         showToast(context, "Installation failed: ${e.localizedMessage}")

@@ -10,13 +10,14 @@ import java.util.Locale
 import java.util.Properties
 
 /**
- * Anonymous Play session via token dispenser + gplayapi (Aurora Store protocol).
+ * Play session for gplayapi — Aurora Store protocol without launching Aurora Store.
  *
- * Does **not** launch the Aurora Store app. The public Aurora OSS dispenser is
- * behind Cloudflare and often returns **403** for non–Aurora-Store User-Agents —
- * we present as a store-like client for the auth POST only.
+ * Order (same idea as Aurora’s Google vs Anonymous login):
+ * 1. **Local** Google account via [AccountManager] ([PlayLocalAccountAuth]) when present
+ * 2. Else **anonymous** token dispenser (`https://auroraoss.com/api/auth`)
  *
- * Best-effort: 403/429 → fail soft with Custom Files guidance (no Grindr CDN).
+ * Dispenser: Cloudflare often **403**s non–store UAs — we rotate store-like agents.
+ * Dating apps: anonymous delivery often **status 3**; local account is the reliable path.
  */
 object PlayStoreSession {
 
@@ -47,14 +48,50 @@ object PlayStoreSession {
     }
 
     /**
+     * Prefer on-device Google Play token; fall back to anonymous dispenser.
+     * May show a system consent UI the first time (approve, then retry Install).
+     */
+    suspend fun buildPreferredAuth(
+        context: Context,
+        httpClient: PlayHttpClient,
+        preferLocal: Boolean = true,
+        dispenserUrl: String = DEFAULT_DISPENSER_URL,
+    ): AuthData {
+        val properties = loadDeviceProperties(context)
+        if (preferLocal) {
+            val emails = PlayLocalAccountAuth.googleAccountEmails(context)
+            if (emails.isNotEmpty()) {
+                Logger.i(
+                    "Trying local Play token for ${emails.size} Google account(s): " +
+                        emails.joinToString()
+                )
+            }
+            val local = PlayLocalAccountAuth.tryBuildAuthData(
+                context = context,
+                httpClient = httpClient,
+                properties = properties,
+                activity = PlayLocalAccountAuth.findActivity(context),
+            )
+            if (local != null) return local
+            if (emails.isNotEmpty()) {
+                Logger.w(
+                    "Local Play auth failed for on-device account(s) — " +
+                        "falling back to anonymous dispenser (dating apps often status-3)"
+                )
+            }
+        }
+        return buildAnonymousAuth(context, httpClient, dispenserUrl, properties)
+    }
+
+    /**
      * Soft-fails callers should wrap; throws on hard auth failure.
      */
     fun buildAnonymousAuth(
         context: Context,
         httpClient: PlayHttpClient,
         dispenserUrl: String = DEFAULT_DISPENSER_URL,
+        properties: Properties = loadDeviceProperties(context),
     ): AuthData {
-        val properties = loadDeviceProperties(context)
         val body = propertiesToJson(properties).toByteArray(Charsets.UTF_8)
 
         var lastError: String? = null

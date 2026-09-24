@@ -15,7 +15,9 @@ import java.io.File
 import java.io.IOException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Helper class for installing APK files using the PackageInstaller API
@@ -25,6 +27,8 @@ class SessionInstaller {
         private const val TAG = "SessionInstaller"
         private const val ACTION_INSTALL_COMPLETE = "com.grindrplus.INSTALL_COMPLETE"
         private const val DEFAULT_BUFFER_SIZE = 8192
+        /** User confirm dialog can sit forever if dismissed without a status callback. */
+        private val INSTALL_TIMEOUT = 3.minutes
     }
 
     /**
@@ -42,16 +46,35 @@ class SessionInstaller {
         silent: Boolean = false,
         callback: ((success: Boolean, message: String) -> Unit)? = null,
         log: (String) -> Unit,
-    ): Boolean = suspendCoroutine { continuation ->
+    ): Boolean = try {
+        withTimeout(INSTALL_TIMEOUT) {
+            installApksInternal(context, apks, silent, callback, log)
+        }
+    } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+        val message =
+            "Installer timed out after ${INSTALL_TIMEOUT.inWholeMinutes} minutes " +
+                "(confirm or dismiss the system install prompt, then tap Install again)"
+        log("ERROR: $message")
+        Timber.Forest.tag(TAG).e(message)
+        callback?.invoke(false, message)
+        throw IOException(message, e)
+    }
+
+    private suspend fun installApksInternal(
+        context: Context,
+        apks: List<File>,
+        silent: Boolean,
+        callback: ((success: Boolean, message: String) -> Unit)?,
+        log: (String) -> Unit,
+    ): Boolean = suspendCancellableCoroutine { continuation ->
         if (apks.isEmpty()) {
             val message = "No APK files provided."
             Timber.Forest.tag(TAG).e(message)
             callback?.invoke(false, message)
             continuation.resumeWithException(IOException(message))
-            return@suspendCoroutine
+            return@suspendCancellableCoroutine
         }
 
-        // Validate all APK files exist
         val missingApks = apks.filter { !it.exists() || it.length() <= 0 }
         if (missingApks.isNotEmpty()) {
             val message =
@@ -60,12 +83,11 @@ class SessionInstaller {
             log("ERROR: $message")
             callback?.invoke(false, message)
             continuation.resumeWithException(IOException(message))
-            return@suspendCoroutine
+            return@suspendCancellableCoroutine
         }
 
         val packageInstaller = context.packageManager.packageInstaller
 
-        // Create installation session
         val params =
             PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
                 setInstallReason(PackageManager.INSTALL_REASON_USER)
@@ -78,7 +100,6 @@ class SessionInstaller {
                 }
             }
 
-        // Create the session
         val sessionId = try {
             packageInstaller.createSession(params)
         } catch (e: IOException) {
@@ -87,10 +108,13 @@ class SessionInstaller {
             log("ERROR: $message")
             callback?.invoke(false, message)
             continuation.resumeWithException(e)
-            return@suspendCoroutine
+            return@suspendCancellableCoroutine
         }
 
-        // Process for completion
+        fun finishOnce(block: () -> Unit) {
+            if (continuation.isActive) block()
+        }
+
         val installCompleteReceiver = object : BroadcastReceiver() {
             @SuppressLint("UnsafeIntentLaunch")
             override fun onReceive(context: Context, intent: Intent) {
@@ -108,15 +132,23 @@ class SessionInstaller {
 
                     when (status) {
                         PackageInstaller.STATUS_SUCCESS -> {
-                            callback?.invoke(true, "Installation successful")
-                            log("Installed!")
-                            context.unregisterReceiver(this)
-                            continuation.resume(true)
+                            finishOnce {
+                                callback?.invoke(true, "Installation successful")
+                                log("Installed!")
+                                try {
+                                    context.unregisterReceiver(this)
+                                } catch (_: Exception) {
+                                }
+                                continuation.resume(true)
+                            }
                         }
 
                         PackageInstaller.STATUS_PENDING_USER_ACTION -> {
                             Timber.Forest.tag(TAG).d("Installation requires user confirmation")
-                            log("DEBUG: Installation requires user confirmation")
+                            log(
+                                "DEBUG: Waiting for system install confirmation " +
+                                    "(approve update / uninstall conflict if prompted)"
+                            )
                             val confirmationIntent =
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                                     intent.getParcelableExtra(
@@ -131,23 +163,32 @@ class SessionInstaller {
                                 confirmationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 try {
                                     context.startActivity(confirmationIntent)
-                                    // Don't complete the coroutine yet - wait for final result
                                 } catch (e: Exception) {
                                     val errorMsg =
                                         "Failed to start installer activity: ${e.message}"
                                     log("ERROR: $errorMsg")
                                     Timber.Forest.tag(TAG).e(e, errorMsg)
-                                    context.unregisterReceiver(this)
-                                    callback?.invoke(false, errorMsg)
-                                    continuation.resumeWithException(IOException(errorMsg))
+                                    finishOnce {
+                                        try {
+                                            context.unregisterReceiver(this)
+                                        } catch (_: Exception) {
+                                        }
+                                        callback?.invoke(false, errorMsg)
+                                        continuation.resumeWithException(IOException(errorMsg))
+                                    }
                                 }
                             } else {
                                 val errorMsg = "Missing confirmation intent"
                                 log("ERROR: $errorMsg")
                                 Timber.Forest.tag(TAG).e(errorMsg)
-                                context.unregisterReceiver(this)
-                                callback?.invoke(false, errorMsg)
-                                continuation.resumeWithException(IOException(errorMsg))
+                                finishOnce {
+                                    try {
+                                        context.unregisterReceiver(this)
+                                    } catch (_: Exception) {
+                                    }
+                                    callback?.invoke(false, errorMsg)
+                                    continuation.resumeWithException(IOException(errorMsg))
+                                }
                             }
                         }
 
@@ -161,25 +202,51 @@ class SessionInstaller {
                             -> {
                             val errorMsg = "Installation failed: $message (code: $status)"
                             Timber.Forest.tag(TAG).e(errorMsg)
-                            context.unregisterReceiver(this)
-                            callback?.invoke(false, errorMsg)
-                            continuation.resumeWithException(IOException(errorMsg))
+                            finishOnce {
+                                try {
+                                    context.unregisterReceiver(this)
+                                } catch (_: Exception) {
+                                }
+                                callback?.invoke(false, errorMsg)
+                                continuation.resumeWithException(IOException(errorMsg))
+                            }
                         }
 
                         else -> {
                             val errorMsg = "Unknown status code: $status - $message"
                             Timber.Forest.tag(TAG).e(errorMsg)
-                            context.unregisterReceiver(this)
-                            callback?.invoke(false, errorMsg)
-                            continuation.resumeWithException(IOException(errorMsg))
+                            finishOnce {
+                                try {
+                                    context.unregisterReceiver(this)
+                                } catch (_: Exception) {
+                                }
+                                callback?.invoke(false, errorMsg)
+                                continuation.resumeWithException(IOException(errorMsg))
+                            }
                         }
                     }
                 } catch (e: Exception) {
                     Timber.Forest.tag(TAG).e(e, "Error in broadcast receiver")
-                    context.unregisterReceiver(this)
-                    callback?.invoke(false, "Error processing installation result: ${e.message}")
-                    continuation.resumeWithException(e)
+                    finishOnce {
+                        try {
+                            context.unregisterReceiver(this)
+                        } catch (_: Exception) {
+                        }
+                        callback?.invoke(false, "Error processing installation result: ${e.message}")
+                        continuation.resumeWithException(e)
+                    }
                 }
+            }
+        }
+
+        continuation.invokeOnCancellation {
+            try {
+                packageInstaller.abandonSession(sessionId)
+            } catch (_: Exception) {
+            }
+            try {
+                context.unregisterReceiver(installCompleteReceiver)
+            } catch (_: Exception) {
             }
         }
 
@@ -234,7 +301,9 @@ class SessionInstaller {
             val message = "Installation failed: ${e.message}"
             Timber.Forest.tag(TAG).e(e, message)
             callback?.invoke(false, message)
-            continuation.resumeWithException(e)
+            if (continuation.isActive) {
+                continuation.resumeWithException(e)
+            }
         }
     }
 }

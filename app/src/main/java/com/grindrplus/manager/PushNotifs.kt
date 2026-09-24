@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
+import androidx.core.text.HtmlCompat
 import com.google.gson.JsonParser
 import com.grindrplus.R
 import com.grindrplus.core.Config
@@ -30,6 +31,17 @@ const val CHANNEL_PING_URL =
     "https://raw.githubusercontent.com/terenzif/GrindrPlus/refs/heads/master/news.json"
 
 val tgMessages = MutableStateFlow<List<GPlusMessage>>(listOf())
+
+/** news.json historically carries Telegram-style HTML — strip for system notifications. */
+fun plainTextFromNewsHtml(raw: String): String {
+    val withoutPush = raw.replace("#push", "", ignoreCase = true)
+    val spanned = HtmlCompat.fromHtml(withoutPush, HtmlCompat.FROM_HTML_MODE_COMPACT)
+    return spanned.toString()
+        .replace('\u00A0', ' ')
+        .replace(Regex("[ \\t]+"), " ")
+        .replace(Regex("\\n{3,}"), "\n\n")
+        .trim()
+}
 
 suspend fun fetchNotifs(context: Context) = withContext(Dispatchers.IO) {
     try {
@@ -76,7 +88,7 @@ suspend fun fetchNotifs(context: Context) = withContext(Dispatchers.IO) {
             if (Config.get("last_push_id", "") != msg.id) {
                 Config.put("last_push_id", msg.id)
                 if (msg.content.contains("#push")) {
-                    sendNotification(context, msg.content.replace("#push", "").trim())
+                    sendNotification(context, plainTextFromNewsHtml(msg.content))
                 } else {
                     sendNotification(context)
                 }
@@ -103,10 +115,15 @@ fun sendNotification(
 
     nm.createNotificationChannel(channel)
 
+    val plain = plainTextFromNewsHtml(msg).ifBlank {
+        "GrindrPlus update — open News for wiki & Releases."
+    }
+
     NotificationCompat.Builder(context, "update_gplus").apply {
         setSmallIcon(R.drawable.ic_launcher_foreground)
         setContentTitle("GrindrPlus News")
-        setContentText(msg)
+        setContentText(plain)
+        setStyle(NotificationCompat.BigTextStyle().bigText(plain))
         setContentIntent(
             PendingIntent.getActivity(
                 context,
