@@ -36,7 +36,8 @@ object GoatCounterStats {
         try {
             val total = fetchCount("$base/counter/TOTAL.json")
             val week = fetchCount("$base/counter/TOTAL.json?start=week")
-            val home = fetchCount("$base/counter/${encodePath("/home")}.json")
+            // Direct URL: /counter/[PATH].json — leading slash → //home.json
+            val home = fetchCount("$base/counter//home.json")
             GoatCounterSnapshot(
                 totalLabel = total ?: "—",
                 weekLabel = week ?: "—",
@@ -49,9 +50,6 @@ object GoatCounterStats {
         }
     }
 
-    private fun encodePath(path: String): String =
-        java.net.URLEncoder.encode(path, Charsets.UTF_8.name())
-
     private fun fetchCount(url: String): String? {
         val request = Request.Builder()
             .url(url)
@@ -60,18 +58,25 @@ object GoatCounterStats {
             .get()
             .build()
         client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
+            val body = response.body?.string().orEmpty()
+            // GoatCounter returns 404 + {"count":"0"} when a path has never been seen.
+            if (!response.isSuccessful && response.code != 404) {
                 Logger.w("GoatCounter counter HTTP ${response.code} for $url")
                 return null
             }
-            val body = response.body?.string().orEmpty()
-            if (body.isBlank()) return null
-            val obj = JSONObject(body)
-            // Prefer `count`; GoatCounter formats with thin spaces as thousands separators.
-            return obj.optString("count")
-                .ifBlank { obj.optString("count_unique") }
-                .trim()
-                .ifBlank { null }
+            if (body.isBlank()) {
+                return if (response.code == 404) "0" else null
+            }
+            return try {
+                val obj = JSONObject(body)
+                // Prefer `count`; GoatCounter formats with thin spaces as thousands separators.
+                obj.optString("count")
+                    .ifBlank { obj.optString("count_unique") }
+                    .trim()
+                    .ifBlank { if (response.code == 404) "0" else null }
+            } catch (_: Exception) {
+                if (response.code == 404) "0" else null
+            }
         }
     }
 }
