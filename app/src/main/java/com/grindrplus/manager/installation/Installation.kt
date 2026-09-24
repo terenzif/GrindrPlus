@@ -28,7 +28,9 @@ class Installation(
     val version: String,
     modUrl: String,
     grindrUrl: String,
-    private val mapsApiKey: String?
+    private val mapsApiKey: String?,
+    /** Mapping-pack / dropdown Grindr versionCode; 0 → BuildConfig TARGET. */
+    preferredVersionCode: Long = 0L,
 ) {
     private val keyStoreUtils = KeyStoreUtils(context)
     private val folder = context.getExternalFilesDir(null)
@@ -43,7 +45,12 @@ class Installation(
 
     /** Grindr: Play (gplayapi / Aurora protocol) when URL blank; else HTTP CDN URL. */
     private val grindrDownloadStep = if (grindrUrl.isBlank()) {
-        PlayGrindrDownloadStep(bundleFile)
+        val pin = if (preferredVersionCode > 0L) {
+            preferredVersionCode
+        } else {
+            PlayGrindrDownloadStep.preferredTargetVersionCode()
+        }
+        PlayGrindrDownloadStep(bundleFile, preferredVersionCode = pin)
     } else {
         DownloadStep(bundleFile, grindrUrl, "Grindr bundle")
     }

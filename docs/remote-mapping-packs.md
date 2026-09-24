@@ -44,9 +44,10 @@ Or any raw/CDN base that serves `{versionCode}.json`.
 
 1. Fingerprint the Grindr APK (`versionCode` / R8 names) as usual.
 2. Write `mapping-packs/<versionCode>.json` (schemaVersion 1).
-3. Open a PR / push to `master` on **terenzif/GrindrPlus**.
-4. Optional: also copy into `app/src/main/assets/mappings/` so the next module build ships it offline.
-5. Optional alternate channel: attach the JSON to a GitHub Release / tag named `mapping-packs` and point devices at that raw base via the override file.
+3. Update `mapping-packs/index.json` (and `app/src/main/assets/mappings/index.json`) so Download & Patch lists the new version.
+4. Open a PR / push to `master` on **terenzif/GrindrPlus**.
+5. Optional: also copy into `app/src/main/assets/mappings/` so the next module build ships it offline.
+6. Optional alternate channel: attach the JSON to a GitHub Release / tag named `mapping-packs` and point devices at that raw base via the override file.
 
 Devices with a module that includes remote fetch will pick up the new file on the next Grindr process start (when online). Offline devices keep using cache or assets.
 

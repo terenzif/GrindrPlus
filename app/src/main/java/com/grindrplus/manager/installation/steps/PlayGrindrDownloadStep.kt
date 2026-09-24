@@ -68,6 +68,13 @@ class PlayGrindrDownloadStep(
             }
         }
 
+        // Prefer on-device Grindr when it already matches the mapping target (no Play round-trip).
+        if (preferredVersionCode > 0L &&
+            tryExportInstalledFallback(context, print, requiredVersionCode = preferredVersionCode)
+        ) {
+            return
+        }
+
         print(
             "Authenticating with Play " +
                 "(local Google/AccountManager→AC2DM→AAS, else anonymous dispenser)..."
@@ -258,8 +265,8 @@ class PlayGrindrDownloadStep(
         }
         return try {
             print(
-                "Play anonymous delivery blocked (common for dating apps on dispenser accounts). " +
-                    "Falling back to installed Grindr APKs (same outcome as Custom Files)."
+                "Using installed Grindr APKs " +
+                    "(versionCode=$requiredVersionCode; same outcome as Custom Files)."
             )
             InstalledPackageExporter.exportToZip(context, pkg, bundleFile, print)
             assertBundleVersionCode(context, bundleFile, requiredVersionCode, print)

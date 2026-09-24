@@ -42,7 +42,7 @@ fun VersionSelector(
     onVersionSelected: (Data) -> Unit,
     modifier: Modifier = Modifier,
     isEnabled: Boolean = true,
-    label: String = "Select a GrindrPlus version",
+    label: String = "Select a mapped Grindr version",
     customOption: String? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -140,7 +140,7 @@ fun VersionSelector(
                 versions.forEach { version ->
                     if (version.modVer != "custom") {
                         DropdownMenuItem(
-                            text = { Text("Version ${version.modVer}") },
+                            text = { Text(version.modVer) },
                             onClick = {
                                 onVersionSelected(version)
                                 expanded = false

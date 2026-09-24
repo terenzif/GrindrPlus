@@ -92,14 +92,26 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
     val manifestUrl = (Config.get("custom_manifest", DATA_URL) as String).ifBlank { null }
 
     LaunchedEffect(Unit) {
-        viewModel.loadVersionData(manifestUrl.toString())
+        viewModel.loadVersionData(context, manifestUrl.toString())
     }
 
-    // Creates a background task to auto-select the latest version
+    // Prefer installed Grindr when it has a mapping pack; else newest pack.
     LaunchedEffect(versionData.size) {
         if (selectedVersion == null && versionData.isNotEmpty()) {
-            selectedVersion = versionData.first()
-            addLog("Auto-selected latest version: ${selectedVersion?.modVer}", LogType.INFO)
+            val installed = versionData.firstOrNull { it.isInstalled }
+            selectedVersion = installed ?: versionData.first()
+            if (installed != null) {
+                addLog(
+                    "Auto-selected installed Grindr ${installed.versionName} " +
+                        "(${installed.versionCode}) — local APK preferred",
+                    LogType.INFO,
+                )
+            } else {
+                addLog(
+                    "Auto-selected mapping version: ${selectedVersion?.modVer}",
+                    LogType.INFO,
+                )
+            }
         }
     }
 
@@ -110,10 +122,11 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
 
         installation = Installation(
             context,
-            selectedVersion!!.modVer,
+            selectedVersion!!.installKey,
             selectedVersion!!.modUrl,
             selectedVersion!!.grindrUrl,
-            mapsApiKey
+            mapsApiKey,
+            preferredVersionCode = selectedVersion!!.versionCode,
         )
     }
 
@@ -231,13 +244,13 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
             LoadingScreen()
         } else if (errorMessage != null) {
             ErrorScreen(errorMessage!!) {
-                viewModel.loadVersionData(manifestUrl.toString())
+                viewModel.loadVersionData(context, manifestUrl.toString())
             }
         } else {
             MessageBanner(
-                text = "• LSPatch embeds the module into Grindr (no LSPosed needed)\n" +
-                    "• Grindr: Play download (best-effort) — if auth shows 403/429, use Custom Files\n" +
-                    "• Module from GitHub Releases; mappings stay remote/bundled\n" +
+                text = "• Versions = mapping packs (index.json); module APK from Releases\n" +
+                    "• If Grindr is already installed for that version, local APKs are used first\n" +
+                    "• Else Play download (pinned versionCode) — Custom Files if Play fails\n" +
                     "• Don't close the app mid-install; Grindr may crash on first launch",
                 isVisible = warningBannerVisible,
                 isPulsating = isInstalling || isCloning,
@@ -497,10 +510,19 @@ private fun startInstallation(
     }
 
     if (version.grindrUrl.isBlank()) {
-        addLog(
-            "No Grindr CDN URL — will download from Play (gplayapi / Aurora protocol).",
-            LogType.INFO
-        )
+        if (version.isInstalled) {
+            addLog(
+                "Installed Grindr matches this mapping — will use local APKs by default " +
+                    "(Play only if export fails).",
+                LogType.INFO,
+            )
+        } else {
+            addLog(
+                "No Grindr CDN URL — will download from Play (gplayapi / Aurora protocol) " +
+                    "for versionCode=${version.versionCode}.",
+                LogType.INFO,
+            )
+        }
     }
 
     onStarted()
@@ -514,10 +536,11 @@ private fun startInstallation(
 
             val installation = Installation(
                 context,
-                version.modVer,
+                version.installKey,
                 version.modUrl,
                 version.grindrUrl,
-                mapsApiKey
+                mapsApiKey,
+                preferredVersionCode = version.versionCode,
             )
 
             withContext(Dispatchers.IO) {
@@ -634,4 +657,16 @@ data class Data(
     val modVer: String,
     val grindrUrl: String,
     val modUrl: String,
-)
+    /** Grindr versionCode for Play pin / local export (0 = BuildConfig TARGET). */
+    val versionCode: Long = 0L,
+    val versionName: String = "",
+    val isInstalled: Boolean = false,
+) {
+    /** Filesystem-safe key for grindr-*.zip / mod-*.zip names. */
+    val installKey: String
+        get() = when {
+            versionName.isNotBlank() -> versionName
+            versionCode > 0L -> "vc$versionCode"
+            else -> modVer.replace(Regex("""[^\w.\-]+"""), "_")
+        }
+}

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "packs": [
+    {
+      "versionCode": 181424,
+      "versionName": "26.17.0"
+    },
+    {
+      "versionCode": 179451,
+      "versionName": "26.16.1"
+    },
+    {
+      "versionCode": 174557,
+      "versionName": "26.15.1"
+    },
+    {
+      "versionCode": 173835,
+      "versionName": "26.15.0"
+    },
+    {
+      "versionCode": 166504,
+      "versionName": "26.10.0"
+    },
+    {
+      "versionCode": 164876,
+      "versionName": "26.9.2"
+    },
+    {
+      "versionCode": 158308,
+      "versionName": "26.6.0"
+    },
+    {
+      "versionCode": 147239,
+      "versionName": "25.20.0"
+    }
+  ]
+}

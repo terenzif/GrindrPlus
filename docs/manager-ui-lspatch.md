@@ -11,7 +11,7 @@ Upstream GrindrPlus hosted Grindr + mod APKs on **`gplusapks.airdns.org`** for o
 LSPatch install uses **Aurora OSS `gplayapi`** for Play delivery when the manifest Grindr URL is blank:
 
 1. Anonymous auth via token dispenser (`https://auroraoss.com/api/auth`)
-2. App details + purchase/delivery for `com.grindrapp.android` at **`TARGET_GRINDR_VERSION_CODES[0]`** (Aurora-style pin — not Play tip). If Play cannot deliver that code, or delivers a different `versionCode`, Install fails and points to **Custom Files** (no tip fallback). Cached `grindr-*.zip` is reused only when its embedded `versionCode` matches the pin. Installed-APK fallback only when the on-device versionCode matches the pin.
+2. App details + purchase/delivery for `com.grindrapp.android` at the **selected mapping pack** `versionCode` (from `mapping-packs/index.json`, Aurora-style pin — not Play tip). If an **unpatched** Grindr with that `versionCode` is already installed, Install **exports those APKs first** (default). Otherwise Play; if Play cannot deliver that code, or delivers a different `versionCode`, Install fails and points to **Custom Files** (no tip fallback). Cached `grindr-*.zip` is reused only when its embedded `versionCode` matches the pin.
 3. Download split APKs from Play CDN → zip → `ExtractBundleStep`
 
 **Cloudflare 403/429:** the public dispenser often blocks non–Aurora-Store clients or rate-limits retries. The manager rotates store-like User-Agents; if auth still fails, use **Custom Files** (local Grindr APK) — do not hammer Install.
