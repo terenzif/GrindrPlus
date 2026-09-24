@@ -13,7 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,11 +28,14 @@ import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.grindrplus.manager.GoatCounterSnapshot
 import dev.jeziellago.compose.markdowntext.MarkdownText
 
 @Composable
@@ -63,6 +69,11 @@ fun HomeScreen(innerPadding: PaddingValues, viewModel: HomeViewModel = viewModel
                 fontWeight = FontWeight.Medium
             )
         }
+
+        GoatCounterStatsBlock(
+            snapshot = viewModel.goatStats.value,
+            loading = viewModel.goatStatsLoading.value,
+        )
 
         viewModel.errorMessage.value?.let { message ->
             Text(
@@ -154,6 +165,123 @@ fun HomeScreen(innerPadding: PaddingValues, viewModel: HomeViewModel = viewModel
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun GoatCounterStatsBlock(
+    snapshot: GoatCounterSnapshot?,
+    loading: Boolean,
+) {
+    val context = LocalContext.current
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(
+            text = "Community stats",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+        )
+        when {
+            loading && snapshot == null -> {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .size(24.dp),
+                    strokeWidth = 2.dp,
+                )
+            }
+            snapshot != null -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    StatCell(
+                        label = "Total",
+                        value = snapshot.totalLabel,
+                        modifier = Modifier.weight(1f),
+                    )
+                    StatCell(
+                        label = "This week",
+                        value = snapshot.weekLabel,
+                        modifier = Modifier.weight(1f),
+                    )
+                    StatCell(
+                        label = "Home",
+                        value = snapshot.homeLabel,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                Text(
+                    text = "Open live board",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .clickable {
+                            Intent(
+                                Intent.ACTION_VIEW,
+                                snapshot.publicUrl.toUri(),
+                            ).also { context.startActivity(it) }
+                        },
+                )
+            }
+            else -> {
+                Text(
+                    text = "Open live board",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable {
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            "https://grindr-plus.goatcounter.com".toUri(),
+                        ).also { context.startActivity(it) }
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatCell(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = value,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }

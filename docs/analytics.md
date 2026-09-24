@@ -26,15 +26,11 @@ The app GETs `{site}/count?p=…` (tracking pixel). **No API token** in the APK 
 
 Public dashboard: **[https://grindr-plus.goatcounter.com](https://grindr-plus.goatcounter.com)**
 
-Website embed (optional, for a future project page — the Android manager does **not** load this script; it POSTs/GETs `{site}/count` directly):
-
-```html
-<script data-goatcounter="https://grindr-plus.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
-```
-
-Config in [`analytics.json`](../analytics.json): `enabled: true`, `site: https://grindr-plus.goatcounter.com`.
-Users still need **Settings → Opt-in analytics**.
+The **Home** tab shows live counters (total, this week, `/home`) from GoatCounter’s
+public visitor-counter JSON (`/counter/TOTAL.json`, …) plus a link to the dashboard —
+no API token. In GoatCounter settings, keep **“Allow adding visitor counts on your
+website”** enabled (required for those URLs). Stats on Home are read-only and do
+**not** require the user opt-in toggle (sending hits still does).
 
 ## What is sent (when enabled)
 

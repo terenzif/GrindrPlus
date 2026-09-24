@@ -5,6 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.grindrplus.core.Logger
+import com.grindrplus.manager.AnalyticsConfigLoader
+import com.grindrplus.manager.GoatCounterSnapshot
+import com.grindrplus.manager.GoatCounterStats
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -28,6 +31,9 @@ class HomeViewModel : ViewModel() {
     val isLoading = mutableStateOf(true)
     val errorMessage = mutableStateOf<String?>(null)
 
+    val goatStats = mutableStateOf<GoatCounterSnapshot?>(null)
+    val goatStatsLoading = mutableStateOf(true)
+
     // Flag to avoid multiple fetches
     private var hasFetched = false
 
@@ -36,6 +42,8 @@ class HomeViewModel : ViewModel() {
 
         private const val CONTRIBUTORS_URL = "https://api.github.com/repos/terenzif/GrindrPlus/contributors"
         private const val RELEASES_URL = "https://api.github.com/repos/terenzif/GrindrPlus/releases"
+        /** Fallback when analytics.json is not yet on master or lacks a site. */
+        private const val DEFAULT_GOAT_SITE = "https://grindr-plus.goatcounter.com"
         // Reuse the HTTP client across requests
         private val client = OkHttpClient()
     }
@@ -91,6 +99,24 @@ class HomeViewModel : ViewModel() {
         releases.putAll(newReleases)
     }
 
+    private suspend fun fetchGoatStats() {
+        goatStatsLoading.value = true
+        try {
+            val remote = AnalyticsConfigLoader.fetch()
+            val site = remote.site.ifBlank { DEFAULT_GOAT_SITE }
+            val publicUrl = remote.publicUrl.ifBlank { site }
+            goatStats.value = GoatCounterStats.fetch(siteBase = site, publicUrl = publicUrl)
+        } catch (e: Exception) {
+            Logger.w("$TAG: GoatCounter stats: ${e.message}")
+            goatStats.value = GoatCounterStats.fetch(
+                siteBase = DEFAULT_GOAT_SITE,
+                publicUrl = DEFAULT_GOAT_SITE,
+            )
+        } finally {
+            goatStatsLoading.value = false
+        }
+    }
+
     fun fetchData(forceRefresh: Boolean = false) {
         if (hasFetched && !forceRefresh) return
         if (forceRefresh) {
@@ -101,6 +127,8 @@ class HomeViewModel : ViewModel() {
         isLoading.value = true
 
         viewModelScope.launch {
+            // Public community counters — independent of telemetry opt-in
+            val goatDeferred = async { fetchGoatStats() }
             try {
                 // Both requests are made in parallel
                 val contributorsDeferred = async { fetchUrlContent(CONTRIBUTORS_URL) }
@@ -114,6 +142,7 @@ class HomeViewModel : ViewModel() {
             } finally {
                 isLoading.value = false
             }
+            goatDeferred.await()
         }
     }
 }
