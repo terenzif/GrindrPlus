@@ -1,12 +1,18 @@
 package com.grindrplus.manager.installation.steps
 
 import android.content.Context
+import com.aurora.gplayapi.data.models.AuthData
+import com.aurora.gplayapi.data.models.PlayFile
+import com.aurora.gplayapi.exceptions.GooglePlayException
 import com.aurora.gplayapi.helpers.AppDetailsHelper
+import com.aurora.gplayapi.helpers.AuthHelper
 import com.aurora.gplayapi.helpers.PurchaseHelper
 import com.grindrplus.BuildConfig
 import com.grindrplus.manager.installation.BaseStep
 import com.grindrplus.manager.installation.Print
+import com.grindrplus.manager.play.InstalledPackageExporter
 import com.grindrplus.manager.play.PlayHttpClient
+import com.grindrplus.manager.play.PlayPackageCerts
 import com.grindrplus.manager.play.PlayStoreSession
 import com.grindrplus.manager.utils.download
 import com.grindrplus.manager.utils.validateFile
@@ -20,7 +26,8 @@ import java.util.zip.ZipOutputStream
  * Downloads Grindr split APKs from Google Play using Aurora OSS [gplayapi]
  * (anonymous dispenser + purchase/delivery), then zips them for [ExtractBundleStep].
  *
- * Replaces CDN URL downloads when [grindrUrl] is blank — no Aurora Store app, no APK host.
+ * Mirrors Aurora Store's [PurchaseHelper] usage: acquire → purchase (optional cert hash) →
+ * delivery, with **fresh anonymous sessions** on delivery status 3 (AppNotPurchased).
  */
 class PlayGrindrDownloadStep(
     private val bundleFile: File,
@@ -37,7 +44,7 @@ class PlayGrindrDownloadStep(
 
         print("Authenticating with Play (anonymous dispenser)...")
         val http = PlayHttpClient()
-        val auth = try {
+        var auth = try {
             PlayStoreSession.buildAnonymousAuth(context, http)
         } catch (e: Exception) {
             throw IOException(
@@ -56,7 +63,7 @@ class PlayGrindrDownloadStep(
             throw IOException("Play app details failed: ${e.message}", e)
         }
 
-        var versionCode = app.versionCode
+        val versionCode = app.versionCode
         if (preferredVersionCode > 0L) {
             if (versionCode == preferredVersionCode) {
                 print("Play tip matches target versionCode=$versionCode")
@@ -71,20 +78,47 @@ class PlayGrindrDownloadStep(
             throw IOException("Play returned invalid versionCode for Grindr")
         }
 
-        val offerType = if (app.offerType > 0) app.offerType else 1
-        print("Requesting delivery for ${app.displayName} vc=$versionCode ot=$offerType...")
-
-        val files = try {
-            PurchaseHelper(auth).using(http).purchase(
-                packageName = PlayStoreSession.GRINDR_PACKAGE,
-                versionCode = versionCode,
-                offerType = offerType,
-            )
-        } catch (e: Exception) {
-            throw IOException("Play purchase/delivery failed: ${e.message}", e)
+        val offerTypes = linkedSetOf(
+            app.offerType.takeIf { it > 0 } ?: 1,
+            1,
+            0,
+        )
+        val installedCertHash = PlayPackageCerts.latestEncodedHash(
+            context,
+            PlayStoreSession.GRINDR_PACKAGE,
+        )
+        if (installedCertHash != null) {
+            print("Installed Grindr signing cert available — will retry purchase with cert hash if needed")
         }
 
-        val apkFiles = files.filter { it.url.isNotBlank() && it.name.endsWith(".apk", ignoreCase = true) }
+        print(
+            "Requesting delivery for ${app.displayName} vc=$versionCode " +
+                "offerTypes=${offerTypes.joinToString()}..."
+        )
+
+        val files = try {
+            purchaseWithRetries(
+                context = context,
+                http = http,
+                initialAuth = auth,
+                versionCode = versionCode,
+                offerTypes = offerTypes,
+                installedCertHash = installedCertHash,
+                print = print,
+            )
+        } catch (e: IOException) {
+            // Dating / age-gated apps often refuse anonymous dispenser accounts (status 3).
+            // Aurora Store then needs a personal Google login — we can't ask for that here.
+            // If Grindr is already installed (unpatched), export those APKs and continue LSPatch.
+            if (tryExportInstalledFallback(context, print)) {
+                return
+            }
+            throw e
+        }
+
+        val apkFiles = files.filter {
+            it.url.isNotBlank() && it.name.endsWith(".apk", ignoreCase = true)
+        }
         if (apkFiles.isEmpty()) {
             throw IOException("Play returned no APK splits (${files.size} file(s))")
         }
@@ -124,7 +158,122 @@ class PlayGrindrDownloadStep(
         }
     }
 
+    private fun tryExportInstalledFallback(context: Context, print: Print): Boolean {
+        val pkg = PlayStoreSession.GRINDR_PACKAGE
+        if (!InstalledPackageExporter.isInstalled(context, pkg)) {
+            print("No installed Grindr to fall back to — use Custom Files")
+            return false
+        }
+        if (InstalledPackageExporter.looksLsPatched(context, pkg)) {
+            print(
+                "Installed Grindr already looks LSPatched — refusing nested patch. " +
+                    "Use Custom Files with a clean Play/APKMirror build."
+            )
+            return false
+        }
+        return try {
+            print(
+                "Play anonymous delivery blocked (common for dating apps on dispenser accounts). " +
+                    "Falling back to installed Grindr APKs (same outcome as Custom Files)."
+            )
+            InstalledPackageExporter.exportToZip(context, pkg, bundleFile, print)
+            true
+        } catch (e: Exception) {
+            print("Installed Grindr export failed: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     * Aurora Store binds [PurchaseHelper] to a session and refreshes on spoof/auth drift.
+     * Anonymous dispenser accounts are a lottery for some apps (status 3) — rotate sessions
+     * like picking another dispenser token, and try offerType / cert-hash variants.
+     */
+    private fun purchaseWithRetries(
+        context: Context,
+        http: PlayHttpClient,
+        initialAuth: AuthData,
+        versionCode: Long,
+        offerTypes: Set<Int>,
+        installedCertHash: String?,
+        print: Print,
+    ): List<PlayFile> {
+        var auth = initialAuth
+        var lastError: Exception? = null
+
+        repeat(MAX_AUTH_ROTATIONS) { rotation ->
+            if (rotation > 0) {
+                print("Rotating anonymous Play session (attempt ${rotation + 1}/$MAX_AUTH_ROTATIONS)...")
+                auth = try {
+                    PlayStoreSession.buildAnonymousAuth(context, http)
+                } catch (e: Exception) {
+                    lastError = e
+                    print("Auth refresh failed: ${e.message}")
+                    return@repeat
+                }
+            }
+
+            if (!AuthHelper.using(http).isValid(auth, PlayStoreSession.GRINDR_PACKAGE)) {
+                // Still try purchase — details already worked for the first session.
+                print("Auth validation soft-fail for Grindr details; continuing purchase")
+            }
+
+            val helper = PurchaseHelper(auth).using(http)
+            val certVariants = buildList {
+                add(null) // prefer clean Play APK (no installed cert) — LSPatch resigns anyway
+                if (!installedCertHash.isNullOrBlank()) add(installedCertHash)
+            }
+
+            var hitStatus3 = false
+            for (offerType in offerTypes) {
+                for (certHash in certVariants) {
+                    val label = "ot=$offerType" +
+                        if (certHash != null) "+cert" else ""
+                    try {
+                        print("Play purchase ($label)...")
+                        val files = helper.purchase(
+                            packageName = PlayStoreSession.GRINDR_PACKAGE,
+                            versionCode = versionCode,
+                            offerType = offerType,
+                            certificateHash = certHash,
+                        )
+                        if (files.isNotEmpty()) {
+                            print("Play purchase OK ($label) — ${files.size} file(s)")
+                            return files
+                        }
+                    } catch (e: GooglePlayException.AppNotPurchased) {
+                        lastError = e
+                        hitStatus3 = true
+                        print("Play delivery status 3 ($label): ${e.reason}")
+                    } catch (e: GooglePlayException.AppNotSupported) {
+                        lastError = e
+                        print("Play app not supported ($label): ${e.message}")
+                    } catch (e: GooglePlayException.AppRemoved) {
+                        throw IOException("Grindr removed from Play: ${e.message}", e)
+                    } catch (e: Exception) {
+                        lastError = e
+                        print("Play purchase error ($label): ${e.message}")
+                    }
+                }
+            }
+            // Status 3 is usually the anonymous-account lottery → next dispenser session
+            if (hitStatus3) {
+                print("All offer/cert variants hit status 3 for this session — rotating account")
+            }
+        }
+
+        throw IOException(
+            "Play purchase/delivery failed after $MAX_AUTH_ROTATIONS anonymous session(s): " +
+                (lastError?.message ?: "unknown") +
+                ". Aurora Store hits the same status-3 lottery on some anonymous accounts — " +
+                "retry Install, or use Custom Files with a local Grindr APK.",
+            lastError
+        )
+    }
+
     companion object {
+        private const val MAX_AUTH_ROTATIONS = 4
+
         fun preferredTargetVersionCode(): Long {
             val codes = BuildConfig.TARGET_GRINDR_VERSION_CODES
             return if (codes.isNotEmpty()) codes[0].toLong() else 0L

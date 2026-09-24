@@ -105,13 +105,17 @@ object PlayStoreSession {
 
         Logger.i("Play anonymous session for $email (token=${tokenType.name})")
 
+        // Locale must match the spoofed device config (bundled Pixel props are US).
+        // Using the phone's locale with a US Pixel spoof is a common cause of delivery
+        // status 3 ("App not purchased / unavailable in your country") for free apps —
+        // same constraint Aurora Store enforces via matchesActiveSpoof().
         return AuthHelper.using(httpClient).build(
             email = email,
             token = token,
             tokenType = tokenType,
             isAnonymous = true,
             properties = properties,
-            locale = Locale.getDefault(),
+            locale = Locale.US,
         )
     }
 
