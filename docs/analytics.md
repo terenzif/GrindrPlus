@@ -22,28 +22,19 @@ Hits are sent **only if**:
 
 The app GETs `{site}/count?p=…` (tracking pixel). **No API token** in the APK or in this JSON.
 
-## What you (maintainer) must do
+## Live board (this fork)
 
-1. Open [https://www.goatcounter.com/signup](https://www.goatcounter.com/signup) and create a free account.  
-2. Create a **site** and pick a code, e.g. `grindrplus-terenzif` → dashboard  
-   `https://grindrplus-terenzif.goatcounter.com`  
-3. In GoatCounter settings, keep the site **public** (default on hosted GoatCounter) so anyone can view stats without login.  
-4. On `master`, set `analytics.json`:
+Public dashboard: **[https://grindr-plus.goatcounter.com](https://grindr-plus.goatcounter.com)**
 
-```json
-{
-  "enabled": true,
-  "provider": "goatcounter",
-  "site": "https://grindrplus-terenzif.goatcounter.com",
-  "public_url": "https://grindrplus-terenzif.goatcounter.com",
-  "docs": "https://github.com/terenzif/GrindrPlus/blob/master/docs/analytics.md"
-}
+Website embed (optional, for a future project page — the Android manager does **not** load this script; it POSTs/GETs `{site}/count` directly):
+
+```html
+<script data-goatcounter="https://grindr-plus.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
 ```
 
-5. Link `public_url` from README / wiki News.  
-6. Optional: in the app, enable **Opt-in analytics** once and open the manager — you should see a `/home` hit on the GoatCounter dashboard within a minute.
-
-Until step 4 is merged to `master`, the app stays quiet even if a user toggles opt-in.
+Config in [`analytics.json`](../analytics.json): `enabled: true`, `site: https://grindr-plus.goatcounter.com`.
+Users still need **Settings → Opt-in analytics**.
 
 ## What is sent (when enabled)
 

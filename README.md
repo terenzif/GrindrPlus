@@ -32,7 +32,7 @@ Free mod, no warranty. We are not responsible for lost chats, bans, or other iss
 
 - Releases / APKs: [Releases](https://github.com/terenzif/GrindrPlus/releases)
 - In-app **News** tab: wiki CTA + GitHub Releases list (no Telegram feed) — [docs/news.md](docs/news.md)
-- Analytics (opt-in GoatCounter; public dashboard via `public_url`): [docs/analytics.md](docs/analytics.md) · [`analytics.json`](analytics.json)
+- Analytics (opt-in [GoatCounter](https://grindr-plus.goatcounter.com); public dashboard): [docs/analytics.md](docs/analytics.md) · [`analytics.json`](analytics.json)
 - Wiki: [terenzif/GrindrPlus/wiki](https://github.com/terenzif/GrindrPlus/wiki)
 - CI: [Verify](https://github.com/terenzif/GrindrPlus/actions/workflows/verify.yml) · [Build & Release](https://github.com/terenzif/GrindrPlus/actions/workflows/build_apk.yml)
 
