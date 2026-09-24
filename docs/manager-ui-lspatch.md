@@ -11,7 +11,7 @@ Upstream GrindrPlus hosted Grindr + mod APKs on **`gplusapks.airdns.org`** for o
 LSPatch install uses **Aurora OSS `gplayapi`** — the same Play Store protocol Aurora Store uses:
 
 1. Anonymous auth via Aurora dispenser (`https://auroraoss.com/api/auth`)
-2. App details + purchase/delivery for `com.grindrapp.android`
+2. App details + purchase/delivery for `com.grindrapp.android` at **`TARGET_GRINDR_VERSION_CODES[0]`** (Aurora-style pin — not Play tip). If Play cannot deliver that code, Install fails and points to **Custom Files** (no tip fallback).
 3. Download split APKs from Play CDN, zip → existing `ExtractBundleStep` / LSPatch pipeline
 
 Implemented in:
