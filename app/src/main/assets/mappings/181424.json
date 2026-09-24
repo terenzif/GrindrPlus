@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 1,
+  "versionName": "26.17.0",
+  "versionCode": 181424,
+  "confidence": "static-jadx",
+  "generatedFrom": "seed 179451 + JADX of LSPatch origin.apk from Razr (Play tip 26.17.0/181424). Core remapped by fingerprint; several UI FQCNs moved or soft-skipped.",
+  "symbols": {
+    "core.userAgent": {
+      "kind": "class",
+      "name": "xj10",
+      "fingerprint": "grindr3/"
+    },
+    "core.userSession": {
+      "kind": "class",
+      "name": "dn10",
+      "fingerprint": "implements ql10 (UserSession V2)",
+      "note": "was atc implementing UserSession; now dn10 implements ql10"
+    },
+    "core.deviceInfo": {
+      "kind": "class",
+      "name": "n4b",
+      "fingerprint": "field AdvertisingIdClient.Info"
+    },
+    "core.grindrLocationProvider": {
+      "kind": "class",
+      "name": "d5h",
+      "fingerprint": "system settings insufficient for location request, attempting to resolve"
+    },
+    "core.serverDrivenCascadeRepo": {
+      "kind": "class",
+      "name": "wg6",
+      "note": "CascadeService wrapper implementing ng6 (was us1)",
+      "fingerprint": "field CascadeService"
+    },
+    "core.ageVerificationActivity": {
+      "kind": "class",
+      "name": "com.grindrapp.android.ageverification.presentation.ui.AgeVerificationActivity"
+    },
+    "core.browseExploreActivity": {
+      "kind": "class",
+      "name": "com.grindrapp.android.ui.browse.presentation.ui.BrowseExploreMapActivity",
+      "note": "package moved under presentation.ui"
+    },
+    "core.serverNotification": {
+      "kind": "class",
+      "name": "com.grindrapp.android.network.websocket.model.WebSocketNotification$ServerNotification",
+      "fingerprint": "ServerNotification"
+    },
+    "retrofit.fail": {
+      "kind": "class",
+      "name": "zyc",
+      "fingerprint": "Fail(failValue="
+    },
+    "retrofit.success": {
+      "kind": "class",
+      "name": "azc",
+      "fingerprint": "Success(successValue="
+    },
+    "retrofit.successValue": {
+      "kind": "field",
+      "name": "a"
+    },
+    "retrofit.failValue": {
+      "kind": "field",
+      "name": "a"
+    },
+    "DisableBoosting.DRAWER_PROFILE_UI_STATE": {
+      "kind": "class",
+      "name": "dzb",
+      "fingerprint": "DrawerProfileUiState(showBoostMeButton="
+    },
+    "DisableBoosting.RADAR_UI_MODEL": {
+      "kind": "class",
+      "name": "u7s",
+      "fingerprint": "RadarUiModel(roamButton="
+    },
+    "DisableBoosting.FAB_UI_MODEL": {
+      "kind": "class",
+      "name": "v2e",
+      "fingerprint": "FabUiModel(labelResource="
+    },
+    "DisableBoosting.RIGHT_NOW_MICROS_FAB_UI_MODEL": {
+      "kind": "class",
+      "name": "efu",
+      "fingerprint": "RightNowMicrosFabUiModel(progressUiState="
+    },
+    "DisableBoosting.BOOST_STATE_CLASS": {
+      "kind": "class",
+      "name": "rjm",
+      "note": "MicrosDrawerItemState$Unavailable → rjm extends sjm, toString Unavailable"
+    },
+    "DisableBoosting.NAVBAR_CLASS": {
+      "kind": "class",
+      "name": "i2i",
+      "fingerprint": "HomeScreenBottomNavigationUiModel(currentSelectedRoute="
+    },
+    "DisableBoosting.SMALL_PERSISTENT_VECTOR": {
+      "kind": "class",
+      "name": "",
+      "note": "kotlinx SmallPersistentVector not present in JADX tree for this build"
+    },
+    "DisableBoosting.SUBSCRIBE_FOR_BOOST_REDEEM": {
+      "kind": "class",
+      "name": "",
+      "note": "lambda not confidently resolved"
+    },
+    "DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP": {
+      "kind": "class",
+      "name": "",
+      "note": "prior h76 no longer matches; needs lab remap"
+    },
+    "DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP_METHOD": {
+      "kind": "method",
+      "name": ""
+    },
+    "AntiBlock.CHAT_DELETE_CONVERSATION_PLUGIN": {
+      "kind": "class",
+      "name": "",
+      "fingerprint": "Deleting conversations",
+      "note": "fingerprint absent on 26.17.0"
+    },
+    "AntiBlock.INBOX_FRAGMENT_V2_DELETE_CONVERSATIONS": {
+      "kind": "class",
+      "name": "zf9",
+      "fingerprint": "chat_read_receipt"
+    },
+    "AntiBlock.INDIVIDUAL_UNBLOCK_ACTIVITY_VIEW_MODEL": {
+      "kind": "class",
+      "name": "",
+      "note": "prior io6 is unrelated gaymoji constant on 26.17.0 — needs remap"
+    },
+    "AntiBlock.CONVERSATION_DELETE_NOTIFICATION": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.model.ConversationDeleteNotification"
+    },
+    "ProfileDetails.BLOCKED_PROFILES_OBSERVER": {
+      "kind": "class",
+      "name": "",
+      "note": "Observer fingerprint not re-resolved"
+    },
+    "ProfileDetails.PROFILE_VIEW_HOLDER": {
+      "kind": "class",
+      "name": "",
+      "note": "prior r29 is a coroutine stub on 26.17.0 — needs remap"
+    },
+    "ProfileDetails.DISTANCE_UTILS": {
+      "kind": "class",
+      "name": "job",
+      "method": "c",
+      "note": "concrete iob (DistanceUtils); method c matches iob.a helper"
+    },
+    "ProfileDetails.PROFILE_BAR_VIEW": {
+      "kind": "class",
+      "name": "com.grindrapp.android.ui.profileV2.ProfileBarView"
+    },
+    "ProfileDetails.PROFILE_VIEW_STATE": {
+      "kind": "class",
+      "name": "v9r",
+      "fingerprint": "ProfileViewState(profileId="
+    },
+    "ProfileDetails.SERVER_DRIVEN_CASCADE_CACHED_STATE": {
+      "kind": "class",
+      "name": "",
+      "note": "removed; use CascadeProfileUiData"
+    },
+    "ProfileDetails.SERVER_DRIVEN_CASCADE_CACHED_PROFILE": {
+      "kind": "class",
+      "name": "",
+      "note": "CascadeProfileUiData package absent on 26.17.0"
+    },
+    "ProfileDetails.CASCADE_PROFILE_UI_DATA": {
+      "kind": "class",
+      "name": "",
+      "note": "CascadeProfileUiData package absent on 26.17.0"
+    },
+    "ChatIndicators.CHAT_REST_SERVICE": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.data.datasource.api.service.ChatRestService"
+    },
+    "LocalSavedPhrases.AddSavedPhraseResponse": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.data.datasource.api.model.AddSavedPhraseResponse",
+      "fingerprint": "chat.data.datasource.api.model"
+    },
+    "LocalSavedPhrases.PhrasesRestService": {
+      "kind": "class",
+      "name": "com.grindrapp.android.api.PhrasesRestService"
+    },
+    "UnlimitedAlbums.AlbumsRestService": {
+      "kind": "class",
+      "name": "com.grindrapp.android.api.albums.AlbumsRestService"
+    },
+    "BanManagement.LoginRestService": {
+      "kind": "class",
+      "name": "com.grindrapp.android.api.LoginRestService"
+    },
+    "BanManagement.bannedArgs": {
+      "kind": "class",
+      "name": "aa3",
+      "fingerprint": "BannedArgs(bannedType="
+    },
+    "BanManagement.deviceUtility": {
+      "kind": "class",
+      "name": "",
+      "note": "dual fingerprint android_id+profile_tag_search_history not in one utility"
+    },
+    "ExpiringMedia.ExpiringImage": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.data.datasource.api.model.MessageBodyResponse$ExpiringImage",
+      "note": "UI model ChatMessageBodyUiModel$ExpiringImage gone; API model retained"
+    },
+    "ExpiringMedia.ExpiringPhotoStatusResponse": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.data.datasource.api.model.ExpiringPhotoStatusResponse"
+    },
+    "FeatureGranting.settingDistanceVisibilityViewModel": {
+      "kind": "class",
+      "name": "tpw",
+      "fingerprint": "UiState(distanceVisibility="
+    }
+  },
+  "hooks": {
+    "DisableBoosting": {
+      "status": "partial",
+      "reason": "core boost UI remapped; SHOW_TAPS + SmallPersistentVector skipped"
+    },
+    "AntiBlock": {
+      "status": "partial",
+      "reason": "CHAT_DELETE fingerprint absent; INDIVIDUAL_UNBLOCK needs remap"
+    },
+    "ProfileDetails": {
+      "status": "partial",
+      "reason": "CascadeProfileUiData + PROFILE_VIEW_HOLDER skipped"
+    },
+    "ChatIndicators": {
+      "status": "mapped"
+    },
+    "DisableShuffle": {
+      "status": "skipped",
+      "reason": "fingerprint absent on this DEX"
+    },
+    "EmptyCalls": {
+      "status": "skipped",
+      "reason": "IndividualChatNavViewModel/isTalkBefore absent"
+    },
+    "NotificationAlerts": {
+      "status": "skipped",
+      "reason": "notification_reminder_time absent"
+    },
+    "ChatTerminal": {
+      "status": "skipped",
+      "reason": "chatMessageMetaData absent"
+    },
+    "LocalSavedPhrases": {
+      "status": "mapped"
+    },
+    "BanManagement": {
+      "status": "partial",
+      "reason": "deviceUtility skip"
+    },
+    "ExpiringMedia": {
+      "status": "partial",
+      "reason": "ExpiringImage remapped to API model; UI path gone"
+    },
+    "FeatureGranting": {
+      "status": "mapped"
+    }
+  }
+}
