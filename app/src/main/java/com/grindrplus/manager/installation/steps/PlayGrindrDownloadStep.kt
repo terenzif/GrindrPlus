@@ -1,6 +1,8 @@
 package com.grindrplus.manager.installation.steps
 
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import com.aurora.gplayapi.data.models.AuthData
 import com.aurora.gplayapi.data.models.PlayFile
 import com.aurora.gplayapi.exceptions.GooglePlayException
@@ -20,6 +22,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
 /**
@@ -42,8 +45,27 @@ class PlayGrindrDownloadStep(
 
     override suspend fun doExecute(context: Context, print: Print) {
         if (bundleFile.exists() && bundleFile.length() > 0 && validateFile(bundleFile)) {
-            print("Existing Grindr bundle found, skipping Play download")
-            return
+            val cachedVc = readBundleVersionCode(context, bundleFile)
+            if (preferredVersionCode > 0L) {
+                if (cachedVc == preferredVersionCode) {
+                    print(
+                        "Existing Grindr bundle matches target versionCode=$cachedVc — " +
+                            "skipping Play download"
+                    )
+                    return
+                }
+                print(
+                    "Existing Grindr bundle versionCode=${cachedVc ?: "unknown"} ≠ " +
+                        "target $preferredVersionCode — deleting cache and re-downloading"
+                )
+                bundleFile.delete()
+            } else {
+                print(
+                    "Existing Grindr bundle found " +
+                        "(versionCode=${cachedVc ?: "unknown"}), skipping Play download"
+                )
+                return
+            }
         }
 
         print(
@@ -202,6 +224,7 @@ class PlayGrindrDownloadStep(
             if (!bundleFile.exists() || bundleFile.length() <= 0) {
                 throw IOException("Failed to write Grindr bundle zip")
             }
+            assertBundleVersionCode(context, bundleFile, versionCode, print)
             print("Grindr Play download complete (${bundleFile.length() / 1024 / 1024}MB)")
         } finally {
             workDir.deleteRecursively()
@@ -239,11 +262,85 @@ class PlayGrindrDownloadStep(
                     "Falling back to installed Grindr APKs (same outcome as Custom Files)."
             )
             InstalledPackageExporter.exportToZip(context, pkg, bundleFile, print)
+            assertBundleVersionCode(context, bundleFile, requiredVersionCode, print)
             true
         } catch (e: Exception) {
             print("Installed Grindr export failed: ${e.message}")
             false
         }
+    }
+
+    /**
+     * Read versionCode from base.apk inside a Grindr split zip (Play / Custom Files / export).
+     */
+    private fun readBundleVersionCode(context: Context, zip: File): Long? {
+        if (!zip.exists() || zip.length() <= 0L) return null
+        return try {
+            ZipFile(zip).use { archive ->
+                val entry = archive.entries().asSequence().firstOrNull { e ->
+                    !e.isDirectory && (
+                        e.name.equals("base.apk", ignoreCase = true) ||
+                            e.name.endsWith("/base.apk", ignoreCase = true)
+                        )
+                } ?: archive.entries().asSequence().firstOrNull { e ->
+                    !e.isDirectory &&
+                        e.name.endsWith(".apk", ignoreCase = true) &&
+                        !e.name.contains("config.", ignoreCase = true)
+                } ?: return null
+
+                val tmp = File(context.cacheDir, "grindr-bundle-vc-check.apk")
+                archive.getInputStream(entry).use { input ->
+                    tmp.outputStream().use { output -> input.copyTo(output) }
+                }
+                try {
+                    val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        PackageManager.PackageInfoFlags.of(0)
+                    } else {
+                        null
+                    }
+                    val info = if (flags != null) {
+                        context.packageManager.getPackageArchiveInfo(tmp.absolutePath, flags)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        context.packageManager.getPackageArchiveInfo(tmp.absolutePath, 0)
+                    } ?: return null
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        info.longVersionCode
+                    } else {
+                        @Suppress("DEPRECATION")
+                        info.versionCode.toLong()
+                    }
+                } finally {
+                    tmp.delete()
+                }
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun assertBundleVersionCode(
+        context: Context,
+        zip: File,
+        expectedVersionCode: Long,
+        print: Print,
+    ) {
+        if (expectedVersionCode <= 0L) return
+        val actual = readBundleVersionCode(context, zip)
+        if (actual == null) {
+            print("Warning: could not read versionCode from downloaded Grindr bundle")
+            return
+        }
+        if (actual != expectedVersionCode) {
+            zip.delete()
+            throw IOException(
+                "Play delivered Grindr versionCode=$actual but fork target is " +
+                    "$expectedVersionCode (tip/wrong build refused). " +
+                    "Use Custom Files with a matching Grindr APK " +
+                    "(APKMirror / Aurora version picker)."
+            )
+        }
+        print("Verified Grindr bundle versionCode=$actual")
     }
 
     /**
