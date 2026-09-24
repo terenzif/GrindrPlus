@@ -28,6 +28,13 @@ object Constants {
     const val SPLINE_DATA_ENDPOINT =
         "https://raw.githubusercontent.com/terenzif/GrindrPlus/refs/heads/master/spline.json"
 
+    /** Remote opt-in analytics control (`enabled` / Plausible host+domain). */
+    const val ANALYTICS_CONFIG_ENDPOINT =
+        "https://raw.githubusercontent.com/terenzif/GrindrPlus/refs/heads/master/analytics.json"
+
+    const val ANALYTICS_DOCS_URL =
+        "https://github.com/terenzif/GrindrPlus/blob/master/docs/analytics.md"
+
     /**
      * In-app News tab — wiki News page (not Home / Releases).
      */

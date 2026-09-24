@@ -263,25 +263,36 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        if (Config.get("analytics", true) as Boolean) {
-                            val config = AndroidResourcePlausibleConfig(this@MainActivity).also {
-                                it.domain = "grindrplus.lol"
-                                it.host = "https://plausible.gmmz.dev/api/"
-                                it.enable = true
-                            }
+                        if (Config.get("analytics", false) as Boolean) {
+                            val remote = AnalyticsConfigLoader.fetch()
+                            if (remote.isReady) {
+                                val config = AndroidResourcePlausibleConfig(this@MainActivity).also {
+                                    it.domain = remote.domain
+                                    it.host = remote.host
+                                    it.enable = true
+                                }
 
-                            withContext(Dispatchers.Main) {
-                                plausible = Plausible(
-                                    config = config,
-                                    client = NetworkFirstPlausibleClient(config)
+                                withContext(Dispatchers.Main) {
+                                    plausible = Plausible(
+                                        config = config,
+                                        client = NetworkFirstPlausibleClient(config)
+                                    )
+                                }
+
+                                plausible?.enable(true)
+                                plausible?.pageView(
+                                    "app://grindrplus/home",
+                                    props = mapOf("android_version" to Build.VERSION.SDK_INT)
+                                )
+                                Logger.i(
+                                    "Analytics enabled → ${remote.domain} @ ${remote.host}"
+                                )
+                            } else {
+                                Logger.i(
+                                    "Analytics opt-in on, but analytics.json is disabled " +
+                                        "or missing host/domain — no telemetry"
                                 )
                             }
-
-                            plausible?.enable(true)
-                            plausible?.pageView(
-                                "app://grindrplus/home",
-                                props = mapOf("android_version" to Build.VERSION.SDK_INT)
-                            )
                         }
 
                         if (Config.get("first_launch", true) as Boolean) {
@@ -381,21 +392,26 @@ class MainActivity : ComponentActivity() {
 
                                 Text(
                                     text =
-                                        "We collect totally anonymous data to improve the app.",
+                                        "Anonymous usage analytics are off by default. " +
+                                            "If you enable them in Settings, events go only to " +
+                                            "the endpoint configured in this fork’s " +
+                                            "analytics.json on GitHub — not to third-party " +
+                                            "upstream hosts.",
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(bottom = 16.dp)
                                 )
 
                                 Text(
                                     text =
-                                        "You can disable this in the settings.",
+                                        "See docs/analytics.md on the repo. You can change " +
+                                            "your choice anytime in Settings.",
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(bottom = 16.dp)
                                 )
 
                                 Text(
-                                    text = "Data collected:",
+                                    text = "If enabled, data collected:",
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(bottom = 8.dp)
                                 )
