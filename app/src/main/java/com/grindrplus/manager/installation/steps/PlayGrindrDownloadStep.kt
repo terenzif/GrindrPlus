@@ -29,6 +29,9 @@ import java.util.zip.ZipOutputStream
  * Auth: **local Google account** (AccountManager Play token) when available, else anonymous
  * dispenser — same split Aurora Store uses for Google vs Anonymous login. Purchase mirrors
  * Aurora (`acquire` → purchase → delivery) with session rotation + installed-APK fallback.
+ *
+ * Purchase uses [preferredVersionCode] (BuildConfig TARGET) when set — same as Aurora Store’s
+ * version picker — not Play tip. Tip is only used when no target is configured.
  */
 class PlayGrindrDownloadStep(
     private val bundleFile: File,
@@ -92,19 +95,21 @@ class PlayGrindrDownloadStep(
             throw IOException("Play app details failed: ${e.message}", e)
         }
 
-        val versionCode = app.versionCode
-        if (preferredVersionCode > 0L) {
-            if (versionCode == preferredVersionCode) {
+        val tipVersionCode = app.versionCode
+        // Aurora Store: pick any versionCode → PurchaseHelper.purchase(..., versionCode, ...).
+        // Never silently fall back to tip — that installs an unsupported Grindr build.
+        val versionCode = resolveDownloadVersionCode(tipVersionCode, preferredVersionCode)
+        when {
+            preferredVersionCode > 0L && tipVersionCode == preferredVersionCode ->
                 print("Play tip matches target versionCode=$versionCode")
-            } else {
+            preferredVersionCode > 0L ->
                 print(
-                    "Play tip versionCode=$versionCode " +
-                        "(fork target=$preferredVersionCode) — downloading tip"
+                    "Play tip versionCode=$tipVersionCode — " +
+                        "requesting fork target versionCode=$preferredVersionCode " +
+                        "(Aurora-style pin; no tip fallback)"
                 )
-            }
-        }
-        if (versionCode <= 0L) {
-            throw IOException("Play returned invalid versionCode for Grindr")
+            else ->
+                print("No fork target set — downloading Play tip versionCode=$versionCode")
         }
 
         val offerTypes = linkedSetOf(
@@ -138,9 +143,25 @@ class PlayGrindrDownloadStep(
         } catch (e: IOException) {
             // Dating / age-gated apps often refuse anonymous dispenser accounts (status 3).
             // Aurora Store then needs a personal Google login — we can't ask for that here.
-            // If Grindr is already installed (unpatched), export those APKs and continue LSPatch.
-            if (tryExportInstalledFallback(context, print)) {
+            // If Grindr is already installed (unpatched) at the pinned version, export APKs.
+            if (tryExportInstalledFallback(context, print, requiredVersionCode = versionCode)) {
                 return
+            }
+            val pinned = preferredVersionCode > 0L && versionCode == preferredVersionCode
+            val tipHint = if (tipVersionCode > 0L && tipVersionCode != versionCode) {
+                " Play tip is $tipVersionCode."
+            } else {
+                ""
+            }
+            if (pinned) {
+                throw IOException(
+                    "Play could not deliver Grindr versionCode=$versionCode " +
+                        "(fork target; tip fallback disabled).$tipHint " +
+                        "Use Custom Files with a matching Grindr APK " +
+                        "(APKMirror / Aurora version picker), or update TARGET_GRINDR_VERSION_CODES. " +
+                        "Cause: ${e.message}",
+                    e,
+                )
             }
             throw e
         }
@@ -187,10 +208,22 @@ class PlayGrindrDownloadStep(
         }
     }
 
-    private fun tryExportInstalledFallback(context: Context, print: Print): Boolean {
+    private fun tryExportInstalledFallback(
+        context: Context,
+        print: Print,
+        requiredVersionCode: Long,
+    ): Boolean {
         val pkg = PlayStoreSession.GRINDR_PACKAGE
         if (!InstalledPackageExporter.isInstalled(context, pkg)) {
             print("No installed Grindr to fall back to — use Custom Files")
+            return false
+        }
+        val installedVc = InstalledPackageExporter.installedVersionCode(context, pkg)
+        if (requiredVersionCode > 0L && installedVc != null && installedVc != requiredVersionCode) {
+            print(
+                "Installed Grindr versionCode=$installedVc ≠ required $requiredVersionCode — " +
+                    "refusing export (would reintroduce tip/wrong build). Use Custom Files."
+            )
             return false
         }
         if (InstalledPackageExporter.looksLsPatched(context, pkg)) {
@@ -319,6 +352,25 @@ class PlayGrindrDownloadStep(
         fun preferredTargetVersionCode(): Long {
             val codes = BuildConfig.TARGET_GRINDR_VERSION_CODES
             return if (codes.isNotEmpty()) codes[0].toLong() else 0L
+        }
+
+        /**
+         * Prefer [preferredVersionCode] when set (BuildConfig target), else Play tip.
+         * Throws if neither is a positive versionCode.
+         */
+        fun resolveDownloadVersionCode(
+            tipVersionCode: Long,
+            preferredVersionCode: Long,
+        ): Long {
+            val chosen = if (preferredVersionCode > 0L) {
+                preferredVersionCode
+            } else {
+                tipVersionCode
+            }
+            if (chosen <= 0L) {
+                throw IOException("Play returned invalid versionCode for Grindr")
+            }
+            return chosen
         }
     }
 }

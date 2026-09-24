@@ -35,6 +35,28 @@ object InstalledPackageExporter {
             false
         }
 
+    /** Installed long versionCode, or null if the package is missing. */
+    fun installedVersionCode(context: Context, packageName: String): Long? =
+        try {
+            val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getPackageInfo(
+                    packageName,
+                    PackageManager.PackageInfoFlags.of(0),
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getPackageInfo(packageName, 0)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                info.longVersionCode
+            } else {
+                @Suppress("DEPRECATION")
+                info.versionCode.toLong()
+            }
+        } catch (_: PackageManager.NameNotFoundException) {
+            null
+        }
+
     /** True if base.apk already embeds LSPatch (re-patching would nest loaders). */
     fun looksLsPatched(context: Context, packageName: String): Boolean {
         return try {
