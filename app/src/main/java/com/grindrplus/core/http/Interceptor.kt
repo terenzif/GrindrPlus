@@ -2,6 +2,7 @@ package com.grindrplus.core.http
 
 import com.grindrplus.core.Logger
 import com.grindrplus.core.LogSource
+import com.grindrplus.core.mapping.MappingDictionary
 import de.robv.android.xposed.XposedBridge
 import okhttp3.Interceptor
 import okhttp3.Protocol
@@ -21,49 +22,83 @@ class Interceptor(
 ) : Interceptor {
 
     private fun modifyRequest(originalRequest: Request): Request {
-        // search for 'getJwt().length() > 0 &&' in userSession
-        val isLoggedIn = invokeMethodSafe(userSession, "r") as? Boolean ?: false
+        val isLoggedInMethod = MappingDictionary.resolve("http.userSession.isLoggedInMethod", "r")
+        val isLoggedIn = if (isLoggedInMethod.isEmpty()) {
+            Logger.i("HTTP: isLoggedInMethod soft-skip (empty remap)", LogSource.HTTP)
+            false
+        } else {
+            // search for 'getJwt().length() > 0 &&' in userSession
+            invokeMethodSafe(userSession, isLoggedInMethod) as? Boolean ?: false
+        }
 
         val builder: Builder = originalRequest.newBuilder()
 
         if (isLoggedIn) {
-            // search for 'return FlowKt.asStateFlow' in userSession (return type is StateFlow<String>)
-            val authTokenFlow = invokeMethodSafe(userSession, "x")
-            val authToken = if (authTokenFlow != null) {
-                invokeMethodSafe(authTokenFlow, "getValue") as? String ?: ""
-            } else {
+            val authTokenFlowMethod =
+                MappingDictionary.resolve("http.userSession.authTokenFlowMethod", "x")
+            val authToken = if (authTokenFlowMethod.isEmpty()) {
+                Logger.i("HTTP: authTokenFlowMethod soft-skip (empty remap)", LogSource.HTTP)
                 ""
+            } else {
+                // search for 'return FlowKt.asStateFlow' in userSession (return type is StateFlow<String>)
+                val authTokenFlow = invokeMethodSafe(userSession, authTokenFlowMethod)
+                if (authTokenFlow != null) {
+                    invokeMethodSafe(authTokenFlow, "getValue") as? String ?: ""
+                } else {
+                    ""
+                }
             }
 
-            // Roles string for L-Grindr-Roles (was "F" on 25.20.0; UserSession.E() on 26.16.1)
-            val roles = invokeMethodSafe(userSession, "E") as? String ?: ""
+            val rolesMethod = MappingDictionary.resolve("http.userSession.rolesMethod", "E")
+            val roles = if (rolesMethod.isEmpty()) {
+                Logger.i("HTTP: rolesMethod soft-skip (empty remap)", LogSource.HTTP)
+                null
+            } else {
+                // Roles string for L-Grindr-Roles (was "F" on 25.20.0; UserSession.E() on 26.16.1)
+                invokeMethodSafe(userSession, rolesMethod) as? String ?: ""
+            }
 
             if (authToken.isNotEmpty()) {
                 builder.header("Authorization", "Grindr3 $authToken")
-                builder.header("L-Grindr-Roles", roles)
+                if (roles != null) {
+                    builder.header("L-Grindr-Roles", roles)
+                }
             } else {
                 Logger.w("Auth token is empty, skipping auth headers", LogSource.HTTP)
             }
 
             builder.header("L-Time-Zone", TimeZone.getDefault().id)
 
-            // search for 'public final kotlin.Lazy' in deviceInfo
-            val deviceInfoLazy = getFieldSafe(deviceInfo, "d") as? Any
-            val lDeviceInfo = if (deviceInfoLazy != null) {
-                invokeMethodSafe(deviceInfoLazy, "getValue") as? String ?: ""
+            val deviceInfoLazyField =
+                MappingDictionary.resolve("http.deviceInfo.lazyField", "d")
+            if (deviceInfoLazyField.isEmpty()) {
+                Logger.i("HTTP: deviceInfo.lazyField soft-skip (empty remap)", LogSource.HTTP)
             } else {
-                ""
-            }
+                // search for 'public final kotlin.Lazy' in deviceInfo
+                val deviceInfoLazy = getFieldSafe(deviceInfo, deviceInfoLazyField) as? Any
+                val lDeviceInfo = if (deviceInfoLazy != null) {
+                    invokeMethodSafe(deviceInfoLazy, "getValue") as? String ?: ""
+                } else {
+                    ""
+                }
 
-            if (lDeviceInfo.isNotEmpty()) {
-                builder.header("L-Device-Info", lDeviceInfo)
+                if (lDeviceInfo.isNotEmpty()) {
+                    builder.header("L-Device-Info", lDeviceInfo)
+                }
             }
         } else {
             builder.header("L-Time-Zone", "Unknown")
         }
 
-        // search for 'getValue().getNameTitleCase()' in userAgent
-        val userAgentString = invokeMethodSafe(userAgent, "a") as? String ?: "Grindr"
+        val userAgentStringMethod =
+            MappingDictionary.resolve("http.userAgent.stringMethod", "a")
+        val userAgentString = if (userAgentStringMethod.isEmpty()) {
+            Logger.i("HTTP: userAgent.stringMethod soft-skip (empty remap)", LogSource.HTTP)
+            "Grindr"
+        } else {
+            // search for 'getValue().getNameTitleCase()' in userAgent
+            invokeMethodSafe(userAgent, userAgentStringMethod) as? String ?: "Grindr"
+        }
 
         builder.header("Accept", "application/json; charset=UTF-8")
         builder.header("User-Agent", userAgentString)
@@ -88,7 +123,7 @@ class Interceptor(
             null
         } catch (e: Exception) {
             Logger.e("Failed to invoke method $methodName: ${e.message}", LogSource.HTTP)
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
             null
         }
     }
@@ -109,7 +144,7 @@ class Interceptor(
             null
         } catch (e: Exception) {
             Logger.e("Failed to get field $fieldName: ${e.message}", LogSource.HTTP)
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
             null
         }
     }
@@ -129,11 +164,11 @@ class Interceptor(
             createErrorResponse(request, 408, "Request Timeout")
         } catch (e: IOException) {
             Logger.e("Network error: ${e.message}", LogSource.HTTP)
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
             createErrorResponse(request, 503, "Network Error")
         } catch (e: Exception) {
             Logger.e("Unexpected error: ${e.message}", LogSource.HTTP)
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
             createErrorResponse(request, 500, "Internal Error")
         }
     }

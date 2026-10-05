@@ -127,7 +127,7 @@ class BridgeService : Service() {
 
         } catch (e: Exception) {
             Logger.w("Failed to start foreground service: ${e.message}", LogSource.BRIDGE)
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
 
             // If we can't start as foreground, continue as normal service
             // The service will still work, just won't be protected from being killed
@@ -177,12 +177,12 @@ class BridgeService : Service() {
                         Logger.i("Block events migration complete", LogSource.BRIDGE)
                     } catch (e: Exception) {
                         Logger.e("Failed to migrate block events: ${e.message}", LogSource.BRIDGE)
-                        Logger.writeRaw(e.stackTraceToString())
+                        Logger.writeThrowable(e)
                     }
                 }
             } catch (e: Exception) {
                 Logger.e("Failed to initialize files: ${e.message}", LogSource.BRIDGE)
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
             }
         }
     }
@@ -231,7 +231,7 @@ class BridgeService : Service() {
                 }
             } catch (e: Exception) {
                 Logger.e("Error reading config file", LogSource.BRIDGE)
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
                 "{}"
             }
         }
@@ -247,7 +247,7 @@ class BridgeService : Service() {
                 configFile.writeText(config ?: "{}")
             } catch (e: Exception) {
                 Logger.e("Error writing to config file", LogSource.BRIDGE)
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
             }
         }
 
@@ -320,7 +320,7 @@ class BridgeService : Service() {
                 }
             } catch (e: Exception) {
                 Logger.e("Error sending notification", LogSource.BRIDGE)
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
             }
         }
 
@@ -370,7 +370,7 @@ class BridgeService : Service() {
                 }
             } catch (e: Exception) {
                 Logger.e("Error sending notification with actions", LogSource.BRIDGE)
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
             }
         }
 
@@ -428,7 +428,7 @@ class BridgeService : Service() {
                 future.get()
             } catch (e: Exception) {
                 Logger.e("Error reading block events from DB", LogSource.BRIDGE)
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
                 "[]"
             }
         }
@@ -443,7 +443,7 @@ class BridgeService : Service() {
                     Logger.i("Cleared all block events", LogSource.BRIDGE)
                 } catch (e: Exception) {
                     Logger.e("Error clearing block events", LogSource.BRIDGE)
-                    Logger.writeRaw(e.stackTraceToString())
+                    Logger.writeThrowable(e)
                 }
             }
         }

@@ -21,6 +21,9 @@ import java.util.zip.ZipOutputStream
  * (anonymous dispenser + purchase/delivery), then zips them for [ExtractBundleStep].
  *
  * Replaces CDN URL downloads when [grindrUrl] is blank — no Aurora Store app, no APK host.
+ *
+ * Pack-aware: prefer a versionCode that matches a mapping pack / BuildConfig tip when
+ * Play delivery allows it (see ADR 0003). Soft-fail back to Play tip on delivery errors.
  */
 class PlayGrindrDownloadStep(
     private val bundleFile: File,
@@ -55,15 +58,25 @@ class PlayGrindrDownloadStep(
             throw IOException("Play app details failed: ${e.message}", e)
         }
 
-        var versionCode = app.versionCode
+        val tipVersionCode = app.versionCode
+        var versionCode = tipVersionCode
+        val softPreferTarget = preferredVersionCode > 0L &&
+            tipVersionCode > 0L &&
+            preferredVersionCode != tipVersionCode
+
         if (preferredVersionCode > 0L) {
-            if (versionCode == preferredVersionCode) {
-                print("Play tip matches target versionCode=$versionCode")
+            if (tipVersionCode == preferredVersionCode) {
+                print(
+                    "Play tip matches preferred target versionCode=$versionCode " +
+                        "(align tip with a mapping pack when possible)"
+                )
             } else {
                 print(
-                    "Play tip versionCode=$versionCode " +
-                        "(fork target=$preferredVersionCode) — downloading tip"
+                    "Play tip versionCode=$tipVersionCode differs from preferred " +
+                        "BuildConfig target=$preferredVersionCode — " +
+                        "soft-preferring target for delivery (pack tip alignment)"
                 )
+                versionCode = preferredVersionCode
             }
         }
         if (versionCode <= 0L) {
@@ -80,7 +93,28 @@ class PlayGrindrDownloadStep(
                 offerType = offerType,
             )
         } catch (e: Exception) {
-            throw IOException("Play purchase/delivery failed: ${e.message}", e)
+            if (softPreferTarget) {
+                print(
+                    "Preferred versionCode=$preferredVersionCode delivery failed " +
+                        "(${e.message}); falling back to Play tip=$tipVersionCode"
+                )
+                versionCode = tipVersionCode
+                print("Requesting delivery for ${app.displayName} vc=$versionCode ot=$offerType...")
+                try {
+                    PurchaseHelper(auth).using(http).purchase(
+                        packageName = PlayStoreSession.GRINDR_PACKAGE,
+                        versionCode = versionCode,
+                        offerType = offerType,
+                    )
+                } catch (fallback: Exception) {
+                    throw IOException(
+                        "Play purchase/delivery failed for tip vc=$tipVersionCode: ${fallback.message}",
+                        fallback
+                    )
+                }
+            } else {
+                throw IOException("Play purchase/delivery failed: ${e.message}", e)
+            }
         }
 
         val apkFiles = files.filter { it.url.isNotBlank() && it.name.endsWith(".apk", ignoreCase = true) }

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "packs": [
+    {
+      "versionCode": 179451,
+      "versionName": "26.16.1",
+      "confidence": "static-jadx"
+    },
+    {
+      "versionCode": 174557,
+      "versionName": "26.15.1",
+      "confidence": "static-dex-fingerprint"
+    },
+    {
+      "versionCode": 173835,
+      "versionName": "26.15.0",
+      "confidence": "static-dex-fingerprint"
+    },
+    {
+      "versionCode": 166504,
+      "versionName": "26.10.0",
+      "confidence": "static-dex-fingerprint"
+    },
+    {
+      "versionCode": 164876,
+      "versionName": "26.9.2",
+      "confidence": "static-dex-fingerprint"
+    },
+    {
+      "versionCode": 158308,
+      "versionName": "26.6.0",
+      "confidence": "static-dex-fingerprint"
+    },
+    {
+      "versionCode": 147239,
+      "versionName": "25.20.0",
+      "confidence": "historical-git"
+    }
+  ]
+}

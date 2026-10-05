@@ -4,24 +4,30 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.min
 
 class TaskScheduler(private val scope: CoroutineScope) {
-    private val runningJobs = mutableMapOf<String, Job>()
+    private val runningJobs = ConcurrentHashMap<String, Job>()
 
     fun periodic(
         name: String,
         intervalMs: Long,
         action: suspend () -> Unit
     ): Job {
+        val maxDelayMs = min(intervalMs * 16, 5 * 60 * 1000L)
         val job = scope.launch {
+            var delayMs = intervalMs
             while (true) {
                 try {
                     action()
-                    delay(intervalMs)
+                    delayMs = intervalMs
+                    delay(delayMs)
                 } catch (e: Exception) {
                     Logger.e("$name failed: ${e.message}", LogSource.MODULE)
-                    Logger.writeRaw(e.stackTraceToString())
-                    delay(intervalMs)
+                    Logger.writeThrowable(e)
+                    delay(delayMs)
+                    delayMs = min(delayMs * 2, maxDelayMs)
                 }
             }
         }
@@ -35,7 +41,7 @@ class TaskScheduler(private val scope: CoroutineScope) {
                 action()
             } catch (e: Exception) {
                 Logger.e("$name failed: ${e.message}", LogSource.MODULE)
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
             } finally {
                 runningJobs.remove(name)
             }
@@ -59,7 +65,7 @@ class TaskScheduler(private val scope: CoroutineScope) {
                     } catch (e: Exception) {
                         if (attempt == retries - 1) {
                             Logger.e("$name failed after $retries attempts", LogSource.MODULE)
-                            Logger.writeRaw(e.stackTraceToString())
+                            Logger.writeThrowable(e)
                             throw e
                         } else {
                             Logger.w("$name retry ${attempt+1}/$retries", LogSource.MODULE)

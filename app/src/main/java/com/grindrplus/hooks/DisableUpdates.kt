@@ -4,6 +4,8 @@ import com.grindrplus.GrindrPlus
 import com.grindrplus.core.Logger
 import com.grindrplus.core.logd
 import com.grindrplus.core.loge
+import com.grindrplus.core.logi
+import com.grindrplus.core.mapping.MappingDictionary
 import com.grindrplus.utils.Hook
 import com.grindrplus.utils.HookStage
 import com.grindrplus.utils.hook
@@ -23,7 +25,6 @@ class DisableUpdates : Hook(
         "https://raw.githubusercontent.com/terenzif/GrindrPlus/master/latest_play.json"
     private val appUpdateInfo = "com.google.android.play.core.appupdate.AppUpdateInfo"
     private val appUpdateZzm = "com.google.android.play.core.appupdate.zzm" // search for 'requestUpdateInfo(%s)'
-    private val appUpgradeManager = "xa0" // search for 'Uri.parse("market://details?id=com.grindrapp.android");' + deprecation_message
     private val appConfiguration = "com.grindrapp.android.platform.config.AppConfiguration"
     private var versionCode: Int = 0
     private var versionName: String = ""
@@ -39,11 +40,21 @@ class DisableUpdates : Hook(
                 param.setResult(false)
             }
 
-        findClass(appUpgradeManager) // showDeprecatedVersionDialog()
-            // search for '.setMessage(R.string.deprecation_message);'
-            .hook("b", HookStage.BEFORE) { param ->
-                param.setResult(null)
-            }
+        val appUpgradeManager =
+            MappingDictionary.resolve("DisableUpdates.appUpgradeManager", "xa0")
+        val showDeprecatedDialogMethod = MappingDictionary.resolve(
+            "DisableUpdates.appUpgradeManager.showDeprecatedDialogMethod",
+            "b"
+        )
+        if (appUpgradeManager.isEmpty() || showDeprecatedDialogMethod.isEmpty()) {
+            logi("DisableUpdates: appUpgradeManager soft-skip (empty remap)")
+        } else {
+            findClass(appUpgradeManager) // showDeprecatedVersionDialog()
+                // search for '.setMessage(R.string.deprecation_message);'
+                .hook(showDeprecatedDialogMethod, HookStage.BEFORE) { param ->
+                    param.setResult(null)
+                }
+        }
 
         findClass(appUpdateZzm) // requestUpdateInfo()
             .hook("zza", HookStage.BEFORE) { param ->
@@ -76,7 +87,7 @@ class DisableUpdates : Hook(
             }
         } catch (e: Exception) {
             loge("Error fetching version info: ${e.message}")
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
         }
     }
 
@@ -100,9 +111,15 @@ class DisableUpdates : Hook(
         ).versionName.toString()
 
         if (compareVersions(versionName, currentVersion) > 0) {
-            // AppConfiguration version field is `f` on 26.16.1 (was `d` on 25.20.0)
-            findClass(appConfiguration).hookConstructor(HookStage.AFTER) { param ->
-                setObjectField(param.thisObject(), "f", "$versionName.$versionCode")
+            val versionField =
+                MappingDictionary.resolve("DisableUpdates.appConfiguration.versionField", "f")
+            if (versionField.isEmpty()) {
+                logi("DisableUpdates: versionField soft-skip (empty remap)")
+            } else {
+                // AppConfiguration version field is `f` on 26.16.1 (was `d` on 25.20.0)
+                findClass(appConfiguration).hookConstructor(HookStage.AFTER) { param ->
+                    setObjectField(param.thisObject(), versionField, "$versionName.$versionCode")
+                }
             }
 
             findClass(GrindrPlus.userAgent).hookConstructor(HookStage.AFTER) { param ->

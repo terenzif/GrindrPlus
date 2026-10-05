@@ -256,7 +256,7 @@ class Location(recipient: String, sender: String) : CommandModule("Location", re
                 withContext(Dispatchers.Main) { GrindrPlus.showToast(Toast.LENGTH_LONG, message) }
                 Logger.apply {
                     e(message)
-                    writeRaw(e.stackTraceToString())
+                    writeThrowable(e)
                 }
                 null
             }

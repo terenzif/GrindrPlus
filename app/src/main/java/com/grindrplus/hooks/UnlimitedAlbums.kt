@@ -85,7 +85,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                 }
             } catch (e: Exception) {
                 loge("Error handling album request: ${e.message}")
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
                 result
             }
         }
@@ -96,7 +96,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                 setObjectField(param.thisObject(), "viewableUntil", Long.MAX_VALUE)
             } catch (e: Exception) {
                 loge("Error making album viewable: ${e.message}")
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
             }
         }
 
@@ -106,7 +106,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                 setObjectField(param.thisObject(), "expiresAt", Long.MAX_VALUE)
             } catch (e: Exception) {
                 loge("Error making album viewable: ${e.message}")
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
             }
         }
 
@@ -116,7 +116,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                     setObjectField(param.thisObject(), "albumViewable", true)
                 } catch (e: Exception) {
                     loge("Error making album viewable: ${e.message}")
-                    Logger.writeRaw(e.stackTraceToString())
+                    Logger.writeThrowable(e)
                 }
             }
         }
@@ -140,12 +140,12 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                     dao.upsertAlbumContent(dbAlbumContent)
                 } catch (e: Exception) {
                     loge("Failed to convert album content: ${e.message}")
-                    Logger.writeRaw(e.stackTraceToString())
+                    Logger.writeThrowable(e)
                 }
             }
         } catch (e: Exception) {
             loge("Failed to save album: ${e.message}")
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
         }
     }
 
@@ -174,7 +174,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
             }
         } catch (e: Exception) {
             loge("Failed to save album content: ${e.message}")
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
         }
     }
 
@@ -201,7 +201,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                     }
                 } catch (e: Exception) {
                     loge("Failed to delete album $albumId: ${e.message}")
-                    Logger.writeRaw(e.stackTraceToString())
+                    Logger.writeThrowable(e)
                     result
                 }
             } else {
@@ -254,7 +254,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                     }
             } catch (e: Exception) {
                 loge("Failed to fetch album $albumId: ${e.message}")
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
                 GrindrPlus.showToast(Toast.LENGTH_LONG, "Failed to load album")
                 val modifiedResult = fetchAlbumFromDatabase(albumId, result)
                 return@withSuspendResult modifiedResult
@@ -301,7 +301,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
             }
         } catch (e: Exception) {
             loge("Failed to load album $albumId from database: ${e.message}")
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
             return originalResult
         }
     }
@@ -329,7 +329,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                         albumContentEntities.add(albumContentEntity)
                     } catch (e: Exception) {
                         loge("Error parsing content item: ${e.message}")
-                        Logger.writeRaw(e.stackTraceToString())
+                        Logger.writeThrowable(e)
                     }
                 }
 
@@ -339,7 +339,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                         runBlocking { saveAlbumContent(albumId, albumContentEntities) }
                     } catch (e: Exception) {
                         loge("Failed to save album content: ${e.message}")
-                        Logger.writeRaw(e.stackTraceToString())
+                        Logger.writeThrowable(e)
                     }
                 }
 
@@ -356,7 +356,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                     }
                 } catch (e: Exception) {
                     loge("Error setting album content: ${e.message}")
-                    Logger.writeRaw(e.stackTraceToString())
+                    Logger.writeThrowable(e)
                 }
             }
                 ?: run {
@@ -365,7 +365,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                 }
         } catch (e: Exception) {
             loge("Error parsing album content: ${e.message}")
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
             return fetchAlbumFromDatabase(albumId, originalResult)
         }
 
@@ -386,7 +386,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                                         saveAlbum(album)
                                     } catch (e: Exception) {
                                         loge("Error saving album: ${e.message}")
-                                        Logger.writeRaw(e.stackTraceToString())
+                                        Logger.writeThrowable(e)
                                     }
                                 }
                             }
@@ -394,7 +394,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                     }
                 } catch (e: Exception) {
                     loge("Error processing albums: ${e.message}")
-                    Logger.writeRaw(e.stackTraceToString())
+                    Logger.writeThrowable(e)
                 }
             }
 
@@ -408,7 +408,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                                 it.album.toGrindrAlbum(it.content)
                             } catch (e: Exception) {
                                 loge("Error converting album ${it.album.id}: ${e.message}")
-                                Logger.writeRaw(e.stackTraceToString())
+                                Logger.writeThrowable(e)
                                 null
                             }
                         }
@@ -419,7 +419,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                 createSuccess(newValue)
             } catch (e: Exception) {
                 loge("Error creating albums list: ${e.message}")
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
                 result
             }
         }
@@ -448,14 +448,14 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                                     }
                                 } catch (e: Exception) {
                                     loge("Error processing album brief: ${e.message}")
-                                    Logger.writeRaw(e.stackTraceToString())
+                                    Logger.writeThrowable(e)
                                 }
                             }
                         }
                     }
                 } catch (e: Exception) {
                     loge("Error saving album briefs: ${e.message}")
-                    Logger.writeRaw(e.stackTraceToString())
+                    Logger.writeThrowable(e)
                 }
             }
 
@@ -474,7 +474,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                                 }
                             } catch (e: Exception) {
                                 loge("Error converting album ${it.album.id} to brief: ${e.message}")
-                                Logger.writeRaw(e.stackTraceToString())
+                                Logger.writeThrowable(e)
                                 null
                             }
                         }
@@ -485,7 +485,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                 createSuccess(newValue)
             } catch (e: Exception) {
                 loge("Error creating shared albums brief: ${e.message}")
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
                 result
             }
         }
@@ -517,14 +517,14 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                                     }
                                 } catch (e: Exception) {
                                     loge("Error processing album brief: ${e.message}")
-                                    Logger.writeRaw(e.stackTraceToString())
+                                    Logger.writeThrowable(e)
                                 }
                             }
                         }
                     }
                 } catch (e: Exception) {
                     loge("Error saving album briefs: ${e.message}")
-                    Logger.writeRaw(e.stackTraceToString())
+                    Logger.writeThrowable(e)
                 }
             }
 
@@ -543,7 +543,7 @@ class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlim
                                 }
                             } catch (e: Exception) {
                                 loge("Error converting album ${it.album.id} to brief: ${e.message}")
-                                Logger.writeRaw(e.stackTraceToString())
+                                Logger.writeThrowable(e)
                                 null
                             }
                         }

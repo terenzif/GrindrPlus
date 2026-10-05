@@ -10,9 +10,11 @@ import android.widget.TextView
 import androidx.core.view.children
 import com.grindrplus.GrindrPlus
 import com.grindrplus.core.Config
+import com.grindrplus.core.mapping.MappingDictionary
 import com.grindrplus.ui.Utils
 import com.grindrplus.utils.Hook
 import com.grindrplus.utils.HookStage
+import com.grindrplus.utils.SoftSkipException
 import com.grindrplus.utils.hook
 import de.robv.android.xposed.XposedHelpers.callMethod
 import de.robv.android.xposed.XposedHelpers.getObjectField
@@ -25,13 +27,24 @@ class Favorites : Hook(
 ) {
     private val recyclerViewLayoutParams =
         "androidx.recyclerview.widget.RecyclerView\$LayoutParams"
-    private val favoritesFragment = "com.grindrapp.android.favorites.presentation.ui.FavoritesFragment"
+    private val favoritesFragment = MappingDictionary.resolve(
+        "Favorites.FRAGMENT",
+        "com.grindrapp.android.favorites.presentation.ui.FavoritesFragment"
+    )
 
     override fun init() {
+        val fragmentClass = try {
+            findClass(favoritesFragment)
+        } catch (t: Throwable) {
+            throw SoftSkipException(
+                "FavoritesFragment absent (Cascade V2) — remap Favorites.FRAGMENT"
+            )
+        }
+
         val recyclerViewLayoutParamsConstructor = findClass(recyclerViewLayoutParams)
             .getDeclaredConstructor(Int::class.java, Int::class.java)
 
-        findClass(favoritesFragment)
+        fragmentClass
             .hook("onViewCreated", HookStage.AFTER) { param ->
                 val columnsNumber = (Config.get("favorites_grid_columns", 3) as Number).toInt()
                 val view = param.arg<View>(0)

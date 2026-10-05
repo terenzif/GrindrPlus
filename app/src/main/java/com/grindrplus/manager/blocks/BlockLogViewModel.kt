@@ -121,7 +121,7 @@ class BlockLogViewModel : ViewModel() {
                 _availablePackages.value = packageSet.toList()
             } catch (e: Exception) {
                 Logger.e("Failed to load block events: ${e.message}", LogSource.MANAGER)
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
             } finally {
                 _isLoading.value = false
             }
@@ -135,7 +135,7 @@ class BlockLogViewModel : ViewModel() {
                 loadEvents()
             } catch (e: Exception) {
                 Logger.e("Failed to clear block events: ${e.message}", LogSource.MANAGER)
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
             }
         }
     }

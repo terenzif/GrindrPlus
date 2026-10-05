@@ -78,10 +78,19 @@ class SettingsViewModel(
                 val hookSettings = hooks
                     .filterNot { (hookName, _) -> hookName in hookHideList }
                     .map { (hookName, pair) ->
+                        val runtime = Config.getHookRuntimeStatus(hookName)
+                        val runtimeNote = when (runtime?.first) {
+                            "skipped" -> " [skipped${runtime.second?.let { " — $it" } ?: ""}]"
+                            "partial" -> " [partial${runtime.second?.let { " — $it" } ?: ""}]"
+                            "failed" -> " [failed${runtime.second?.let { " — $it" } ?: ""}]"
+                            "disabled" -> ""
+                            "enabled" -> ""
+                            else -> ""
+                        }
                         SwitchSetting(
                             id = hookName,
                             title = hookName,
-                            description = pair.first,
+                            description = pair.first + runtimeNote,
                             isChecked = pair.second,
                             onCheckedChange = {
                                 viewModelScope.launch {
@@ -183,7 +192,8 @@ class SettingsViewModel(
                     TextSetting(
                         id = "favorites_grid_columns",
                         title = "Favorites grid columns",
-                        description = "Number of columns in the favorites grid (default: 3)",
+                        description = "Number of columns in the favorites grid (default: 3). " +
+                            "[inactive until Favorites.FRAGMENT remapped — Cascade V2]",
                         value = Config.get("favorites_grid_columns", 3).toString(),
                         onValueChange = {
                             val value = it.toIntOrNull() ?: 3
@@ -379,6 +389,25 @@ class SettingsViewModel(
                             viewModelScope.launch {
                                 Config.put("analytics", it)
                                 loadSettings()
+                            }
+                        }
+                    ),
+                    TextSetting(
+                        id = "analytics_endpoint",
+                        title = "Analytics endpoint (optional)",
+                        description = "HTTPS URL for anonymous event flush (JSON array POST). Empty = local queue only.",
+                        value = Config.get("analytics_endpoint", "") as String,
+                        onValueChange = {
+                            viewModelScope.launch {
+                                Config.put("analytics_endpoint", it.trim())
+                                loadSettings()
+                            }
+                        },
+                        validator = { value ->
+                            when {
+                                value.isBlank() -> null
+                                value.startsWith("https://") -> null
+                                else -> "Must be https:// or empty"
                             }
                         }
                     ),

@@ -32,7 +32,7 @@ class DisableBoosting : Hook(
                 }
         }.onFailure {
             loge("DisableBoosting drawer state: ${it.message}")
-            Logger.writeRaw(it.stackTraceToString())
+            Logger.writeThrowable(it)
         }
 
         val radar = Obfuscation.G.DisableBoosting.RADAR_UI_MODEL

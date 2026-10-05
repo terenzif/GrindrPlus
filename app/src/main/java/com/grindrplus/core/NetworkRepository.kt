@@ -19,7 +19,7 @@ object NetworkRepository {
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Logger.e("Failed to fetch remote data: ${e.message}", LogSource.MODULE)
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -39,7 +39,7 @@ object NetworkRepository {
                             callback(parsedPoints)
                         } catch (e: Exception) {
                             Logger.e("Failed to parse remote data: ${e.message}", LogSource.MODULE)
-                            Logger.writeRaw(e.stackTraceToString())
+                            Logger.writeThrowable(e)
                         }
                     }
                 }
@@ -82,7 +82,7 @@ object NetworkRepository {
                 }
             } catch (e: Exception) {
                 Logger.e("Error fetching own user ID: ${e.message}", LogSource.MODULE)
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
             }
         }
     }

@@ -75,7 +75,7 @@ object FileOperationHandler {
         } catch (e: Exception) {
             Logger.apply {
                 e("Failed to write file: ${e.message}")
-                writeRaw(e.stackTraceToString())
+                writeThrowable(e)
             }
         } finally {
             pendingExportContent = null
@@ -94,7 +94,7 @@ object FileOperationHandler {
         } catch (e: Exception) {
             Logger.apply {
                 e("Failed to write zip file: ${e.message}")
-                writeRaw(e.stackTraceToString())
+                writeThrowable(e)
             }
         } finally {
             pendingExportZipFile = null
@@ -110,7 +110,7 @@ object FileOperationHandler {
         } catch (e: Exception) {
             Logger.apply {
                 e("Failed to read file: ${e.message}")
-                writeRaw(e.stackTraceToString())
+                writeThrowable(e)
             }
         }
     }
@@ -217,7 +217,7 @@ object FileOperationHandler {
         } catch (e: Exception) {
             Logger.apply {
                 e("Failed to create logs zip: ${e.message}")
-                writeRaw(e.stackTraceToString())
+                writeThrowable(e)
             }
             return@withContext null
         }

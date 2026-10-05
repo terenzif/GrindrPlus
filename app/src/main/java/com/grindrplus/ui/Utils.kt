@@ -42,7 +42,7 @@ object Utils {
             dt.format(formatter)
         } catch (e: Exception) {
             Logger.e("Error formatting date: $epochSec with format: $formatter")
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
             "Unknown"
         }
     }

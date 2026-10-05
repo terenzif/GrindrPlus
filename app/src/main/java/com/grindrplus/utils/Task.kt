@@ -45,7 +45,7 @@ abstract class Task(
                     Logger.i("Task $id executed successfully", LogSource.MODULE)
                 } catch (e: Exception) {
                     Logger.e("Task $id failed: ${e.message}", LogSource.MODULE)
-                    Logger.writeRaw(e.stackTraceToString())
+                    Logger.writeThrowable(e)
                 }
             }
         )

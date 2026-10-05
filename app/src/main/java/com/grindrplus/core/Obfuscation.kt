@@ -5,9 +5,9 @@ import com.grindrplus.core.mapping.MappingDictionary
 /**
  * Obfuscated class / method names for hooks.
  *
- * When a mapping pack is loaded for the installed Grindr [versionCode], values come from
- * [MappingDictionary]. Otherwise (or for keys not yet in the pack) the compile-time fallbacks
- * for 26.16.1 (179451) are used. Empty string still means "skip this hook site".
+ * When a mapping pack is active, values come from [MappingDictionary]; missing keys soft-skip
+ * (empty string) and call sites must log + return early. Compile-time fallback literals for
+ * 26.16.1 (179451) are used only when no pack is loaded.
  */
 object Obfuscation {
     object G {

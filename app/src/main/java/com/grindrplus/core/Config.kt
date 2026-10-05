@@ -165,7 +165,7 @@ object Config {
             GrindrPlus.bridgeClient.getConfig()
         } catch (e: Exception) {
             Logger.e("Failed to read config file: ${e.message}", LogSource.MANAGER)
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
             JSONObject().put("clones", JSONObject().put(
                 Constants.GRINDR_PACKAGE_NAME,
                 JSONObject().put("hooks", JSONObject()))
@@ -178,7 +178,7 @@ object Config {
             GrindrPlus.bridgeClient.setConfig(json)
         } catch (e: IOException) {
             Logger.e("Failed to write config file: ${e.message}", LogSource.MANAGER)
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
         }
     }
 
@@ -348,6 +348,37 @@ object Config {
             }
 
             return@runBlocking map
+        }
+    }
+
+    /**
+     * Persist achieved runtime state for Settings truthfulness (ADR 0002).
+     * Does not change user [enabled] preference.
+     */
+    suspend fun setHookRuntimeStatus(name: String, status: String, reason: String? = null) {
+        configMutex.withLock {
+            val packageConfig = getCurrentPackageConfig()
+            val hooks = packageConfig.optJSONObject("hooks")
+                ?: JSONObject().also { packageConfig.put("hooks", it) }
+            val obj = hooks.optJSONObject(name) ?: JSONObject().also { hooks.put(name, it) }
+            obj.put("runtimeStatus", status)
+            if (reason.isNullOrBlank()) {
+                obj.remove("runtimeReason")
+            } else {
+                obj.put("runtimeReason", reason)
+            }
+            writeRemoteConfig(localConfig)
+            updateCache()
+        }
+    }
+
+    fun getHookRuntimeStatus(name: String): Pair<String, String?>? = runBlocking {
+        configMutex.withLock {
+            val hooks = getCurrentPackageConfig().optJSONObject("hooks") ?: return@runBlocking null
+            val obj = hooks.optJSONObject(name) ?: return@runBlocking null
+            val status = obj.optString("runtimeStatus").ifEmpty { return@runBlocking null }
+            val reason = obj.optString("runtimeReason").ifEmpty { null }
+            return@runBlocking status to reason
         }
     }
 }

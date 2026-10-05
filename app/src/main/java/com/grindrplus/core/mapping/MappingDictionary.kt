@@ -3,6 +3,7 @@ package com.grindrplus.core.mapping
 import android.content.Context
 import com.grindrplus.core.LogSource
 import com.grindrplus.core.Logger
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
@@ -15,11 +16,14 @@ import java.util.zip.ZipFile
  *
  * Prefer [loadForVersion] at Xposed init: remote → disk cache → module APK assets → literals.
  * Soft-fail: missing/invalid packs leave [current] null so callers fall back to compile-time literals.
+ *
+ * Pack schema is version 2. Schema v1 packs soft-migrate to v2 in memory on load.
  */
 object MappingDictionary {
     private const val ASSET_DIR = "mappings"
-    private const val SCHEMA_VERSION = 1
+    private const val SCHEMA_VERSION = 2
     private const val CACHE_SUBDIR = "mapping-packs-cache"
+    private const val INDEX_FILE_NAME = "index.json"
     private const val REMOTE_CONNECT_TIMEOUT_MS = 3_000
     private const val REMOTE_READ_TIMEOUT_MS = 3_000
 
@@ -28,6 +32,7 @@ object MappingDictionary {
      * or a one-line file `mapping_pack_base_url.txt` under the cache parent (filesDir).
      *
      * Pack URL: `{base}/{versionCode}.json`
+     * Catalog URL: `{base}/index.json`
      */
     const val DEFAULT_REMOTE_BASE_URL =
         "https://raw.githubusercontent.com/terenzif/GrindrPlus/master/mapping-packs"
@@ -73,6 +78,32 @@ object MappingDictionary {
     }
 
     /**
+     * Fetch `{base}/index.json` (soft-fail). On success, cache under
+     * `mapping-packs-cache/index.json`. On remote failure, try the on-device cache.
+     */
+    fun loadIndex(
+        cacheDir: File,
+        remoteBaseUrl: String = DEFAULT_REMOTE_BASE_URL,
+    ): MappingPackIndex? {
+        val resolvedBase = resolveRemoteBaseUrl(cacheDir, remoteBaseUrl)
+        val remoteJson = fetchRemoteText("$resolvedBase/$INDEX_FILE_NAME")
+        if (remoteJson != null) {
+            val index = runCatching { parseIndex(JSONObject(remoteJson)) }.getOrElse { err ->
+                Logger.w(
+                    "Invalid remote mapping pack index: ${err.message}",
+                    LogSource.MODULE
+                )
+                null
+            }
+            if (index != null) {
+                writeIndexCache(cacheDir, remoteJson)
+                return index
+            }
+        }
+        return loadIndexFromCache(cacheDir)
+    }
+
+    /**
      * Load pack for [versionCode] from the module APK on disk (LSPosed / Xposed path).
      * Returns null if the entry is missing or invalid — callers should soft-fail.
      */
@@ -115,12 +146,13 @@ object MappingDictionary {
 
     /**
      * Resolve a class/name symbol.
-     * - No active pack, or key absent from pack: [fallback] (migration safety).
-     * - Key present with empty `name`: empty string (explicit skip, same as Obfuscation).
+     * - No active pack: [fallback] (legacy compile-time literals).
+     * - Active pack and key present: [MappingSymbol.name] (may be empty = explicit skip).
+     * - Active pack and key absent: empty string (soft-skip; do **not** use [fallback]).
      */
     fun resolve(key: String, fallback: String): String {
         val pack = active ?: return fallback
-        val symbol = pack.symbols[key] ?: return fallback
+        val symbol = pack.symbols[key] ?: return ""
         return symbol.name
     }
 
@@ -139,6 +171,55 @@ object MappingDictionary {
     fun symbol(key: String): MappingSymbol? =
         active?.symbols?.get(key)
 
+    /**
+     * Soft-validate fingerprints on class symbols in the active pack.
+     * Logs warnings on hard mismatches; never throws.
+     *
+     * @return number of hard mismatches (struct / implements / field / data-class)
+     */
+    fun validateActiveFingerprints(classLoader: ClassLoader): Int {
+        val pack = active ?: return 0
+        var mismatches = 0
+        for ((key, symbol) in pack.symbols) {
+            if (symbol.kind != "class" || !symbol.isPresent || symbol.fingerprint.isNullOrBlank()) {
+                continue
+            }
+            val clazz = runCatching { classLoader.loadClass(symbol.name) }.getOrNull()
+            if (clazz == null) {
+                Logger.d(
+                    "Fingerprint skip $key: class ${symbol.name} not loaded yet",
+                    LogSource.MODULE
+                )
+                continue
+            }
+            val result = TargetFingerprint.matches(clazz, symbol.fingerprint)
+            when {
+                !result.matched -> {
+                    mismatches++
+                    Logger.w(
+                        "Fingerprint mismatch for $key (${symbol.name}) " +
+                            "[${result.mode}]: ${result.detail}",
+                        LogSource.MODULE
+                    )
+                }
+                result.mode == TargetFingerprint.Result.Mode.UNSUPPORTED -> {
+                    Logger.d(
+                        "Fingerprint advisory for $key: ${result.detail}",
+                        LogSource.MODULE
+                    )
+                }
+            }
+        }
+        if (mismatches > 0) {
+            Logger.w(
+                "Mapping fingerprint mismatches: $mismatches " +
+                    "(hooks may be stale — check mapping pack)",
+                LogSource.MODULE
+            )
+        }
+        return mismatches
+    }
+
     fun requireClass(key: String): String {
         val name = className(key)
         if (name.isEmpty()) {
@@ -149,6 +230,44 @@ object MappingDictionary {
 
     fun clear() {
         active = null
+    }
+
+    /**
+     * Hot-reload pack for [versionCode] (remote → cache → assets) and re-validate fingerprints.
+     * Soft-fail: returns null and leaves previous [current] if reload fails.
+     */
+    fun reloadForVersion(
+        modulePath: String,
+        versionCode: Int,
+        cacheDir: File,
+        classLoader: ClassLoader? = null,
+        remoteBaseUrl: String = DEFAULT_REMOTE_BASE_URL,
+    ): MappingPack? {
+        val previous = active
+        clear()
+        val pack = loadForVersion(
+            modulePath = modulePath,
+            versionCode = versionCode,
+            cacheDir = cacheDir,
+            remoteBaseUrl = remoteBaseUrl,
+            fetchRemote = true,
+        )
+        if (pack == null) {
+            active = previous
+            Logger.w(
+                "Hot-reload failed for versionCode=$versionCode — keeping previous pack",
+                LogSource.MODULE
+            )
+            return previous
+        }
+        if (classLoader != null) {
+            validateActiveFingerprints(classLoader)
+        }
+        Logger.i(
+            "Mapping pack hot-reloaded: ${pack.versionName} (${pack.versionCode})",
+            LogSource.MODULE
+        )
+        return pack
     }
 
     /** Test / tooling: set the active pack after [parsePack]. Soft-rejects unsupported schema. */
@@ -195,6 +314,14 @@ object MappingDictionary {
         return pack
     }
 
+    /**
+     * Parse a pack JSON object. Schema v1 soft-migrates to v2 in memory
+     * (schemaVersion=2, symbols preserved, hooks map always present).
+     *
+     * Symbol [MappingSymbol.kind] accepts `"class"`, `"method"`, `"field"` (and stores others
+     * flexibly). For method/field, [MappingSymbol.name] is the member name; owner class may
+     * appear in [MappingSymbol.note].
+     */
     internal fun parsePack(root: JSONObject): MappingPack {
         val symbolsJson = root.optJSONObject("symbols") ?: JSONObject()
         val symbols = linkedMapOf<String, MappingSymbol>()
@@ -219,14 +346,39 @@ object MappingDictionary {
             )
         }
 
+        val rawSchema = root.optInt("schemaVersion", 1)
+        val schemaVersion = if (rawSchema <= 1) SCHEMA_VERSION else rawSchema
+
         return MappingPack(
-            schemaVersion = root.optInt("schemaVersion", 1),
+            schemaVersion = schemaVersion,
             versionName = root.optString("versionName"),
             versionCode = root.optInt("versionCode"),
             confidence = root.optString("confidence"),
             generatedFrom = root.optString("generatedFrom"),
             symbols = symbols,
             hooks = hooks,
+        )
+    }
+
+    /**
+     * Parse `{ "schemaVersion": 1, "packs": [ { versionCode, versionName, confidence } ] }`.
+     */
+    internal fun parseIndex(root: JSONObject): MappingPackIndex {
+        val packsArray = root.optJSONArray("packs") ?: JSONArray()
+        val packs = ArrayList<MappingPackIndexEntry>(packsArray.length())
+        for (i in 0 until packsArray.length()) {
+            val obj = packsArray.optJSONObject(i) ?: continue
+            packs.add(
+                MappingPackIndexEntry(
+                    versionCode = obj.optInt("versionCode"),
+                    versionName = obj.optString("versionName"),
+                    confidence = obj.optString("confidence"),
+                )
+            )
+        }
+        return MappingPackIndex(
+            schemaVersion = root.optInt("schemaVersion", 1),
+            packs = packs,
         )
     }
 
@@ -243,8 +395,10 @@ object MappingDictionary {
         return base
     }
 
-    private fun fetchRemotePack(baseUrl: String, versionCode: Int): String? {
-        val url = "$baseUrl/$versionCode.json"
+    private fun fetchRemotePack(baseUrl: String, versionCode: Int): String? =
+        fetchRemoteText("$baseUrl/$versionCode.json")
+
+    private fun fetchRemoteText(url: String): String? {
         return runCatching {
             val conn = (URL(url).openConnection() as HttpURLConnection).apply {
                 connectTimeout = REMOTE_CONNECT_TIMEOUT_MS
@@ -270,7 +424,7 @@ object MappingDictionary {
             }
         }.getOrElse { err ->
             Logger.w(
-                "Remote mapping pack fetch failed for versionCode=$versionCode: ${err.message}",
+                "Remote mapping fetch failed for $url: ${err.message}",
                 LogSource.MODULE
             )
             null
@@ -280,6 +434,9 @@ object MappingDictionary {
     private fun cacheFile(cacheDir: File, versionCode: Int): File =
         File(File(cacheDir, CACHE_SUBDIR), "$versionCode.json")
 
+    private fun indexCacheFile(cacheDir: File): File =
+        File(File(cacheDir, CACHE_SUBDIR), INDEX_FILE_NAME)
+
     private fun writeCache(cacheDir: File, versionCode: Int, json: String) {
         runCatching {
             val file = cacheFile(cacheDir, versionCode)
@@ -288,6 +445,19 @@ object MappingDictionary {
         }.onFailure { err ->
             Logger.w(
                 "Failed to cache mapping pack versionCode=$versionCode: ${err.message}",
+                LogSource.MODULE
+            )
+        }
+    }
+
+    private fun writeIndexCache(cacheDir: File, json: String) {
+        runCatching {
+            val file = indexCacheFile(cacheDir)
+            file.parentFile?.mkdirs()
+            file.writeText(json)
+        }.onFailure { err ->
+            Logger.w(
+                "Failed to cache mapping pack index: ${err.message}",
                 LogSource.MODULE
             )
         }
@@ -308,6 +478,25 @@ object MappingDictionary {
                 "Mapping pack loaded from device cache (versionCode=$versionCode)",
                 LogSource.MODULE
             )
+        }
+    }
+
+    private fun loadIndexFromCache(cacheDir: File): MappingPackIndex? {
+        val file = indexCacheFile(cacheDir)
+        if (!file.isFile) return null
+        val json = runCatching { file.readText() }.getOrElse { err ->
+            Logger.w(
+                "Mapping pack index cache read failed: ${err.message}",
+                LogSource.MODULE
+            )
+            return null
+        }
+        return runCatching { parseIndex(JSONObject(json)) }.getOrElse { err ->
+            Logger.w(
+                "Invalid cached mapping pack index: ${err.message}",
+                LogSource.MODULE
+            )
+            null
         }
     }
 }

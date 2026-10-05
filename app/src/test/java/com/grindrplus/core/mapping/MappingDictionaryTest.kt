@@ -44,13 +44,52 @@ class MappingDictionaryTest {
                 """.trimIndent()
             )
         )
-        assertEquals(1, pack.schemaVersion)
+        assertEquals(2, pack.schemaVersion)
         assertEquals(179451, pack.versionCode)
         assertEquals("lrc", pack.symbols["core.userAgent"]?.name)
         assertEquals("c", pack.symbols["ProfileDetails.DISTANCE_UTILS"]?.method)
         assertTrue(pack.symbols["DisableBoosting.SUBSCRIBE_FOR_BOOST_REDEEM"]?.name?.isEmpty() == true)
         assertEquals("partial", pack.hooks["DisableBoosting"]?.status)
         assertEquals("absent", pack.hooks["DisableShuffle"]?.reason)
+    }
+
+    @Test
+    fun parsePack_softMigratesSchemaV1ToV2() {
+        val pack = MappingDictionary.parsePack(
+            JSONObject(
+                """
+                {
+                  "schemaVersion": 1,
+                  "versionName": "26.16.1",
+                  "versionCode": 179451,
+                  "confidence": "test",
+                  "generatedFrom": "test",
+                  "symbols": {
+                    "core.userAgent": { "kind": "class", "name": "lrc" },
+                    "retrofit.successValue": {
+                      "kind": "field",
+                      "name": "a",
+                      "note": "owner r84"
+                    },
+                    "ProfileDetails.DISTANCE_UTILS": {
+                      "kind": "method",
+                      "name": "c",
+                      "note": "owner iq3"
+                    }
+                  }
+                }
+                """.trimIndent()
+            )
+        )
+        assertEquals(2, pack.schemaVersion)
+        assertEquals("lrc", pack.symbols["core.userAgent"]?.name)
+        assertEquals("field", pack.symbols["retrofit.successValue"]?.kind)
+        assertEquals("a", pack.symbols["retrofit.successValue"]?.name)
+        assertEquals("owner r84", pack.symbols["retrofit.successValue"]?.note)
+        assertEquals("method", pack.symbols["ProfileDetails.DISTANCE_UTILS"]?.kind)
+        assertEquals("c", pack.symbols["ProfileDetails.DISTANCE_UTILS"]?.name)
+        assertNotNull(pack.hooks)
+        assertTrue(pack.hooks.isEmpty())
     }
 
     @Test
@@ -80,9 +119,91 @@ class MappingDictionaryTest {
 
         assertEquals("fromPack", MappingDictionary.resolve("core.userAgent", "fallback"))
         assertEquals("", MappingDictionary.resolve("skip.me", "fallback"))
-        assertEquals("fallback", MappingDictionary.resolve("missing.key", "fallback"))
+        assertEquals("", MappingDictionary.resolve("missing.key", "fallback"))
         assertEquals("c", MappingDictionary.methodName("ProfileDetails.DISTANCE_UTILS", "x"))
         assertNull(MappingDictionary.methodName("missing", null))
+    }
+
+    @Test
+    fun resolve_activePackMissingKeyReturnsEmpty_notFallback() {
+        val pack = MappingDictionary.parsePack(
+            JSONObject(
+                """
+                {
+                  "schemaVersion": 2,
+                  "versionName": "t",
+                  "versionCode": 1,
+                  "confidence": "test",
+                  "generatedFrom": "test",
+                  "symbols": {
+                    "core.userAgent": { "kind": "class", "name": "fromPack" }
+                  },
+                  "hooks": {}
+                }
+                """.trimIndent()
+            )
+        )
+        MappingDictionary.activate(pack)
+        assertEquals("", MappingDictionary.resolve("not.in.pack", "compileTimeLiteral"))
+        assertEquals("fromPack", MappingDictionary.resolve("core.userAgent", "compileTimeLiteral"))
+    }
+
+    @Test
+    fun resolve_noActivePackUsesFallback() {
+        assertNull(MappingDictionary.current)
+        assertEquals("compileTimeLiteral", MappingDictionary.resolve("any.key", "compileTimeLiteral"))
+    }
+
+    @Test
+    fun parseIndex_readsPackCatalog() {
+        val index = MappingDictionary.parseIndex(
+            JSONObject(
+                """
+                {
+                  "schemaVersion": 1,
+                  "packs": [
+                    { "versionCode": 179451, "versionName": "26.16.1", "confidence": "high" },
+                    { "versionCode": 174557, "versionName": "26.15.1", "confidence": "medium" }
+                  ]
+                }
+                """.trimIndent()
+            )
+        )
+        assertEquals(1, index.schemaVersion)
+        assertEquals(2, index.packs.size)
+        assertEquals(179451, index.packs[0].versionCode)
+        assertEquals("26.16.1", index.packs[0].versionName)
+        assertEquals("high", index.packs[0].confidence)
+        assertEquals(174557, index.packs[1].versionCode)
+    }
+
+    @Test
+    fun loadIndex_fallsBackToCacheWhenRemoteFails() {
+        val cacheDir = createTempDirectory(prefix = "gp-map-index-cache").toFile()
+        try {
+            val json = """
+                {
+                  "schemaVersion": 1,
+                  "packs": [
+                    { "versionCode": 179451, "versionName": "26.16.1", "confidence": "high" }
+                  ]
+                }
+            """.trimIndent()
+            val file = File(File(cacheDir, "mapping-packs-cache"), "index.json")
+            file.parentFile?.mkdirs()
+            file.writeText(json)
+
+            val index = MappingDictionary.loadIndex(
+                cacheDir = cacheDir,
+                remoteBaseUrl = "http://127.0.0.1:1/mapping-packs-unreachable",
+            )
+            assertNotNull(index)
+            assertEquals(1, index!!.schemaVersion)
+            assertEquals(179451, index.packs.single().versionCode)
+            assertEquals("high", index.packs.single().confidence)
+        } finally {
+            cacheDir.deleteRecursively()
+        }
     }
 
     @Test
@@ -103,6 +224,26 @@ class MappingDictionaryTest {
               "generatedFrom": "test",
               "symbols": {
                 "core.userAgent": "not-an-object"
+              },
+              "hooks": {}
+            }
+        """.trimIndent()
+        assertNull(MappingDictionary.decodeAndActivate(json, expectedVersionCode = 179451))
+        assertNull(MappingDictionary.current)
+        assertEquals("literal", MappingDictionary.resolve("core.userAgent", "literal"))
+    }
+
+    @Test
+    fun decodeAndActivate_rejectsFutureSchemaVersion() {
+        val json = """
+            {
+              "schemaVersion": 3,
+              "versionName": "t",
+              "versionCode": 179451,
+              "confidence": "test",
+              "generatedFrom": "test",
+              "symbols": {
+                "core.userAgent": { "kind": "class", "name": "fromPack" }
               },
               "hooks": {}
             }

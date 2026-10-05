@@ -158,7 +158,7 @@ class AntiBlock : Hook(
                         }
                     } catch (e: Exception) {
                         loge("Error checking if user is blocked: ${e.message}")
-                        Logger.writeRaw(e.stackTraceToString())
+                        Logger.writeThrowable(e)
                     }
 
                     try {
@@ -168,7 +168,7 @@ class AntiBlock : Hook(
                         }
                     } catch (e: Exception) {
                         loge("Error handling block/unblock request: ${e.message ?: "Unknown error"}")
-                        Logger.writeRaw(e.stackTraceToString())
+                        Logger.writeThrowable(e)
                     }
                 }
             }
@@ -203,7 +203,7 @@ class AntiBlock : Hook(
                             name -> name.isNotEmpty() } ?: profileId.toString()
                 } catch (e: Exception) {
                     loge("Error fetching display name: ${e.message}")
-                    Logger.writeRaw(e.stackTraceToString())
+                    Logger.writeThrowable(e)
                     displayName = profileId.toString()
                 }
                 displayName = if (displayName == profileId.toString() || displayName == "null")
@@ -252,7 +252,7 @@ class AntiBlock : Hook(
             }
         } catch (e: Exception) {
             loge("Error handling profile response: ${e.message ?: "Unknown error"}")
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
             return false
         }
     }

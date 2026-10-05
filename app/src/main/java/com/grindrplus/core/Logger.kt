@@ -118,6 +118,11 @@ object Logger {
         }
     }
 
+    /** Write a throwable's stack trace after [StacktraceSanitizer] redaction. */
+    fun writeThrowable(throwable: Throwable) {
+        writeRaw(StacktraceSanitizer.sanitize(throwable.stackTraceToString()))
+    }
+
     fun clearLogs() {
         bridgeClient?.let { bridge ->
             try {

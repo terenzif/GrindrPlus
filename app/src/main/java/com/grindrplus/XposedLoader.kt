@@ -1,7 +1,6 @@
 package com.grindrplus
 
 import android.app.Application
-import android.util.Log
 import com.grindrplus.core.Constants.GRINDR_PACKAGE_NAME
 import com.grindrplus.hooks.spoofSignatures
 import com.grindrplus.hooks.sslUnpinning
@@ -39,6 +38,7 @@ class XposedLoader : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
         Application::class.java.hook("attach", HookStage.AFTER) {
             val application = it.thisObject()
+            // TARGET_* arrays are tip/hint only — init soft-continues on mismatch (Wave 2).
             GrindrPlus.init(modulePath, application,
                 BuildConfig.TARGET_GRINDR_VERSION_CODES,
                 BuildConfig.TARGET_GRINDR_VERSION_NAMES)
