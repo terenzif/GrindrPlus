@@ -53,6 +53,6 @@ Expected: APKs under `app/build/outputs/apk/morphe/debug` and `.../alloy/debug`
 
 **Files:** product sources, docs/ADR, CI, AGENTS.md, plan; exclude tmp/debug artifacts
 
-- [ ] **Step 1: Stage named product/docs/CI files only**
-- [ ] **Step 2: Commit with outcome-focused message**
-- [ ] **Step 3: `git status` confirms junk left unstaged**
+- [x] **Step 1: Stage named product/docs/CI files only**
+- [x] **Step 2: Commit with outcome-focused message** (`597c4b9` + follow-up `3235337` for main Manager deletions)
+- [x] **Step 3: `git status` confirms junk left unstaged**
