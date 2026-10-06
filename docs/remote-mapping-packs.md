@@ -52,11 +52,11 @@ Catalog `schemaVersion` is independent of pack schema. Repo / assets copies live
 
 | Piece | Value |
 | --- | --- |
-| Default base | `https://raw.githubusercontent.com/terenzif/GrindrPlus/master/mapping-packs` |
+| Default base | `https://raw.githubusercontent.com/terenzif/grindr-plus-plus/master/mapping-packs` |
 | Catalog | `{base}/index.json` |
 | Pack file | `{base}/{versionCode}.json` |
-| Example (26.16.1) | https://raw.githubusercontent.com/terenzif/GrindrPlus/master/mapping-packs/179451.json |
-| Repo folder | [`mapping-packs/`](https://github.com/terenzif/GrindrPlus/tree/master/mapping-packs) |
+| Example (26.16.1) | https://raw.githubusercontent.com/terenzif/grindr-plus-plus/master/mapping-packs/179451.json |
+| Repo folder | [`mapping-packs/`](https://github.com/terenzif/grindr-plus-plus/tree/master/mapping-packs) |
 
 ### Override base URL
 
@@ -69,7 +69,7 @@ Write a one-line file (no trailing slash required):
 Example alternate (release tag tree):
 
 ```
-https://raw.githubusercontent.com/terenzif/GrindrPlus/mapping-packs/mapping-packs
+https://raw.githubusercontent.com/terenzif/grindr-plus-plus/mapping-packs/mapping-packs
 ```
 
 Or any raw/CDN base that serves `{versionCode}.json` and `index.json`.
@@ -79,7 +79,7 @@ Or any raw/CDN base that serves `{versionCode}.json` and `index.json`.
 1. Fingerprint the Grindr APK (`versionCode` / R8 names) as usual.
 2. Write `mapping-packs/<versionCode>.json` (`schemaVersion` 2 preferred; 1 still migrates).
 3. Update `mapping-packs/index.json` (and optionally `app/src/main/assets/mappings/index.json`).
-4. Open a PR / push to `master` on **terenzif/GrindrPlus**.
+4. Open a PR / push to `master` on **terenzif/grindr-plus-plus**.
 5. Optional: also copy into `app/src/main/assets/mappings/` so the next module build ships it offline.
 6. Optional alternate channel: attach the JSON to a GitHub Release / tag named `mapping-packs` and point devices at that raw base via the override file.
 

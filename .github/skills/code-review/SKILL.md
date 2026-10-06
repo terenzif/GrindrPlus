@@ -10,7 +10,7 @@ description: >-
 
 # GrindrPlus code review (Copilot)
 
-You are reviewing **terenzif/GrindrPlus**: a **Vector / Xposed** module (Kotlin) that hooks the Grindr Android app. Public docs/README are English; the maintainer may discuss in Italian — keep review comments in **English**.
+You are reviewing **terenzif/grindr-plus-plus** (product name Grindr++): a **Vector / Xposed** module (Kotlin) that hooks the Grindr Android app. Public docs/README are English; the maintainer may discuss in Italian — keep review comments in **English**.
 
 ## What to prioritize (medium+)
 

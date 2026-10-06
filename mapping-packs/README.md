@@ -12,7 +12,7 @@ mapping-packs/<versionCode>.json
 Example (26.16.1):
 
 ```
-https://raw.githubusercontent.com/terenzif/GrindrPlus/master/mapping-packs/179451.json
+https://raw.githubusercontent.com/terenzif/grindr-plus-plus/master/mapping-packs/179451.json
 ```
 
 Bundled offline copies live under `app/src/main/assets/mappings/` (same filenames).

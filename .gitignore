@@ -10,6 +10,8 @@ local.properties
 .idea/*
 .idea
 build_keys/*
+tmp*/
+tmp*
 
 # Antigravity working files
 *.txt

@@ -53,12 +53,12 @@ fun HomeScreen(innerPadding: PaddingValues, viewModel: HomeViewModel = viewModel
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "GrindrPlus",
+                text = "Grindr++",
                 fontSize = 48.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Enhanced Features for Grindr",
+                text = "take them all",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )

@@ -108,7 +108,7 @@ fun SettingsScreen(
             onDismiss = { showAboutDialog = false },
             onViewSourceCode = {
                 val intent =
-                    Intent(Intent.ACTION_VIEW, "https://github.com/terenzif/GrindrPlus".toUri())
+                    Intent(Intent.ACTION_VIEW, "https://github.com/terenzif/grindr-plus-plus".toUri())
                 context.startActivity(intent)
             }
         )

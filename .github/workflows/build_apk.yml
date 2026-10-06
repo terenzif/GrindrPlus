@@ -1,6 +1,6 @@
 name: Build APK and Release
 
-# Fork-friendly build for terenzif/GrindrPlus.
+# Build for terenzif/grindr-plus-plus.
 # - Always builds debug + release APKs and uploads artifacts (no upstream Telegram required).
 # - Signs release only when KEYSTORE_* secrets are present.
 # - Publishes a GitHub Release when create_release=true or on v* tags (needs contents:write).
@@ -191,20 +191,20 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${{ steps.tag.outputs.tag }}"
-          TITLE="GrindrPlus ${{ env.VERSION_INFO }} (${TAG})"
+          TITLE="Grindr++ ${{ env.VERSION_INFO }} (${TAG})"
           NOTES="$(cat <<EOF
-          Dual APK build for **terenzif/GrindrPlus** (ADR 0005).
+          Dual APK build for **terenzif/grindr-plus-plus** (ADR 0005).
 
           - Commit: \`${{ env.COMMIT_SHA }}\`
           - Version info: \`${{ env.VERSION_INFO }}\`
           - Signed: \`${{ steps.signing.outputs.available }}\`
 
           **Install**
-          - **Morphe** (\`com.grindrplus.morphe\`) — rootless Manager / LSPatch
-          - **Alloy** (\`com.grindrplus.alloy\`) — Vector module ([JingMatrix/Vector](https://github.com/JingMatrix/Vector))
-          - **embed** (\`com.grindrplus.morphe.payload\`) — slim \`-m\` payload (build artifact)
+          - **Morphe** (\`com.gpp.morphe\`) — rootless Manager / LSPatch
+          - **Alloy** (\`com.gpp.alloy\`) — Vector module ([JingMatrix/Vector](https://github.com/JingMatrix/Vector))
+          - **embed** (\`com.gpp.morphe.payload\`) — slim \`-m\` payload (build artifact)
 
-          UI label is **GrindrPlus** for both user APKs. See \`docs/dual-apk-migration.md\`.
+          UI label is **Grindr++** for both user APKs. See \`docs/dual-apk-migration.md\`.
           EOF
           )"
           FILES=("$MORPHE_DEBUG" "$ALLOY_DEBUG" "$MORPHE_RELEASE" "$ALLOY_RELEASE")

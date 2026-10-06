@@ -237,7 +237,7 @@ fun AboutDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "GrindrPlus",
+                    text = "Grindr++",
                     style = MaterialTheme.typography.headlineMedium
                 )
 
@@ -280,14 +280,14 @@ fun AboutDialog(
                                 modifier = Modifier.clickable {
                                     val intent = Intent(
                                         Intent.ACTION_VIEW,
-                                        "https://github.com/terenzif/GrindrPlus".toUri()
+                                        "https://github.com/terenzif/grindr-plus-plus".toUri()
                                     )
                                     context.startActivity(intent)
                                 }
                             )
 
                             Text(
-                                text = " (fork) · ",
+                                text = " · lineage: ",
                                 style = MaterialTheme.typography.bodyLarge
                             )
 
