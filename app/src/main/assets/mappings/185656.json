@@ -3,7 +3,7 @@
   "versionName": "26.19.0",
   "versionCode": 185656,
   "confidence": "static-jadx",
-  "generatedFrom": "Seed 179451 + JADX 1.5 of device-pulled Play APK 26.19.0/185656 (tmp-grindr-26.19.0). Coordinator finished after mapping agent 47c8c0c8 stalled mid-rg. Unresolved members left empty (SoftSkip). Does not freeze this version as destiny.",
+  "generatedFrom": "JADX decompile of device tip APK 26.19.0/185656 + fingerprint remap from 179451 pack (2026-10-06). Unresolved R8 sites soft-skipped (empty name) — do not reuse 26.16.1 short names (collisions).",
   "symbols": {
     "core.userAgent": {
       "kind": "class",
@@ -13,8 +13,8 @@
     "core.userSession": {
       "kind": "class",
       "name": "hu30",
-      "fingerprint": "implements qs30 (UserSession)",
-      "note": "concrete session; interface qs30"
+      "fingerprint": "implements qs30 / headerGrindrRoles",
+      "note": "impl of qs30 (was atc / UserSession)"
     },
     "core.deviceInfo": {
       "kind": "class",
@@ -29,7 +29,7 @@
     "core.serverDrivenCascadeRepo": {
       "kind": "class",
       "name": "wq6",
-      "note": "CascadeService wrapper implementing nq6",
+      "note": "CascadeService field owner",
       "fingerprint": "field CascadeService"
     },
     "core.ageVerificationActivity": {
@@ -38,8 +38,8 @@
     },
     "core.browseExploreActivity": {
       "kind": "class",
-      "name": "com.grindrapp.android.ui.browse.presentation.ui.BrowseExploreMapActivity",
-      "note": "package moved under presentation.ui vs 26.16.1"
+      "name": "",
+      "note": "BrowseExploreMapActivity FQN absent on 26.19.0"
     },
     "core.serverNotification": {
       "kind": "class",
@@ -59,18 +59,17 @@
     "retrofit.successValue": {
       "kind": "field",
       "name": "successValue",
-      "note": "R8 kept source name (was a on 26.16.1)"
+      "note": "was a on 26.16.1; readable name retained by R8"
     },
     "retrofit.failValue": {
       "kind": "field",
       "name": "failValue",
-      "note": "R8 kept source name (was a on 26.16.1)"
+      "note": "was a on 26.16.1; readable name retained by R8"
     },
     "DisableBoosting.DRAWER_PROFILE_UI_STATE": {
       "kind": "class",
       "name": "jhc",
-      "fingerprint": "DrawerProfileUiState(showBoostMeButton=",
-      "note": "FQCN folded into R8 class"
+      "fingerprint": "DrawerProfileUiState(showBoostMeButton="
     },
     "DisableBoosting.RADAR_UI_MODEL": {
       "kind": "class",
@@ -79,27 +78,28 @@
     },
     "DisableBoosting.FAB_UI_MODEL": {
       "kind": "class",
-      "name": "",
-      "note": "com.grindrapp.android.boost2.presentation.model.FabUiModel absent"
+      "name": "wle",
+      "fingerprint": "FabUiModel(isVisible="
     },
     "DisableBoosting.RIGHT_NOW_MICROS_FAB_UI_MODEL": {
       "kind": "class",
       "name": "",
-      "note": "RightNowMicrosFabUiModel FQCN absent"
+      "note": "RightNowMicrosFabUiModel toString not resolved (p9w is MapperInput)"
     },
     "DisableBoosting.BOOST_STATE_CLASS": {
       "kind": "class",
       "name": "",
-      "note": "MicrosDrawerItemState$Unavailable FQCN absent"
+      "note": "MicrosDrawerItemState$Unavailable absent / unresolved"
     },
     "DisableBoosting.NAVBAR_CLASS": {
       "kind": "class",
-      "name": "",
-      "note": "HomeScreenBottomNavigationUiModel FQCN absent"
+      "name": "j0j",
+      "fingerprint": "HomeScreenBottomNavigationUiModel("
     },
     "DisableBoosting.SMALL_PERSISTENT_VECTOR": {
       "kind": "class",
-      "name": "kotlinx.collections.immutable.implementations.immutableList.SmallPersistentVector"
+      "name": "",
+      "note": "SmallPersistentVector FQN absent on this DEX"
     },
     "DisableBoosting.SUBSCRIBE_FOR_BOOST_REDEEM": {
       "kind": "class",
@@ -109,28 +109,26 @@
     "DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP": {
       "kind": "class",
       "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "note": "h76 collision on 26.19.0 — soft-skip"
     },
     "DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP_METHOD": {
       "kind": "method",
-      "name": "emit"
+      "name": ""
     },
     "AntiBlock.CHAT_DELETE_CONVERSATION_PLUGIN": {
       "kind": "class",
       "name": "",
-      "fingerprint": "Deleting conversations",
-      "note": "fingerprint miss on 26.19.0 JADX"
+      "note": "Deleting conversations string in DEX pool but no JADX owner yet"
     },
     "AntiBlock.INBOX_FRAGMENT_V2_DELETE_CONVERSATIONS": {
       "kind": "class",
-      "name": "",
-      "fingerprint": "chat_read_receipt",
-      "note": "string only in resources; owning plugin not unique"
+      "name": "xs9",
+      "fingerprint": "chat_read_receipt + deleteConversationUseCase"
     },
     "AntiBlock.INDIVIDUAL_UNBLOCK_ACTIVITY_VIEW_MODEL": {
       "kind": "class",
       "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "note": "io6 collision — soft-skip"
     },
     "AntiBlock.CONVERSATION_DELETE_NOTIFICATION": {
       "kind": "class",
@@ -144,12 +142,13 @@
     "ProfileDetails.PROFILE_VIEW_HOLDER": {
       "kind": "class",
       "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "note": "r29 collision — soft-skip"
     },
     "ProfileDetails.DISTANCE_UTILS": {
       "kind": "class",
-      "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "name": "l6c",
+      "method": "c",
+      "note": "concrete impl of k6c (utils.distance.DistanceUtils)"
     },
     "ProfileDetails.PROFILE_BAR_VIEW": {
       "kind": "class",
@@ -157,23 +156,23 @@
     },
     "ProfileDetails.PROFILE_VIEW_STATE": {
       "kind": "class",
-      "name": "",
-      "note": "ui.profileV2.model.ProfileViewState FQCN absent"
+      "name": "vys",
+      "fingerprint": "ProfileViewState(profileId="
     },
     "ProfileDetails.SERVER_DRIVEN_CASCADE_CACHED_STATE": {
       "kind": "class",
       "name": "",
-      "note": "removed; Cascade V2"
+      "note": "removed; use CascadeProfileUiData"
     },
     "ProfileDetails.SERVER_DRIVEN_CASCADE_CACHED_PROFILE": {
       "kind": "class",
-      "name": "",
-      "note": "CascadeProfileUiData FQCN absent on 26.19.0"
+      "name": "vp6",
+      "fingerprint": "CascadeProfileUiData(profileId="
     },
     "ProfileDetails.CASCADE_PROFILE_UI_DATA": {
       "kind": "class",
-      "name": "",
-      "note": "CascadeProfileUiData FQCN absent on 26.19.0"
+      "name": "vp6",
+      "fingerprint": "CascadeProfileUiData(profileId="
     },
     "ChatIndicators.CHAT_REST_SERVICE": {
       "kind": "class",
@@ -181,7 +180,8 @@
     },
     "LocalSavedPhrases.AddSavedPhraseResponse": {
       "kind": "class",
-      "name": "com.grindrapp.android.chat.data.datasource.api.model.AddSavedPhraseResponse"
+      "name": "com.grindrapp.android.chat.data.datasource.api.model.AddSavedPhraseResponse",
+      "fingerprint": "chat.data.datasource.api.model"
     },
     "LocalSavedPhrases.PhrasesRestService": {
       "kind": "class",
@@ -203,12 +203,12 @@
     "BanManagement.deviceUtility": {
       "kind": "class",
       "name": "",
-      "note": "dual fingerprint not in one utility"
+      "note": "dual fingerprint android_id+profile_tag_search_history not in one utility"
     },
     "ExpiringMedia.ExpiringImage": {
       "kind": "class",
-      "name": "",
-      "note": "ChatMessageBodyUiModel$ExpiringImage FQCN absent"
+      "name": "qq7",
+      "fingerprint": "ExpiringImage(text="
     },
     "ExpiringMedia.ExpiringPhotoStatusResponse": {
       "kind": "class",
@@ -217,131 +217,125 @@
     "FeatureGranting.settingDistanceVisibilityViewModel": {
       "kind": "class",
       "name": "mly",
-      "fingerprint": "UiState(distanceVisibility=",
-      "note": "constructor (int, boolean, Set) — hook hidePreciseDistance"
+      "fingerprint": "UiState(distanceVisibility="
     },
     "http.userSession.isLoggedInMethod": {
       "kind": "method",
       "name": "N",
-      "note": "getJwt().length() > 0 via at30.b()"
+      "note": "getJwt().length() > 0 via userSessionStateFlow"
     },
     "http.userSession.authTokenFlowMethod": {
       "kind": "method",
       "name": "G",
-      "note": "sessionFlow StateFlow; k8i uses G().getValue()"
+      "note": "StateFlow sessionFlow auth token"
     },
     "http.userSession.rolesMethod": {
       "kind": "method",
       "name": "x",
-      "note": "L-Grindr-Roles headerGrindrRoles"
+      "note": "returns headerGrindrRoles (L-Grindr-Roles)"
     },
     "http.deviceInfo.lazyField": {
       "kind": "field",
       "name": "deviceInfoData$delegate",
-      "note": "kotlin.Lazy on jkb"
+      "note": "kotlin.Lazy device info (was d)"
     },
     "http.userAgent.stringMethod": {
       "kind": "method",
       "name": "a",
-      "note": "User-Agent string on br30"
+      "note": "User-Agent string"
     },
     "EnableUnlimited.paywallUtils": {
       "kind": "class",
       "name": "",
-      "note": "paywall show site not uniquely resolved (app_restart_required hits analytics lambda)"
+      "note": "xub collision — soft-skip pending paywall fingerprint"
     },
     "EnableUnlimited.paywallUtils.showMethod": {
       "kind": "method",
-      "name": "",
-      "note": "owner unresolved"
+      "name": ""
     },
     "EnableUnlimited.persistentAdBannerContainer": {
       "kind": "class",
-      "name": "wlq"
+      "name": "",
+      "note": "h68 collision — soft-skip"
     },
     "EnableUnlimited.persistentAdBannerContainer.bindMethod": {
       "kind": "method",
-      "name": "a"
+      "name": ""
     },
     "EnableUnlimited.interstitialCollector.show": {
       "kind": "class",
       "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "note": "fo1 collision — soft-skip"
     },
     "EnableUnlimited.interstitialCollector.o39": {
       "kind": "class",
       "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "note": "o39 collision — soft-skip"
     },
     "EnableUnlimited.interstitialCollector.d12": {
       "kind": "class",
       "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "note": "d12 collision — soft-skip"
     },
     "EnableUnlimited.interstitialCollector.chatActivity": {
       "kind": "class",
       "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "note": "qy1 collision — soft-skip"
     },
     "EnableUnlimited.interstitialCollector.profilesActivity": {
       "kind": "class",
       "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "note": "p49 collision — soft-skip"
     },
     "EnableUnlimited.viewsToHide.profileTagCascade": {
       "kind": "class",
       "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "note": "ny8 collision — soft-skip"
     },
     "EnableUnlimited.viewsToHide.drawerProfile": {
       "kind": "class",
       "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "note": "yr3 collision — soft-skip"
     },
     "EnableUnlimited.viewsToHide.fragmentRadar": {
       "kind": "class",
       "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "note": "eb9 collision — soft-skip"
     },
     "EnableUnlimited.userSession.rolesUpdatedMethod": {
       "kind": "method",
-      "name": "",
-      "note": "Y(List) not found on hu30"
+      "name": "e0",
+      "note": "synchronized e0(List) updates grantedRoles (was Y on 26.16.1)"
     },
     "QuickBlock.blockViewModel": {
       "kind": "class",
       "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "note": "mu0 collision — soft-skip"
     },
     "QuickBlock.blockViewModel.showDialogMethod": {
       "kind": "method",
-      "name": "",
-      "note": "owner unresolved"
+      "name": ""
     },
     "QuickBlock.profileViewHolder.bindMethod": {
       "kind": "method",
-      "name": "",
-      "note": "owner unresolved"
+      "name": ""
     },
     "QuickBlock.profileViewHolder.viewBindingField": {
       "kind": "field",
-      "name": "",
-      "note": "owner unresolved"
+      "name": ""
     },
     "QuickBlock.profileViewHolder.toolbarField": {
       "kind": "field",
-      "name": "",
-      "note": "owner unresolved"
+      "name": ""
     },
     "FeatureGranting.isFeatureFlagEnabled": {
       "kind": "class",
-      "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "name": "i2l",
+      "note": "implements h2l"
     },
     "FeatureGranting.isFeatureFlagEnabled.invokeMethod": {
       "kind": "method",
-      "name": "",
-      "note": "owner unresolved"
+      "name": "a"
     },
     "FeatureGranting.alertParamsField": {
       "kind": "field",
@@ -351,32 +345,31 @@
     "OnlineIndicator.utils": {
       "kind": "class",
       "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "note": "aq7 collision — soft-skip"
     },
     "OnlineIndicator.utils.shouldShowMethod": {
       "kind": "method",
-      "name": "",
-      "note": "owner unresolved"
+      "name": ""
     },
     "OnlineIndicator.profileUtilsV2.thresholdMethod": {
       "kind": "method",
       "name": "",
-      "note": "ProfileUtilsV2 FQCN absent"
+      "note": "ProfileUtilsV2 FQN absent"
     },
     "DisableUpdates.appUpgradeManager": {
       "kind": "class",
-      "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "name": "gb2",
+      "fingerprint": "deprecation_message / deprecationDialog"
     },
     "DisableUpdates.appUpgradeManager.showDeprecatedDialogMethod": {
       "kind": "method",
-      "name": "",
-      "note": "owner unresolved"
+      "name": "o",
+      "note": "o(AppCompatActivity) builds deprecation dialog"
     },
     "DisableUpdates.appConfiguration.versionField": {
       "kind": "field",
-      "name": "",
-      "note": "not re-resolved on 26.19.0"
+      "name": "appVersion",
+      "note": "h52.appVersion spoof target (was f); AppConfiguration FQN is now h52 — hook still hardcodes platform.config.AppConfiguration"
     },
     "EmptyCalls.VIDEO_CALL_HAS_NOT_CHATTED": {
       "kind": "class",
@@ -393,37 +386,38 @@
     },
     "WebSocketAlive.FACTORY": {
       "kind": "class",
-      "name": "",
-      "note": "factory not uniquely resolved"
+      "name": "pk50",
+      "fingerprint": "a(String,String,websocket.a)->h6u"
     },
     "Favorites.FRAGMENT": {
       "kind": "class",
       "name": "",
-      "note": "FavoritesFragment absent; FavoritesHeaderData exists under cascade.data.model"
+      "note": "FavoritesFragment absent on Cascade V2"
     }
   },
   "hooks": {
     "DisableBoosting": {
       "status": "partial",
-      "reason": "drawer+radar remapped; FAB/navbar FQCNs missing"
+      "reason": "drawer/radar/fab/navbar remapped; RightNow/BOOST_STATE/SmallPersistent/SHOW_TAPS soft-skipped"
     },
     "AntiBlock": {
       "status": "partial",
-      "reason": "ConversationDeleteNotification only; delete-plugin fingerprints miss"
+      "reason": "xs9 inbox + ConversationDeleteNotification; delete-plugin + unblock VM soft-skipped"
     },
     "ProfileDetails": {
       "status": "partial",
-      "reason": "ProfileBarView only; view-state/cascade UI data FQCNs absent"
+      "reason": "l6c/vys/vp6/ProfileBarView; PROFILE_VIEW_HOLDER soft-skipped"
     },
     "ChatIndicators": {
       "status": "mapped"
     },
     "DisableShuffle": {
       "status": "skipped",
-      "reason": "ShuffleUiState absent"
+      "reason": "fingerprint absent on this DEX (Cascade V2)"
     },
     "EmptyCalls": {
-      "status": "mapped"
+      "status": "mapped",
+      "reason": "VideoCallHasNotChattedException + ChatIndividualFragment FQNs present"
     },
     "NotificationAlerts": {
       "status": "skipped",
@@ -442,35 +436,34 @@
     },
     "EnableUnlimited": {
       "status": "partial",
-      "reason": "banner bind remapped; paywall/views/rolesUpdated empty"
+      "reason": "rolesUpdatedMethod e0 remapped; paywall/interstitial/viewsToHide soft-skipped (R8 collisions)"
     },
     "QuickBlock": {
       "status": "skipped",
-      "reason": "view-holder/view-model not re-resolved"
+      "reason": "blockViewModel / profileViewHolder unresolved (R8 collisions)"
     },
     "FeatureGranting": {
       "status": "partial",
-      "reason": "distance UiState mly remapped; feature-flag class empty"
+      "reason": "i2l + mly remapped; alertParamsField soft-skipped"
     },
     "OnlineIndicator": {
       "status": "skipped",
-      "reason": "utils/ProfileUtilsV2 not re-resolved"
+      "reason": "utils + ProfileUtilsV2 unresolved"
     },
     "DisableUpdates": {
-      "status": "skipped",
-      "reason": "upgrade manager not re-resolved"
+      "status": "partial",
+      "reason": "gb2.o remapped; AppConfiguration FQN still hardcoded to platform.config in hook"
     },
     "Favorites": {
       "status": "skipped",
-      "reason": "FavoritesFragment absent (Cascade V2 header model only)"
+      "reason": "FavoritesFragment absent (Cascade V2)"
     },
     "WebSocketAlive": {
-      "status": "partial",
-      "reason": "websocket.a mapped; factory empty"
+      "status": "mapped",
+      "reason": "websocket.a + pk50"
     },
     "StatusDialog": {
-      "status": "skipped",
-      "reason": "not re-resolved on 26.19.0"
+      "status": "mapped"
     }
   }
 }
