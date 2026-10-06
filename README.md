@@ -17,7 +17,7 @@
 <p align="center">
   <a href="https://github.com/terenzif/grindr-plus-plus/actions/workflows/verify.yml"><img src="https://img.shields.io/github/actions/workflow/status/terenzif/grindr-plus-plus/verify.yml?branch=master&logo=github&label=Verify" alt="Verify"></a>
   <a href="https://github.com/terenzif/grindr-plus-plus/actions/workflows/build_apk.yml"><img src="https://img.shields.io/github/actions/workflow/status/terenzif/grindr-plus-plus/build_apk.yml?branch=master&logo=github&label=Build" alt="Build"></a>
-  <a href="https://github.com/terenzif/grindr-plus-plus/releases"><img src="https://img.shields.io/github/v/release/terenzif/grindr-plus-plus?include_prereleases&label=Release" alt="Release"></a>
+  <a href="https://github.com/terenzif/grindr-plus-plus/releases/latest"><img src="https://img.shields.io/github/v/release/terenzif/grindr-plus-plus?label=Release" alt="Release"></a>
 </p>
 
 ## What this is
