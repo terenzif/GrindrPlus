@@ -7,8 +7,9 @@ import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
 /**
- * Seam for MorpheApp-style `bytecodePatch` / `.mpp` application (ADR 0007).
- * Default is a DEX fingerprint dry-run until the full MorpheApp patcher module lands.
+ * Seam for MorpheApp-style `bytecodePatch` application (ADR 0007).
+ * Default engine uses [DexlibBytecodeBackend]; [FingerprintScanBytecodeBackend] is the
+ * invalid-DEX fallback and a dry-run test seam.
  */
 fun interface MorpheBytecodeBackend {
     /**
@@ -125,20 +126,27 @@ class FingerprintScanBytecodeBackend(
 /** Shared APK asset rewrite used by Morphe B marker + bytecode scan. */
 internal object ApkAssetInjector {
     fun inject(apk: File, entryName: String, data: ByteArray) {
+        replaceEntries(apk, mapOf(entryName to data))
+    }
+
+    fun replaceEntries(apk: File, updates: Map<String, ByteArray>) {
+        if (updates.isEmpty()) return
         val tmp = File(apk.parentFile, "${apk.name}.bytecode.tmp")
         ZipFile(apk).use { zip ->
             ZipOutputStream(tmp.outputStream().buffered()).use { zos ->
                 val entries = zip.entries()
                 while (entries.hasMoreElements()) {
                     val entry = entries.nextElement()
-                    if (entry.name == entryName || entry.isDirectory) continue
+                    if (entry.isDirectory || entry.name in updates) continue
                     zos.putNextEntry(ZipEntry(entry.name))
                     zip.getInputStream(entry).use { it.copyTo(zos) }
                     zos.closeEntry()
                 }
-                zos.putNextEntry(ZipEntry(entryName))
-                zos.write(data)
-                zos.closeEntry()
+                for ((name, data) in updates) {
+                    zos.putNextEntry(ZipEntry(name))
+                    zos.write(data)
+                    zos.closeEntry()
+                }
             }
         }
         if (!apk.delete()) {

@@ -18,7 +18,7 @@ Sequence: **Morphe A (in Ver.5) → green → Morphe B**
 | Morphe B started | Done | `MorpheBPatchEngine` in orchestrator; runtime remaps; [morphe-b.md](morphe-b.md) |
 | Dual APK Morphe / Alloy | Phase 1 Done | Flavors `morphe` / `alloy` / `embed`; [ADR 0005](adr/0005-dual-apk-morphe-alloy.md) |
 | Alloy DexKit | Started | [ADR 0006](adr/0006-alloy-dexkit-fingerprints.md); `AlloyDexKit` + Favorites pilot |
-| Morphe B bytecodePatch | Proposed | [ADR 0007](adr/0007-morphe-b-bytecodepatch.md) |
+| Morphe B bytecodePatch | Scaffold Done | [ADR 0007](adr/0007-morphe-b-bytecodepatch.md); dexlib2 rewrite in orchestrator |
 
 ## Residual product debt (honest skips)
 

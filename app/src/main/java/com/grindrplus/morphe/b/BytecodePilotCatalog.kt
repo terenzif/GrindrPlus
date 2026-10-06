@@ -1,8 +1,10 @@
 package com.grindrplus.morphe.b
 
 /**
- * Pilot fingerprints for [FingerprintScanBytecodeBackend] (ADR 0007 dry-run).
+ * Pilot fingerprints for Morphe B bytecode (ADR 0007).
  * Needles are ASCII/MUTF-8 substrings expected in tip DEX string pools.
+ * Locate-only until a per-feature instruction recipe is proven; do not rewrite
+ * Cascade data-class getters (FavoritesHeaderData is not the Favorites layout hook).
  */
 data class BytecodeFingerprint(
     val id: String,

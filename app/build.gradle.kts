@@ -129,6 +129,12 @@ dependencies {
     "morpheCompileOnly"(libs.dexkit)
     "embedCompileOnly"(libs.dexkit)
 
+    // dexlib2 rewriter for Morphe B (ADR 0007). Packaged on Manager channels only;
+    // slim embed stays compileOnly so the Vector payload does not grow.
+    "morpheImplementation"(libs.smali.dexlib2)
+    "alloyImplementation"(libs.smali.dexlib2)
+    "embedCompileOnly"(libs.smali.dexlib2)
+
     // LSPatch jar: packaged on morphe Manager only (ADR 0005)
     "morpheImplementation"(fileTree("libs") { include("lspatch.jar") })
     "alloyCompileOnly"(fileTree("libs") { include("lspatch.jar") })
@@ -186,6 +192,7 @@ dependencies {
     "morpheImplementation"(libs.arsclib)
     "alloyImplementation"(libs.arsclib)
 
+    testImplementation(libs.smali.dexlib2)
     testImplementation(libs.junit)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.test.runner)

@@ -1,6 +1,6 @@
 # ADR 0007: Morphe B — MorpheApp bytecodePatch as STATIC_RESOURCE
 
-- **Status:** Accepted (fingerprint dry-run backend landed; full MorpheApp rewriter TBD)
+- **Status:** Accepted (dexlib2 rewriter scaffold landed; feature instruction recipes TBD)
 - **Date:** 2026-10-05
 - **Related:** [0004-morphe-b.md](0004-morphe-b.md), [0005-dual-apk-morphe-alloy.md](0005-dual-apk-morphe-alloy.md)
 
@@ -17,10 +17,15 @@ Morphe B today embeds a JSON marker and uses RUNTIME_REMAP. Tip-DEX residuals ne
 
 ## Current state
 
-Default backend is `FingerprintScanBytecodeBackend`: scans `classes*.dex` for [BytecodePilotCatalog](../../app/src/main/java/com/grindrplus/morphe/b/BytecodePilotCatalog.kt) needles and writes `assets/grindrplus/bytecode_scan.json` (dry-run, no instruction rewrite yet). `NoOpMorpheBytecodeBackend` remains for tests. Next: MorpheApp patcher module + real `bytecodePatch` mutate.
+Default backend is [DexlibBytecodeBackend](../../app/src/main/java/com/grindrplus/morphe/b/DexlibBytecodeBackend.kt): parses `classes*.dex` with `smali-dexlib2` (same writer as MorpheApp `bytecodePatch` / patches-template), locating [BytecodePilotCatalog](../../app/src/main/java/com/grindrplus/morphe/b/BytecodePilotCatalog.kt) needles to class types, then executing in-process `MorpheBytecodePatch` blocks (`addInstructions`-style prepend + marker class inject). Invalid DEX falls back to `FingerprintScanBytecodeBackend`. Desktop `app.morphe:morphe-patcher` is **not** embedded (apktool/resource decode is too heavy for on-device Manager). Slim embed stays `compileOnly` for dexlib2.
+
+Pilot: marker class `Lcom/grindrplus/morphe/b/BytecodeApplied;` plus boolean-gate prepend primitive. Chat terminal / Favorites remain locate-only — JADX tip `FavoritesHeaderData` is a Cascade data class, not the layout Fragment hook (Settings stay RUNTIME_REMAP / honest skip).
+
+Next: a verified feature recipe (Chat inbound processor or Favorites Fragment) once a safe boolean/const site is mapped.
 
 ## Acceptance
 
 - [x] ≥1 static bytecode path applied in dry-run (fingerprint scan + report asset).
-- [ ] Real instruction rewrite via MorpheApp `.mpp` / patcher.
+- [x] Real instruction rewrite scaffold (dexlib2 mutate + marker class; MorpheApp-shaped `bytecodePatch` execute inside orchestrator).
+- [ ] Feature-specific `.mpp` / Chat or Favorites instruction recipe (not getter rewrites of Cascade models).
 - Slim embed still used; Settings truthfulness preserved.

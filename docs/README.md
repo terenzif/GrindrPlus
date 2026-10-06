@@ -9,8 +9,8 @@
   - [0003 — Morphe A patch backend](adr/0003-morphe-a-patch-backend.md)
   - [0004 — Morphe B static parity](adr/0004-morphe-b.md)
   - [0005 — Dual APK Morphe / Alloy](adr/0005-dual-apk-morphe-alloy.md)
-  - [0006 — Alloy DexKit fingerprints](adr/0006-alloy-dexkit-fingerprints.md) (proposed)
-  - [0007 — Morphe B bytecodePatch](adr/0007-morphe-b-bytecodepatch.md) (proposed)
+  - [0006 — Alloy DexKit fingerprints](adr/0006-alloy-dexkit-fingerprints.md)
+  - [0007 — Morphe B bytecodePatch](adr/0007-morphe-b-bytecodepatch.md)
 - [Morphe A](morphe-a.md) — patch orchestrator (`PatchBackend` / LSPatch integrated)
 - [Morphe B](morphe-b.md) — post-green static feature parity
 - [Dual APK migration](dual-apk-migration.md) — `com.grindrplus.morphe` / `com.grindrplus.alloy`

@@ -9,7 +9,8 @@ See [adr/0004-morphe-b.md](adr/0004-morphe-b.md).
 ```text
 select APKs
     → MorpheBPatchEngine
-         · FingerprintScanBytecodeBackend → assets/grindrplus/bytecode_scan.json
+         · DexlibBytecodeBackend (dexlib2 rewrite + scan fallback)
+              → mutated classes*.dex + assets/grindrplus/bytecode_scan.json
          · marker → assets/grindrplus/morphe_b.json
     → Morphe A LSPatchIntegratedBackend (-l 2 + slim embed)
     → SessionInstaller
@@ -17,13 +18,13 @@ select APKs
 
 `MorpheOrchestrator` runs B then A. B failures are non-fatal (A continues).
 
-Bytecode today is a **dry-run fingerprint scan** (ADR 0007); full MorpheApp `bytecodePatch` rewriter is next.
+Bytecode today is a **dexlib2 rewriter** inside the orchestrator (ADR 0007): MorpheApp-shaped `bytecodePatch` execute, marker class inject, fingerprint locate. Feature instruction recipes (Chat / Favorites) are next; Cascade data-class getters are not rewrite targets.
 
 ## Delivery modes
 
 | Mode | Meaning |
 | --- | --- |
-| `STATIC_RESOURCE` | Mutate APK before LSPatch (marker today; DEX rewriter later) |
+| `STATIC_RESOURCE` | Mutate APK before LSPatch (DEX marker class + JSON report; feature recipes later) |
 | `RUNTIME_REMAP` | Remapped Xposed hooks for sites found on tip DEX |
 | `DEFERRED` | No safe target — Settings stay skipped/honest |
 

@@ -37,6 +37,7 @@ kotlinxCoroutinesTest = "1.7.3"
 robolectric = "4.12.1"
 dexkit = "2.2.0"
 gplayapi = "3.6.4"
+smaliDexlib2 = "3.0.8"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
@@ -83,6 +84,8 @@ robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectr
 # Aurora OSS Google Play API (same stack as Aurora Store; GPL-3.0)
 gplayapi = { module = "com.auroraoss:gplayapi", version.ref = "gplayapi" }
 dexkit = { module = "org.luckypray:dexkit", version.ref = "dexkit" }
+# Same DEX writer MorpheApp/ReVanced bytecodePatch uses (in-process, not a Manager product).
+smali-dexlib2 = { module = "com.android.tools.smali:smali-dexlib2", version.ref = "smaliDexlib2" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

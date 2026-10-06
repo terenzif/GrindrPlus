@@ -8,11 +8,11 @@ import java.io.IOException
  *
  * Embeds `assets/grindrplus/morphe_b.json` listing applied / deferred patch ids.
  * Feature bytecode for skipped DEX sites is delivered via RUNTIME_REMAP hooks today;
- * [bytecodeBackend] is the ADR 0007 hook (default: fingerprint dry-run scan).
+ * [bytecodeBackend] is the ADR 0007 hook (default: dexlib2 rewrite + scan fallback).
  */
 class MorpheBPatchEngine(
     private val catalog: List<MorpheBPatchDescriptor> = MorpheBCatalog.patches,
-    private val bytecodeBackend: MorpheBytecodeBackend = FingerprintScanBytecodeBackend(),
+    private val bytecodeBackend: MorpheBytecodeBackend = DexlibBytecodeBackend(),
 ) {
     fun apply(inputApks: List<File>, print: Print): MorpheBApplyResult {
         val base = selectBaseApk(inputApks)
