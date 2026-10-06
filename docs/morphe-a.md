@@ -2,6 +2,10 @@
 
 Morphe A is the Ver.5 delivery pillar for **orchestrator-rootless** installs: patch Grindr APKs and embed the GrindrPlus module via Vector/LSPatch. It does **not** rewrite product hooks or features — that is **Morphe B**, after Ver.5 green. See [vision.md](vision.md) and [ADR 0003](adr/0003-morphe-a-patch-backend.md).
 
+Ships in the **`morphe`** product flavor (`com.grindrplus.morphe`). The **`alloy`** flavor is rooted LSPosed-only and does not package LSPatch. See [ADR 0005](adr/0005-dual-apk-morphe-alloy.md).
+
+Prefer a **slim embed payload** as `-m` (hooks + bridge + Xposed entry), not the full Manager APK, so Grindr’s process stays lighter.
+
 ## Components
 
 | Type | Class | Role |

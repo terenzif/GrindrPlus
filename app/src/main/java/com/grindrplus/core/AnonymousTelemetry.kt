@@ -34,6 +34,7 @@ object AnonymousTelemetry {
         val payload = JSONObject()
         payload.put("event", event)
         payload.put("ts", System.currentTimeMillis())
+        payload.put("delivery", DeliveryChannel.current.name.lowercase())
         val data = JSONObject()
         props.forEach { (k, v) ->
             if (v != null) data.put(k, v)

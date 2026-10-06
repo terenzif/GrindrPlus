@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Morphe: rootless Manager. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <meta-data
+            android:name="xposeddescription"
+            android:value="GrindrPlus Morphe — rootless Manager / embed payload source"
+            tools:replace="android:value" />
+    </application>
+</manifest>

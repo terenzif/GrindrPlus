@@ -22,7 +22,7 @@ class XposedLoader : IXposedHookZygoteInit, IXposedHookLoadPackage {
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         if (lpparam.packageName.startsWith("com.grindrplus")) {
             findAndHookMethod(
-                "com.grindrplus.manager.utils.MiscUtilsKt",
+                "com.grindrplus.core.DeviceFlags",
                 lpparam.classLoader,
                 "isLSPosed",
                 XC_MethodReplacement.returnConstant(true)

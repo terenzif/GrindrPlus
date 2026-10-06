@@ -15,6 +15,11 @@ to check `Always install with package manager`. If not, LSPosed will not notice 
 an update and will not reload the module. You can find this option in the 
 [run configurations](img/run_configs.png).
 
+### JDK for Gradle / unit tests
+Use **JDK 17 or 21** as the Gradle JVM (`JAVA_HOME`). **JDK 25 breaks Robolectric**
+(`ClassReader` / `NoClassDefFoundError` on Shadows). CI uses Temurin 17. Lab machines
+with Studio under `C:\devbin` can point at `C:\devbin\android-studio\jbr` (JDK 21).
+
 
 ## Grindr apk
 You will need the apk to a) inspect the code and b) test your patches in the app.  

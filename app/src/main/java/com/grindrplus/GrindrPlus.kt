@@ -12,10 +12,12 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import com.grindrplus.alloy.AlloyDexKit
 import com.grindrplus.bridge.BridgeClient
 import com.grindrplus.core.AnonymousTelemetry
 import com.grindrplus.core.Config
 import com.grindrplus.core.Constants
+import com.grindrplus.core.DeliveryChannel
 import com.grindrplus.core.EventManager
 import com.grindrplus.core.InstanceManager
 import com.grindrplus.core.Logger
@@ -420,6 +422,9 @@ object GrindrPlus {
             Logger.i("Resetting database...", LogSource.MODULE)
             database.clearAllTables()
             Config.put("reset_database", false)
+        }
+        if (DeliveryChannel.current.isRootedModule) {
+            AlloyDexKit.ensureInitialized(context)
         }
         hookManager.init()
         isMainInitialized = true

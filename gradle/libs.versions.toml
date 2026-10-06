@@ -35,6 +35,7 @@ androidxTestRunner = "1.6.2"
 androidxTestExtJunit = "1.2.1"
 kotlinxCoroutinesTest = "1.7.3"
 robolectric = "4.12.1"
+dexkit = "2.2.0"
 gplayapi = "3.6.4"
 
 [libraries]
@@ -81,6 +82,7 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 # Aurora OSS Google Play API (same stack as Aurora Store; GPL-3.0)
 gplayapi = { module = "com.auroraoss:gplayapi", version.ref = "gplayapi" }
+dexkit = { module = "org.luckypray:dexkit", version.ref = "dexkit" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

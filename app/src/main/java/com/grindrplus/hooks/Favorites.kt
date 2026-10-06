@@ -9,7 +9,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.children
 import com.grindrplus.GrindrPlus
+import com.grindrplus.alloy.AlloyDexKit
 import com.grindrplus.core.Config
+import com.grindrplus.core.DeliveryChannel
 import com.grindrplus.core.mapping.MappingDictionary
 import com.grindrplus.ui.Utils
 import com.grindrplus.utils.Hook
@@ -33,13 +35,10 @@ class Favorites : Hook(
     )
 
     override fun init() {
-        val fragmentClass = try {
-            findClass(favoritesFragment)
-        } catch (t: Throwable) {
-            throw SoftSkipException(
-                "FavoritesFragment absent (Cascade V2) — remap Favorites.FRAGMENT"
+        val fragmentClass = resolveFavoritesFragmentClass()
+            ?: throw SoftSkipException(
+                "FavoritesFragment absent (Cascade V2) — remap Favorites.FRAGMENT or Alloy DexKit CascadeFavorites miss"
             )
-        }
 
         val recyclerViewLayoutParamsConstructor = findClass(recyclerViewLayoutParams)
             .getDeclaredConstructor(Int::class.java, Int::class.java)
@@ -141,5 +140,24 @@ class Favorites : Hook(
                         profileDisplayName.layoutParams = displayNameLayoutParams
                     }
             }
+    }
+
+    /**
+     * Pack remaps first; on Alloy, DexKit string search is a soft fallback (ADR 0006).
+     */
+    private fun resolveFavoritesFragmentClass(): Class<*>? {
+        try {
+            return findClass(favoritesFragment)
+        } catch (_: Throwable) {
+            // fall through
+        }
+        if (!DeliveryChannel.current.isRootedModule) return null
+        if (!AlloyDexKit.ensureInitialized(GrindrPlus.context)) return null
+        // Tip 26.16.1 Cascade V2: FavoritesFragment / fragment_favorite_recycler_view are gone.
+        // Prefer Cascade favorites UI model fingerprints (ADR 0006); still soft-skip if not a Fragment.
+        return AlloyDexKit.findClassByStrings("CascadeFavoritesItemUiModel")
+            ?: AlloyDexKit.findClassByStrings("FavoritesHeaderData")
+            ?: AlloyDexKit.findClassByStrings("fragment_favorite_recycler_view")
+            ?: AlloyDexKit.findClassByStrings("FavoritesFragment")
     }
 }

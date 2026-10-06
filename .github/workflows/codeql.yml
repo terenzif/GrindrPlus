@@ -51,7 +51,7 @@ jobs:
         if: matrix.language == 'java-kotlin'
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon assembleDebug -x lint
+          ./gradlew --no-daemon assembleMorpheDebug assembleAlloyDebug -x lint
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

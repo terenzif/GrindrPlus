@@ -6,10 +6,14 @@ How to verify that Manager **Settings** match module runtime for GrindrPlus Ver.
 
 ## Preconditions
 
-1. Module built and installed (LSPosed **or** Morphe A / LSPatch integrated path).
+1. Module built and installed:
+   - **Alloy** (`com.grindrplus.alloy`) via LSPosed, **or**
+   - **Morphe** (`com.grindrplus.morphe`) via Morphe A / LSPatch integrated path (slim `-m` preferred).
+   See [dual-apk-migration.md](dual-apk-migration.md) / [ADR 0005](adr/0005-dual-apk-morphe-alloy.md).
 2. Target Grindr `versionCode` known; prefer a pack under `mapping-packs/<versionCode>.json` or `app/src/main/assets/mappings/`.
 3. Bridge connected (Manager Settings reads config; module writes runtime status once ADR 0002 lands).
 4. Record pack source used: remote / cache / assets / none (`MappingDictionary.loadForVersion` order — [remote-mapping-packs.md](remote-mapping-packs.md)).
+5. Record delivery channel: `morphe` | `alloy` (`DeliveryChannel` / `BuildConfig.DELIVERY_CHANNEL`).
 
 ## Procedure (per row)
 

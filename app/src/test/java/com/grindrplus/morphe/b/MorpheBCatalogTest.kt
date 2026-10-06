@@ -28,9 +28,9 @@ class MorpheBCatalogTest {
             zos.write("Manifest-Version: 1.0\n".toByteArray())
             zos.closeEntry()
         }
-        val result = MorpheBPatchEngine().apply(listOf(apk)) { msg ->
-            // no-op print
-        }
+        val result = MorpheBPatchEngine(
+            bytecodeBackend = NoOpMorpheBytecodeBackend,
+        ).apply(listOf(apk)) { _ -> }
         assertTrue(result.applied.isNotEmpty())
         assertTrue(result.deferred.isNotEmpty())
         ZipFile(apk).use { zip ->
@@ -41,5 +41,28 @@ class MorpheBCatalogTest {
             assertTrue(text.contains("empty-calls"))
         }
         assertEquals(apk, result.baseApk)
+    }
+
+    @Test
+    fun fingerprintScanWritesReportOnHit() {
+        val dir = createTempDir("morpheb-bc")
+        val apk = File(dir, "base.apk")
+        java.util.zip.ZipOutputStream(apk.outputStream()).use { zos ->
+            zos.putNextEntry(java.util.zip.ZipEntry("classes.dex"))
+            // Not a real DEX — byte-scan dry-run only needs the needle present.
+            zos.write("xxFavoritesFragmentyyfragment_favorite_recycler_viewzz".toByteArray())
+            zos.closeEntry()
+        }
+        val logs = mutableListOf<String>()
+        FingerprintScanBytecodeBackend().applyBytecodePatches(apk) { logs += it }
+        ZipFile(apk).use { zip ->
+            val entry = zip.getEntry(FingerprintScanBytecodeBackend.REPORT_ENTRY)
+            assertNotNull(entry)
+            val text = zip.getInputStream(entry).bufferedReader().readText()
+            assertTrue(text.contains("FingerprintScanBytecodeBackend"))
+            assertTrue(text.contains("\"status\": \"hit\""))
+            assertTrue(text.contains("favorites-cascade"))
+        }
+        assertTrue(logs.any { it.contains("favorites-cascade") && it.contains("hit") })
     }
 }

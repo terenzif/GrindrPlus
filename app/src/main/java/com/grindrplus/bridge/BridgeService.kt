@@ -17,9 +17,9 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import com.grindrplus.core.Constants
+import com.grindrplus.core.DeviceFlags
 import com.grindrplus.core.LogSource
 import com.grindrplus.core.Logger
-import com.grindrplus.manager.fetchNotifs
 import com.grindrplus.persistence.GPDatabase
 import com.grindrplus.persistence.model.BlockEventEntity
 import kotlinx.coroutines.runBlocking
@@ -97,9 +97,10 @@ class BridgeService : Service() {
                 .build()
 
             try {
+                // News polling lives in Manager UI (MainActivity); slim embed skips it.
                 periodicTasksExecutor.scheduleWithFixedDelay(
-                    { runBlocking { fetchNotifs(this@BridgeService) } },
-                    0,
+                    { /* reserved */ },
+                    15,
                     15,
                     java.util.concurrent.TimeUnit.SECONDS
                 )
@@ -478,12 +479,12 @@ class BridgeService : Service() {
 
         override fun isRooted(): Boolean {
             checkCaller()
-            return com.grindrplus.manager.utils.isRooted(applicationContext)
+            return DeviceFlags.isRooted(applicationContext)
         }
 
         override fun isLSPosed(): Boolean {
             checkCaller()
-            return com.grindrplus.manager.utils.isLSPosed()
+            return DeviceFlags.isLSPosed()
         }
     }
 

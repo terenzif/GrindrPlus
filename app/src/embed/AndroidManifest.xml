@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Embed payload: Xposed module only — no launcher (ADR 0005 slim -m). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <activity
+            android:name="com.grindrplus.manager.MainActivity"
+            tools:node="remove" />
+        <activity-alias
+            android:name="com.grindrplus.manager.MainActivityAlias"
+            tools:node="remove" />
+    </application>
+</manifest>

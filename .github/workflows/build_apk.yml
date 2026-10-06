@@ -67,24 +67,31 @@ jobs:
           echo "version_info=${VERSION_INFO}" >> "$GITHUB_OUTPUT"
           echo "commit_sha=${COMMIT_SHA}" >> "$GITHUB_OUTPUT"
 
-      - name: Build debug APK
-        run: ./gradlew --no-daemon assembleDebug -x lint
+      - name: Build debug APKs (morphe + alloy)
+        run: ./gradlew --no-daemon assembleMorpheDebug assembleAlloyDebug -x lint
 
-      - name: Build release APK
-        run: ./gradlew --no-daemon assembleRelease -x lint
+      - name: Build release APKs (morphe + alloy + embed payload)
+        run: ./gradlew --no-daemon assembleMorpheRelease assembleAlloyRelease assembleEmbedRelease -x lint
 
       - name: Locate APKs
         id: apks
         run: |
           set -euo pipefail
-          DEBUG_APK=$(find app/build/outputs/apk/debug -name '*.apk' | head -n1)
-          RELEASE_APK=$(find app/build/outputs/apk/release -name '*.apk' | head -n1)
-          test -n "$DEBUG_APK"
-          test -n "$RELEASE_APK"
-          echo "DEBUG_APK=$DEBUG_APK" >> "$GITHUB_ENV"
-          echo "RELEASE_APK=$RELEASE_APK" >> "$GITHUB_ENV"
-          echo "debug_apk=$DEBUG_APK" >> "$GITHUB_OUTPUT"
-          echo "release_apk=$RELEASE_APK" >> "$GITHUB_OUTPUT"
+          MORPHE_DEBUG=$(find app/build/outputs/apk/morphe/debug -name '*.apk' | head -n1)
+          ALLOY_DEBUG=$(find app/build/outputs/apk/alloy/debug -name '*.apk' | head -n1)
+          MORPHE_RELEASE=$(find app/build/outputs/apk/morphe/release -name '*.apk' | head -n1)
+          ALLOY_RELEASE=$(find app/build/outputs/apk/alloy/release -name '*.apk' | head -n1)
+          EMBED_RELEASE=$(find app/build/outputs/apk/embed/release -name '*.apk' | head -n1)
+          test -n "$MORPHE_DEBUG" && test -n "$ALLOY_DEBUG"
+          test -n "$MORPHE_RELEASE" && test -n "$ALLOY_RELEASE"
+          echo "MORPHE_DEBUG=$MORPHE_DEBUG" >> "$GITHUB_ENV"
+          echo "ALLOY_DEBUG=$ALLOY_DEBUG" >> "$GITHUB_ENV"
+          echo "MORPHE_RELEASE=$MORPHE_RELEASE" >> "$GITHUB_ENV"
+          echo "ALLOY_RELEASE=$ALLOY_RELEASE" >> "$GITHUB_ENV"
+          echo "EMBED_RELEASE=$EMBED_RELEASE" >> "$GITHUB_ENV"
+          # Compat aliases for signing / telegram steps
+          echo "DEBUG_APK=$MORPHE_DEBUG" >> "$GITHUB_ENV"
+          echo "RELEASE_APK=$MORPHE_RELEASE" >> "$GITHUB_ENV"
 
       - name: Detect signing secrets
         id: signing
@@ -104,7 +111,7 @@ jobs:
             echo "::notice::KEYSTORE_* secrets missing — uploading unsigned release APK. Add secrets to enable signing."
           fi
 
-      - name: Sign release APK
+      - name: Sign release APKs
         if: steps.signing.outputs.available == 'true'
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
@@ -113,39 +120,53 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          # PKCS12 keystore (secrets: KEYSTORE_*). Write as .p12 for apksigner.
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > /tmp/keystore.p12
           BT=$(ls "${ANDROID_HOME}/build-tools" | sort -V | tail -n1)
-          "${ANDROID_HOME}/build-tools/${BT}/apksigner" sign \
-            --ks /tmp/keystore.p12 \
-            --ks-type PKCS12 \
-            --ks-key-alias "$KEY_ALIAS" \
-            --ks-pass "pass:${KEYSTORE_PASSWORD}" \
-            --key-pass "pass:${KEY_PASSWORD}" \
-            --out "${RELEASE_APK}" \
-            "${RELEASE_APK}"
-          "${ANDROID_HOME}/build-tools/${BT}/apksigner" verify "${RELEASE_APK}"
+          sign_one() {
+            local in="$1"
+            "${ANDROID_HOME}/build-tools/${BT}/apksigner" sign \
+              --ks /tmp/keystore.p12 \
+              --ks-type PKCS12 \
+              --ks-key-alias "$KEY_ALIAS" \
+              --ks-pass "pass:${KEYSTORE_PASSWORD}" \
+              --key-pass "pass:${KEY_PASSWORD}" \
+              --out "${in}" \
+              "${in}"
+            "${ANDROID_HOME}/build-tools/${BT}/apksigner" verify "${in}"
+            case "$in" in
+              *-unsigned.apk) out="${in%-unsigned.apk}.apk" ;;
+              *) out="${in%.apk}-signed.apk" ;;
+            esac
+            mv "$in" "$out"
+            echo "$out"
+          }
+          MORPHE_RELEASE=$(sign_one "$MORPHE_RELEASE")
+          ALLOY_RELEASE=$(sign_one "$ALLOY_RELEASE")
+          if [ -n "${EMBED_RELEASE:-}" ]; then
+            EMBED_RELEASE=$(sign_one "$EMBED_RELEASE")
+          fi
           rm -f /tmp/keystore.p12
-          # apksigner signs in-place; Gradle still named it *-release-unsigned.apk
-          case "$RELEASE_APK" in
-            *-unsigned.apk) SIGNED_APK="${RELEASE_APK%-unsigned.apk}.apk" ;;
-            *) SIGNED_APK="${RELEASE_APK%.apk}-signed.apk" ;;
-          esac
-          mv "$RELEASE_APK" "$SIGNED_APK"
-          echo "RELEASE_APK=$SIGNED_APK" >> "$GITHUB_ENV"
-          echo "Signed release renamed to $(basename "$SIGNED_APK")"
+          echo "MORPHE_RELEASE=$MORPHE_RELEASE" >> "$GITHUB_ENV"
+          echo "ALLOY_RELEASE=$ALLOY_RELEASE" >> "$GITHUB_ENV"
+          echo "EMBED_RELEASE=$EMBED_RELEASE" >> "$GITHUB_ENV"
+          echo "RELEASE_APK=$MORPHE_RELEASE" >> "$GITHUB_ENV"
 
-      - name: Upload debug artifact
+      - name: Upload debug artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: "Debug APK - ${{ env.DATE_TODAY }}-${{ env.COMMIT_SHA }}"
-          path: ${{ env.DEBUG_APK }}
+          name: "Debug APKs - ${{ env.DATE_TODAY }}-${{ env.COMMIT_SHA }}"
+          path: |
+            ${{ env.MORPHE_DEBUG }}
+            ${{ env.ALLOY_DEBUG }}
 
-      - name: Upload release artifact
+      - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: "Release APK - ${{ env.DATE_TODAY }}-${{ env.COMMIT_SHA }}"
-          path: ${{ env.RELEASE_APK }}
+          name: "Release APKs - ${{ env.DATE_TODAY }}-${{ env.COMMIT_SHA }}"
+          path: |
+            ${{ env.MORPHE_RELEASE }}
+            ${{ env.ALLOY_RELEASE }}
+            ${{ env.EMBED_RELEASE }}
 
       - name: Resolve release tag
         id: tag
@@ -172,19 +193,26 @@ jobs:
           TAG="${{ steps.tag.outputs.tag }}"
           TITLE="GrindrPlus ${{ env.VERSION_INFO }} (${TAG})"
           NOTES="$(cat <<EOF
-          Fork build for **terenzif/GrindrPlus**.
+          Dual APK build for **terenzif/GrindrPlus** (ADR 0005).
 
           - Commit: \`${{ env.COMMIT_SHA }}\`
           - Version info: \`${{ env.VERSION_INFO }}\`
           - Signed: \`${{ steps.signing.outputs.available }}\`
 
-          Install via LSPosed (JingMatrix). Target Grindr: see README / \`supported_target.json\`.
+          **Install**
+          - **Morphe** (\`com.grindrplus.morphe\`) — rootless Manager / LSPatch
+          - **Alloy** (\`com.grindrplus.alloy\`) — LSPosed module (JingMatrix)
+          - **embed** (\`com.grindrplus.morphe.payload\`) — slim \`-m\` payload (build artifact)
+
+          UI label is **GrindrPlus** for both user APKs. See \`docs/dual-apk-migration.md\`.
           EOF
           )"
+          FILES=("$MORPHE_DEBUG" "$ALLOY_DEBUG" "$MORPHE_RELEASE" "$ALLOY_RELEASE")
+          if [ -n "${EMBED_RELEASE:-}" ]; then FILES+=("$EMBED_RELEASE"); fi
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" "$DEBUG_APK" "$RELEASE_APK" --clobber
+            gh release upload "$TAG" "${FILES[@]}" --clobber
           else
-            gh release create "$TAG" "$DEBUG_APK" "$RELEASE_APK" \
+            gh release create "$TAG" "${FILES[@]}" \
               --title "$TITLE" \
               --notes "$NOTES"
           fi
@@ -207,9 +235,15 @@ jobs:
           steps.telegram.outputs.available == 'true'
         run: |
           set -euo pipefail
-          curl -fsS -F document=@"${DEBUG_APK}" \
+          curl -fsS -F document=@"${MORPHE_DEBUG}" \
             -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument"
-          curl -fsS -F document=@"${RELEASE_APK}" \
+          curl -fsS -F document=@"${ALLOY_DEBUG}" \
+            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument"
+          curl -fsS -F document=@"${MORPHE_RELEASE}" \
+            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument"
+          curl -fsS -F document=@"${ALLOY_RELEASE}" \
             -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument"

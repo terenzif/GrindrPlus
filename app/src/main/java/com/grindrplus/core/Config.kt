@@ -2,7 +2,7 @@ package com.grindrplus.core
 
 import android.content.Context
 import com.grindrplus.GrindrPlus
-import com.grindrplus.manager.utils.AppCloneUtils
+import com.grindrplus.core.GrindrCloneUtils
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -151,7 +151,7 @@ object Config {
     fun getAvailablePackages(context: Context): List<String> = runBlocking {
         configMutex.withLock {
             Logger.d("Getting available packages", LogSource.MANAGER)
-            val installedClones = listOf(Constants.GRINDR_PACKAGE_NAME) + AppCloneUtils.getExistingClones(context)
+            val installedClones = listOf(Constants.GRINDR_PACKAGE_NAME) + GrindrCloneUtils.getExistingClones(context)
             val clones = localConfig.optJSONObject("clones") ?: return@runBlocking listOf(Constants.GRINDR_PACKAGE_NAME)
 
             return@runBlocking installedClones.filter { pkg ->

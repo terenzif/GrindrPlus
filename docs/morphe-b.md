@@ -8,12 +8,16 @@ See [adr/0004-morphe-b.md](adr/0004-morphe-b.md).
 
 ```text
 select APKs
-    → MorpheBPatchEngine (assets/grindrplus/morphe_b.json marker)
-    → Morphe A LSPatchIntegratedBackend (-l 2)
+    → MorpheBPatchEngine
+         · FingerprintScanBytecodeBackend → assets/grindrplus/bytecode_scan.json
+         · marker → assets/grindrplus/morphe_b.json
+    → Morphe A LSPatchIntegratedBackend (-l 2 + slim embed)
     → SessionInstaller
 ```
 
 `MorpheOrchestrator` runs B then A. B failures are non-fatal (A continues).
+
+Bytecode today is a **dry-run fingerprint scan** (ADR 0007); full MorpheApp `bytecodePatch` rewriter is next.
 
 ## Delivery modes
 

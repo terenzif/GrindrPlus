@@ -38,14 +38,16 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Unit tests
-        run: ./gradlew --no-daemon testDebugUnitTest
+        run: ./gradlew --no-daemon testMorpheDebugUnitTest testAlloyDebugUnitTest
 
-      - name: Assemble debug APK
-        run: ./gradlew --no-daemon assembleDebug -x lint
+      - name: Assemble debug APKs (morphe + alloy)
+        run: ./gradlew --no-daemon assembleMorpheDebug assembleAlloyDebug -x lint
 
-      - name: Upload debug APK
+      - name: Upload debug APKs
         uses: actions/upload-artifact@v4
         with:
           name: grindrplus-debug-${{ github.sha }}
-          path: app/build/outputs/apk/debug/*.apk
+          path: |
+            app/build/outputs/apk/morphe/debug/*.apk
+            app/build/outputs/apk/alloy/debug/*.apk
           if-no-files-found: error
