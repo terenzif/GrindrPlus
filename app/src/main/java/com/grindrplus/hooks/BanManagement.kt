@@ -61,7 +61,7 @@ class BanManagement : Hook(
             findClass(authServiceClass)
         } catch (t: Throwable) {
             logi("Ban management: LoginRestService not found ($authServiceClass) — soft-skip")
-            Logger.writeRaw(t.stackTraceToString())
+            Logger.writeThrowable(t)
             return
         }
 
@@ -181,7 +181,7 @@ class BanManagement : Hook(
                     }
                 } catch (e: Exception) {
                     loge("BannedFragment: Error in hook: ${e.message}")
-                    Logger.writeRaw(e.stackTraceToString())
+                    Logger.writeThrowable(e)
                 }
             }
     }

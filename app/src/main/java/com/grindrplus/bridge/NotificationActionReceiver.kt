@@ -58,7 +58,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
             }
         } catch (e: Exception) {
             Logger.e("Error handling notification action: ${e.message}", LogSource.BRIDGE)
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
         }
     }
 }

@@ -9,10 +9,14 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.children
 import com.grindrplus.GrindrPlus
+import com.grindrplus.alloy.AlloyDexKit
 import com.grindrplus.core.Config
+import com.grindrplus.core.DeliveryChannel
+import com.grindrplus.core.mapping.MappingDictionary
 import com.grindrplus.ui.Utils
 import com.grindrplus.utils.Hook
 import com.grindrplus.utils.HookStage
+import com.grindrplus.utils.SoftSkipException
 import com.grindrplus.utils.hook
 import de.robv.android.xposed.XposedHelpers.callMethod
 import de.robv.android.xposed.XposedHelpers.getObjectField
@@ -25,13 +29,21 @@ class Favorites : Hook(
 ) {
     private val recyclerViewLayoutParams =
         "androidx.recyclerview.widget.RecyclerView\$LayoutParams"
-    private val favoritesFragment = "com.grindrapp.android.favorites.presentation.ui.FavoritesFragment"
+    private val favoritesFragment = MappingDictionary.resolve(
+        "Favorites.FRAGMENT",
+        "com.grindrapp.android.favorites.presentation.ui.FavoritesFragment"
+    )
 
     override fun init() {
+        val fragmentClass = resolveFavoritesFragmentClass()
+            ?: throw SoftSkipException(
+                "FavoritesFragment absent (Cascade V2) — remap Favorites.FRAGMENT or Alloy DexKit CascadeFavorites miss"
+            )
+
         val recyclerViewLayoutParamsConstructor = findClass(recyclerViewLayoutParams)
             .getDeclaredConstructor(Int::class.java, Int::class.java)
 
-        findClass(favoritesFragment)
+        fragmentClass
             .hook("onViewCreated", HookStage.AFTER) { param ->
                 val columnsNumber = (Config.get("favorites_grid_columns", 3) as Number).toInt()
                 val view = param.arg<View>(0)
@@ -128,5 +140,47 @@ class Favorites : Hook(
                         profileDisplayName.layoutParams = displayNameLayoutParams
                     }
             }
+    }
+
+    /**
+     * Pack remaps first; on Alloy, DexKit string search is a soft fallback (ADR 0006).
+     */
+    private fun resolveFavoritesFragmentClass(): Class<*>? {
+        try {
+            return findClass(favoritesFragment)
+        } catch (_: Throwable) {
+            // fall through
+        }
+        if (!DeliveryChannel.current.isRootedModule) return null
+        if (!AlloyDexKit.ensureInitialized(GrindrPlus.context)) return null
+        // Tip 26.16.1 Cascade V2: FavoritesFragment / fragment_favorite_recycler_view are gone.
+        // Prefer FavoritesFragment string first; Cascade UI-model hits are not Fragments.
+        val candidates = listOfNotNull(
+            AlloyDexKit.findClassByStrings("FavoritesFragment"),
+            AlloyDexKit.findClassByStrings("fragment_favorite_recycler_view"),
+            AlloyDexKit.findClassByStrings("CascadeFavoritesItemUiModel"),
+            AlloyDexKit.findClassByStrings("FavoritesHeaderData"),
+        )
+        return candidates.firstOrNull { isFragmentWithOnViewCreated(it) }
+    }
+
+    private fun isFragmentWithOnViewCreated(clazz: Class<*>): Boolean {
+        var c: Class<*>? = clazz
+        var fragment = false
+        while (c != null) {
+            val n = c.name
+            if (n == "androidx.fragment.app.Fragment" || n == "android.app.Fragment") {
+                fragment = true
+                break
+            }
+            c = c.superclass
+        }
+        if (!fragment) return false
+        return try {
+            clazz.getMethod("onViewCreated", View::class.java, android.os.Bundle::class.java)
+            true
+        } catch (_: Throwable) {
+            false
+        }
     }
 }

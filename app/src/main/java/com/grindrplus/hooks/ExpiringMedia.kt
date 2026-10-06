@@ -118,7 +118,7 @@ class ExpiringMedia : Hook(
                     )
                 } catch (e: Exception) {
                     loge("Error processing expiring $mediaTypeStr: ${e.message}")
-                    Logger.writeRaw(e.stackTraceToString())
+                    Logger.writeThrowable(e)
                     param.setResult(originalUrl)
                 }
             }

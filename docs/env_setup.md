@@ -5,15 +5,20 @@ What you (might) need:
  - Grindr apk
  - JADX [link](https://github.com/skylot/jadx/releases)
  - HTTP interception
- - an Android phone with LSPosed
+ - an Android phone or emulator with [Vector](https://github.com/JingMatrix/Vector) (rooted Alloy path)
 
 
 ## Android Studio
 Download the newest version, open the repository and install necessaty plugins/tools.
-Try to build the app and install on your phone (via ADB). If you use LSPosed, make sure 
-to check `Always install with package manager`. If not, LSPosed will not notice you installed
+Try to build the app and install on your phone (via ADB). If you use Vector, make sure 
+to check `Always install with package manager`. If not, Vector will not notice you installed
 an update and will not reload the module. You can find this option in the 
 [run configurations](img/run_configs.png).
+
+### JDK for Gradle / unit tests
+Use **JDK 17 or 21** as the Gradle JVM (`JAVA_HOME`). **JDK 25 breaks Robolectric**
+(`ClassReader` / `NoClassDefFoundError` on Shadows). CI uses Temurin 17. Lab machines
+with Studio under `C:\devbin` can point at `C:\devbin\android-studio\jbr` (JDK 21).
 
 
 ## Grindr apk
@@ -27,7 +32,7 @@ which is just a zip of all the partial .apk files.
 
 For the decompilation, you will need only the base apk from it.
 
-If you have a phone with LSPosed, install the app on it. Apkm files can be installed using
+If you have a phone or emulator with Vector, install the app on it. Apkm files can be installed using
 [apkmirror installer](https://play.google.com/store/apps/details/APKMirror_Installer_Official?id=com.apkmirror.helper.prod).
 
 
@@ -79,27 +84,46 @@ has not been extensively tested and may cause issues with lspatch. To try that, 
 install and open it, select Android App via Frida and follow the manual.
 
 
-## Android phone
-There are two options for efficient development: LSPatch (non-root) and LSPosed (for root).
+## Android phone / emulator
+Two efficient development paths: **LSPatch** (rootless / Morphe) and **Vector** (rooted / Alloy).
 
-### LSPatch
+### LSPatch (rootless)
 Download and install [LSPatch](https://github.com/JingMatrix/LSPatch/releases),
 [Shizuku](https://github.com/RikkaApps/Shizuku/releases)
 and Grindr app (see above).
 Set up Shizuku and open LSPatch and patch Grindr app in local mode.
-Then tap on Grindr in LSPatch in installed apps, open Module scope and enable Grindr Plus.
+Then tap on Grindr in LSPatch in installed apps, open Module scope and enable GrindrPlus.
 
-### LSPosed
-You will need to look up a method/manual to install LSPosed specifically for your brand/model.
-Generally, you want to install [Magisk](https://github.com/topjohnwu/Magisk), enable Zygisk,
-install [LSPosed](https://github.com/JingMatrix/LSPosed) as Magisk module.
-Rooting your phone carries some risks, please study them carefully before deciding.
+### Vector (rooted — preferred over legacy LSPosed)
+Install [Magisk](https://github.com/topjohnwu/Magisk) (or KernelSU), enable Zygisk,
+then install **[Vector](https://github.com/JingMatrix/Vector)** as the Zygisk module
+(JingMatrix’s modern Xposed framework; successor to the JingMatrix LSPosed fork).
+Use the **`com.grindrplus.alloy`** APK, enable the module in Vector, and scope Grindr.
+Rooting carries risks — study them before deciding.
 
-### Plain Grindr plus manager
-You can also use just the GrindrPlus app to patch the Grindr app,
+Legacy “LSPosed” naming in APIs (`isLsPosed`, log tags) remains for framework
+compatibility; product docs and Releases copy say **Vector**.
+
+### Plain GrindrPlus manager
+You can also use just the GrindrPlus (Morphe) app to patch Grindr,
 but every change to the patch code will require you build a patched Grindr app and install it,
-instead of just installing the GrindrPlus app and force-stopping the Grindr app.
+instead of just installing GrindrPlus and force-stopping Grindr.
 
-### Android emulator / VM
-Alternatively, you can use Android emulator on your PC, with any of the above methods,
-but this is out of scope of this guide.
+### Android emulator / VM (lab)
+Lab SDK: `C:\devbin\android-sdk` (adb). Create/start an AVD from Android Studio or:
+
+```text
+emulator -list-avds
+emulator -avd <name> -netdelay none -netspeed full
+adb devices
+```
+
+For the Alloy path you still need a rooted image + Zygisk + Vector (same as a phone).
+For Morphe / LSPatch, a normal Google APIs image + Shizuku is enough.
+
+### JADX / Frida + AI assist (optional)
+JADX GUI and Frida remain the primary reverse-engineering tools (see HTTP / Frida notes above).
+If you use an AI-assisted JADX or Frida helper in this lab, set **`GEMINI_API_KEY`**
+in the environment (do not commit the key). Prefer a **Machine** or **User** Windows env
+var and restart Cursor so agent shells inherit it. Working smoke-test model (2026-10):
+`gemini-3.1-flash-lite` via Generative Language API `generateContent`.

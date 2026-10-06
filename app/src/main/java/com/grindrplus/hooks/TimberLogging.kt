@@ -7,6 +7,7 @@ import com.grindrplus.core.Logger
 import com.grindrplus.core.loge
 import com.grindrplus.utils.Hook
 import com.grindrplus.utils.HookStage
+import com.grindrplus.utils.SoftSkipException
 import com.grindrplus.utils.hook
 import de.robv.android.xposed.XposedHelpers
 
@@ -15,7 +16,7 @@ class TimberLogging :
     Hook("Timber Logging", "Forces Timber to log messages even if no tree is planted") {
     override fun init() {
         if (!BuildConfig.DEBUG) {
-            return
+            throw SoftSkipException("Timber Logging applies only in DEBUG builds")
         }
 
         try {
@@ -146,7 +147,7 @@ class TimberLogging :
             }
         } catch (e: Exception) {
             loge("Failed to hook Timber: ${e.message}")
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
         }
     }
 }

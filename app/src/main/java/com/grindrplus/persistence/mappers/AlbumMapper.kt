@@ -135,7 +135,7 @@ fun AlbumEntity.toGrindrAlbum(dbContent: List<AlbumContentEntity>): Any {
         )
     } catch (e: Throwable) {
         Logger.e("Error creating Album instance: ${e.message}")
-        Logger.writeRaw(e.stackTraceToString())
+        Logger.writeThrowable(e)
 
         try {
             val albumClass = GrindrPlus.loadClass(ALBUM_CLASS)
@@ -240,7 +240,7 @@ fun AlbumEntity.toGrindrAlbumWithoutContent(): Any {
         )
     } catch (e: Throwable) {
         Logger.e("Error creating Album instance without content: ${e.message}")
-        Logger.writeRaw(e.stackTraceToString())
+        Logger.writeThrowable(e)
         throw e
     }
 }

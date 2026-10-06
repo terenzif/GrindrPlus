@@ -8,6 +8,7 @@ import com.grindrplus.core.Logger
 import com.grindrplus.core.logd
 import com.grindrplus.core.loge
 import com.grindrplus.core.logi
+import com.grindrplus.core.mapping.MappingDictionary
 import com.grindrplus.ui.Utils.copyToClipboard
 import com.grindrplus.utils.Hook
 import com.grindrplus.utils.HookStage
@@ -19,63 +20,66 @@ class EnableUnlimited : Hook(
     "Enable unlimited",
     "Enable Grindr Unlimited features"
 ) {
-    private val profileViewState = "com.grindrapp.android.ui.profileV2.model.ProfileViewState"
+    private val profileViewState: String
+        get() = MappingDictionary.resolve(
+            "ProfileDetails.PROFILE_VIEW_STATE",
+            "com.grindrapp.android.ui.profileV2.model.ProfileViewState"
+        )
     private val profileModel = "com.grindrapp.android.persistence.model.Profile"
     private val tabLayoutClass = "com.google.android.material.tabs.TabLayout"
 
-    // Interface xub static b() shows app_restart_required dialog (was dk.c.d)
-    private val paywallUtils = "xub"
-    // ViewBinding for persistent_banner_ad_compose_view (was Z4.a)
-    private val persistentAdBannerContainer = "h68"
-    // Interstitial FlowCollectors that show ReadyToBeShown ads (was empty on earlier 26.16.1 pass)
-    private val subscribeToInterstitialsList = listOf(
-        "fo1", // static FlowCollector — show()
-        "o39", // static FlowCollector
-        "d12", // static FlowCollector
-        "qy1", // ChatActivityV2 collector
-        "p49"  // ProfilesActivity collector
-    )
-    private val viewsToHide = mapOf(
-        // FunctionReferenceImpl bind helpers (default package on 26.16.1)
-        "ny8" to listOf("upsell_bottom_bar"), // ProfileTagCascadeFragmentBinding
-        "yr3" to listOf(
-            "plans_title",
-            "store_in_profile_drawer_card",
-            "sideDrawerBoostContainer",
-            "drawer_profile_offer_card"
-        ), // DrawerProfileBinding
-        "eb9" to listOf("micros_fab", "right_now_fabs_container") // FragmentRadarBinding
-        // CascadeFragment → CascadeFragmentV2 (Compose): binding fingerprint not found yet
-    )
-
     override fun init() {
         val userSessionClass = findClass(GrindrPlus.userSession)
-        userSessionClass.hook( // rolesUpdated() — was "W", now Y(List)
-            "Y", HookStage.BEFORE
-        ) { param ->
-            val allRoles = listOf(
-                "Plus",
-                "Xtra",
-                "Unlimited",
-                "Premium",
-                "Free_Plus",
-                "Free_Unlimited",
-                "Free_Premium"
-            )
 
-            logd("Updating user roles to enable unlimited features")
+        val rolesUpdatedMethod =
+            MappingDictionary.resolve("EnableUnlimited.userSession.rolesUpdatedMethod", "Y")
+        if (rolesUpdatedMethod.isEmpty()) {
+            logi("EnableUnlimited: rolesUpdatedMethod soft-skip (empty remap)")
+        } else {
+            userSessionClass.hook( // rolesUpdated() — was "W", now Y(List)
+                rolesUpdatedMethod, HookStage.BEFORE
+            ) { param ->
+                val allRoles = listOf(
+                    "Plus",
+                    "Xtra",
+                    "Unlimited",
+                    "Premium",
+                    "Free_Plus",
+                    "Free_Unlimited",
+                    "Free_Premium"
+                )
 
-            param.setArg(0, allRoles)
+                logd("Updating user roles to enable unlimited features")
+
+                param.setArg(0, allRoles)
+            }
         }
 
-        // Prevent leak of faked roles into HTTP headers (UserSession.E() on 26.16.1; was "F")
-        userSessionClass.hook(
-            "E", HookStage.BEFORE
-        ) { param ->
-            param.setResult("[]")
+        // Shared with Interceptor — prevent leak of faked roles into HTTP headers
+        val rolesMethod = MappingDictionary.resolve("http.userSession.rolesMethod", "E")
+        if (rolesMethod.isEmpty()) {
+            logi("EnableUnlimited: rolesMethod soft-skip (empty remap)")
+        } else {
+            userSessionClass.hook(
+                rolesMethod, HookStage.BEFORE
+            ) { param ->
+                param.setResult("[]")
+            }
         }
 
-        subscribeToInterstitialsList.forEach { className ->
+        val interstitialCollectors = listOf(
+            "EnableUnlimited.interstitialCollector.show" to "fo1",
+            "EnableUnlimited.interstitialCollector.o39" to "o39",
+            "EnableUnlimited.interstitialCollector.d12" to "d12",
+            "EnableUnlimited.interstitialCollector.chatActivity" to "qy1",
+            "EnableUnlimited.interstitialCollector.profilesActivity" to "p49",
+        )
+        interstitialCollectors.forEach { (key, fallback) ->
+            val className = MappingDictionary.resolve(key, fallback)
+            if (className.isEmpty()) {
+                logi("EnableUnlimited: interstitial $key soft-skip (empty remap)")
+                return@forEach
+            }
             runCatching {
                 findClass(className)
                     .hook("emit", HookStage.BEFORE) { param ->
@@ -116,7 +120,26 @@ class EnableUnlimited : Hook(
             loge("Skip tabLayout hook: ${it.message}")
         }
 
-        viewsToHide.forEach { (className, viewIds) ->
+        val viewsToHide = listOf(
+            "EnableUnlimited.viewsToHide.profileTagCascade" to ("ny8" to listOf("upsell_bottom_bar")),
+            "EnableUnlimited.viewsToHide.drawerProfile" to ("yr3" to listOf(
+                "plans_title",
+                "store_in_profile_drawer_card",
+                "sideDrawerBoostContainer",
+                "drawer_profile_offer_card"
+            )),
+            "EnableUnlimited.viewsToHide.fragmentRadar" to ("eb9" to listOf(
+                "micros_fab",
+                "right_now_fabs_container"
+            )),
+        )
+        viewsToHide.forEach { (key, fallbackAndIds) ->
+            val (fallback, viewIds) = fallbackAndIds
+            val className = MappingDictionary.resolve(key, fallback)
+            if (className.isEmpty()) {
+                logi("EnableUnlimited: viewsToHide $key soft-skip (empty remap)")
+                return@forEach
+            }
             runCatching {
                 findClass(className).hook(
                     "invoke", HookStage.AFTER
@@ -131,18 +154,34 @@ class EnableUnlimited : Hook(
             }
         }
 
-        runCatching {
-            findClass(persistentAdBannerContainer).hook("a", HookStage.BEFORE) { param ->
-                if (param.args().isNotEmpty()) {
-                    val rootView = param.arg<View>(0)
-                    hideViews(
-                        rootView,
-                        listOf("persistent_banner_ad_container", "persistent_banner_ad_compose_view")
-                    )
-                }
+        val persistentAdBannerContainer = MappingDictionary.resolve(
+            "EnableUnlimited.persistentAdBannerContainer",
+            "h68"
+        )
+        val persistentAdBannerBindMethod = MappingDictionary.resolve(
+            "EnableUnlimited.persistentAdBannerContainer.bindMethod",
+            "a"
+        )
+        if (persistentAdBannerContainer.isEmpty() || persistentAdBannerBindMethod.isEmpty()) {
+            logi("EnableUnlimited: persistentAdBanner soft-skip (empty remap)")
+        } else {
+            runCatching {
+                findClass(persistentAdBannerContainer)
+                    .hook(persistentAdBannerBindMethod, HookStage.BEFORE) { param ->
+                        if (param.args().isNotEmpty()) {
+                            val rootView = param.arg<View>(0)
+                            hideViews(
+                                rootView,
+                                listOf(
+                                    "persistent_banner_ad_container",
+                                    "persistent_banner_ad_compose_view"
+                                )
+                            )
+                        }
+                    }
+            }.onFailure {
+                loge("Skip persistent ad banner hook: ${it.message}")
             }
-        }.onFailure {
-            loge("Skip persistent ad banner hook: ${it.message}")
         }
 
         setOf("isBlockable", "component60").forEach { method ->
@@ -155,46 +194,56 @@ class EnableUnlimited : Hook(
             }
         }
 
-        runCatching {
-            // Static helper on interface xub (was instance method d on dk.c)
-            findClass(paywallUtils).hook("b", HookStage.BEFORE) { param ->
-                val stackTrace = Thread.currentThread().stackTrace.dropWhile {
-                    !it.toString().contains("LSPHooker")
-                }.drop(1).joinToString("\n")
+        val paywallUtils = MappingDictionary.resolve("EnableUnlimited.paywallUtils", "xub")
+        val paywallShowMethod =
+            MappingDictionary.resolve("EnableUnlimited.paywallUtils.showMethod", "b")
+        if (paywallUtils.isEmpty() || paywallShowMethod.isEmpty()) {
+            logi("EnableUnlimited: paywallUtils soft-skip (empty remap)")
+        } else {
+            runCatching {
+                findClass(paywallUtils).hook(paywallShowMethod, HookStage.BEFORE) { param ->
+                    val stackTrace = Thread.currentThread().stackTrace.dropWhile {
+                        !it.toString().contains("LSPHooker")
+                    }.drop(1).joinToString("\n")
 
-                val activity = GrindrPlus.currentActivity
-                if (activity != null) {
-                    android.app.AlertDialog.Builder(activity)
-                        .setTitle("Paywalled Feature Detected")
-                        .setMessage(
-                            "This feature is server-enforced and cannot be bypassed in this version.\n\n" +
-                                "If you think this is a mistake, please report it to the developer. " +
-                                "You can copy the stack trace below to help with troubleshooting."
-                        )
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .setCancelable(false)
-                        .setNegativeButton("Copy Stack Trace") { _, _ ->
-                            copyToClipboard(
-                                "Stack trace",
-                                stackTrace
+                    val activity = GrindrPlus.currentActivity
+                    if (activity != null) {
+                        android.app.AlertDialog.Builder(activity)
+                            .setTitle("Paywalled Feature Detected")
+                            .setMessage(
+                                "This feature is server-enforced and cannot be bypassed in this version.\n\n" +
+                                    "If you think this is a mistake, please report it to the developer. " +
+                                    "You can copy the stack trace below to help with troubleshooting."
                             )
-                        }
-                        .setPositiveButton("Ok", null)
-                        .show()
-                }
+                            .setIcon(android.R.drawable.ic_dialog_alert)
+                            .setCancelable(false)
+                            .setNegativeButton("Copy Stack Trace") { _, _ ->
+                                copyToClipboard(
+                                    "Stack trace",
+                                    stackTrace
+                                )
+                            }
+                            .setPositiveButton("Ok", null)
+                            .show()
+                    }
 
-                param.setResult(null)
+                    param.setResult(null)
+                }
+            }.onFailure {
+                loge("Skip paywallUtils hook: ${it.message}")
             }
-        }.onFailure {
-            loge("Skip paywallUtils hook: ${it.message}")
         }
 
-        runCatching {
-            findClass(profileViewState).hook("isChatPaywalled", HookStage.BEFORE) { param ->
-                param.setResult(false)
+        if (profileViewState.isEmpty()) {
+            logi("EnableUnlimited: profileViewState soft-skip (empty remap)")
+        } else {
+            runCatching {
+                findClass(profileViewState).hook("isChatPaywalled", HookStage.BEFORE) { param ->
+                    param.setResult(false)
+                }
+            }.onFailure {
+                loge("Skip isChatPaywalled hook: ${it.message}")
             }
-        }.onFailure {
-            loge("Skip isChatPaywalled hook: ${it.message}")
         }
     }
 
@@ -219,7 +268,7 @@ class EnableUnlimited : Hook(
                 }
             } catch (e: Exception) {
                 loge("Error hiding view with ID: $viewId: ${e.message}")
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
             }
         }
     }

@@ -12,9 +12,12 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import com.grindrplus.alloy.AlloyDexKit
 import com.grindrplus.bridge.BridgeClient
+import com.grindrplus.core.AnonymousTelemetry
 import com.grindrplus.core.Config
 import com.grindrplus.core.Constants
+import com.grindrplus.core.DeliveryChannel
 import com.grindrplus.core.EventManager
 import com.grindrplus.core.InstanceManager
 import com.grindrplus.core.Logger
@@ -133,9 +136,19 @@ object GrindrPlus {
         Logger.initialize(context, bridgeClient, true)
         Logger.i("Initializing GrindrPlus...", LogSource.MODULE)
 
-        loadMappingPack(modulePath, application)
+        val versionCode = installedVersionCode(application)
+        val hasPack = loadMappingPack(modulePath, application, versionCode)
 
+        // TARGET_* arrays from XposedLoader are tip/hint only — never abort init on mismatch.
         DialogManager.checkVersionCodes(context, versionCodes, versionNames)
+        DialogManager.checkPackPresence(hasPack, versionCode.toLong(), versionCodes)
+
+        if (DialogManager.shouldShowVersionMismatchDialog || DialogManager.shouldShowNoPackWarning) {
+            Logger.w(
+                "Version tip / mapping-pack soft warning — continuing initialization",
+                LogSource.MODULE
+            )
+        }
 
         runBlocking {
             val connected = try {
@@ -196,11 +209,6 @@ object GrindrPlus {
 
         registerActivityLifecycleCallbacks(application)
 
-        if (DialogManager.shouldShowVersionMismatchDialog) {
-            Logger.i("Version mismatch detected, stopping initialization", LogSource.MODULE)
-            return
-        }
-
         try {
             setupInstanceManager()
             setupServerNotificationHook()
@@ -208,7 +216,7 @@ object GrindrPlus {
             // Soft-fail: InstanceManager already skips missing classes per-name. Do not abort
             // before HookManager — MVP hooks must still initialize.
             Logger.e("Failed to hook critical classes (continuing to HookManager): ${t.message}", LogSource.MODULE)
-            Logger.writeRaw(t.stackTraceToString())
+            Logger.writeThrowable(t)
             showToast(Toast.LENGTH_LONG, "Failed to hook critical classes: ${t.message}")
         }
 
@@ -227,7 +235,7 @@ object GrindrPlus {
             isInitialized = true
         } catch (t: Throwable) {
             Logger.e("Failed to initialize: ${t.message}", LogSource.MODULE)
-            Logger.writeRaw(t.stackTraceToString())
+            Logger.writeThrowable(t)
             showToast(Toast.LENGTH_LONG, "Failed to initialize: ${t.message}")
             return
         }
@@ -277,6 +285,10 @@ object GrindrPlus {
                         DialogManager.showBridgeConnectionError(activity)
                         DialogManager.shouldShowBridgeConnectionError = false
                     }
+                    DialogManager.shouldShowNoPackWarning -> {
+                        DialogManager.showNoPackWarningDialog(activity)
+                        DialogManager.shouldShowNoPackWarning = false
+                    }
                     DialogManager.shouldShowVersionMismatchDialog -> {
                         DialogManager.showVersionMismatchDialog(activity)
                         DialogManager.shouldShowVersionMismatchDialog = false
@@ -310,8 +322,12 @@ object GrindrPlus {
         })
     }
 
-    private fun loadMappingPack(modulePath: String, application: Application) {
-        val versionCode = installedVersionCode(application)
+    /** @return true when a mapping pack was activated for [versionCode]. */
+    private fun loadMappingPack(
+        modulePath: String,
+        application: Application,
+        versionCode: Int,
+    ): Boolean {
         // Remote → disk cache → bundled assets → literals (all soft-fail).
         val pack = MappingDictionary.loadForVersion(
             modulePath = modulePath,
@@ -324,12 +340,17 @@ object GrindrPlus {
                     "${pack.symbols.size} symbols, confidence=${pack.confidence}",
                 LogSource.MODULE
             )
-        } else {
-            Logger.w(
-                "No mapping pack for versionCode=$versionCode — using compile-time literals",
-                LogSource.MODULE
-            )
+            // Soft-check JADX / structural fingerprints against loaded classes.
+            MappingDictionary.validateActiveFingerprints(application.classLoader)
+            AnonymousTelemetry.recordPackLoad(versionCode, "loaded", true)
+            return true
         }
+        Logger.w(
+            "No mapping pack for versionCode=$versionCode — using compile-time literals",
+            LogSource.MODULE
+        )
+        AnonymousTelemetry.recordPackLoad(versionCode, "missing", false)
+        return false
     }
 
     private fun installedVersionCode(application: Application): Int {
@@ -402,9 +423,12 @@ object GrindrPlus {
             database.clearAllTables()
             Config.put("reset_database", false)
         }
-
+        if (DeliveryChannel.current.isRootedModule) {
+            AlloyDexKit.ensureInitialized(context)
+        }
         hookManager.init()
         isMainInitialized = true
+        AnonymousTelemetry.flush()
     }
 
     fun runOnMainThread(appContext: Context? = null, block: (Context) -> Unit) {
@@ -425,7 +449,7 @@ object GrindrPlus {
                 block()
             } catch (e: Exception) {
                 Logger.e("Async operation failed: ${e.message}", LogSource.MODULE)
-                Logger.writeRaw(e.stackTraceToString())
+                Logger.writeThrowable(e)
             }
         }
     }
@@ -471,11 +495,11 @@ object GrindrPlus {
                 Logger.writeRaw("Exception: ${throwable.javaClass.name}")
                 Logger.writeRaw("Message: ${throwable.message}")
                 Logger.writeRaw("Stack trace:")
-                Logger.writeRaw(throwable.stackTraceToString())
+                Logger.writeThrowable(throwable)
 
                 throwable.cause?.let { cause ->
                     Logger.writeRaw("Caused by: ${cause.javaClass.name}: ${cause.message}")
-                    Logger.writeRaw(cause.stackTraceToString())
+                    Logger.writeThrowable(cause)
                 }
             } catch (e: Exception) {
                 Timber.tag("GrindrPlus").e("Failed to log crash: ${e.message}")

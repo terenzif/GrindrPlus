@@ -66,7 +66,7 @@ class AlwaysOnline :
             }
         } catch (e: Exception) {
             loge("Error in AlwaysOnline task: ${e.message}")
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
         }
     }
 }

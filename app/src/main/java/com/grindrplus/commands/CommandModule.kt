@@ -24,7 +24,7 @@ abstract class CommandModule(
             GrindrPlus.showToast(Toast.LENGTH_LONG, message)
             Logger.apply {
                 e("An error occurred while executing the command: ${e.message ?: "Unknown error"}")
-                writeRaw(e.stackTraceToString())
+                writeThrowable(e)
             }
             false
         }

@@ -14,7 +14,7 @@ android {
         val grindrVersionCode = listOf(179451)
         val gitCommitHash = getGitCommitHash() ?: "unknown"
 
-        applicationId = "com.grindrplus"
+        // applicationId set per delivery flavor (ADR 0005)
         minSdk = 26
         targetSdk = 34
         versionCode = 14
@@ -37,6 +37,26 @@ android {
             "TARGET_GRINDR_VERSION_CODES",
             grindrVersionCode.let { it.joinToString(prefix = "{", separator = ", ", postfix = "}") { code -> "$code" } }
         )
+    }
+
+    flavorDimensions += "delivery"
+    productFlavors {
+        create("morphe") {
+            dimension = "delivery"
+            applicationId = "com.grindrplus.morphe"
+            buildConfigField("String", "DELIVERY_CHANNEL", "\"morphe\"")
+        }
+        create("alloy") {
+            dimension = "delivery"
+            applicationId = "com.grindrplus.alloy"
+            buildConfigField("String", "DELIVERY_CHANNEL", "\"alloy\"")
+        }
+        // Internal slim -m payload (not a primary Releases product). ADR 0005.
+        create("embed") {
+            dimension = "delivery"
+            applicationId = "com.grindrplus.morphe.payload"
+            buildConfigField("String", "DELIVERY_CHANNEL", "\"embed\"")
+        }
     }
 
     buildFeatures {
@@ -65,10 +85,15 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    
-    // Replacement for applicationVariants logic
-    defaultConfig {
-        // archivesBaseName set via base {} block below
+
+    sourceSets {
+        // Manager UI / Install / LSPatch orchestration — not shipped in slim embed payload.
+        getByName("morphe") {
+            java.srcDir("src/manager/java")
+        }
+        getByName("alloy") {
+            java.srcDir("src/manager/java")
+        }
     }
 }
 
@@ -79,54 +104,95 @@ kotlin {
 }
 
 dependencies {
+    // Shared module / hooks payload (all flavors including slim embed)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.coordinatorlayout)
     implementation(libs.material)
     implementation(libs.square.okhttp)
-    // lspatch.jar already embeds Gson; gplayapi's transitive Gson duplicates at dex merge.
-    implementation(libs.gplayapi) {
-        exclude(group = "com.google.code.gson", module = "gson")
-    }
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.runtime.android)
-    ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
-    compileOnly(fileTree("libs") { include("*.jar") })
-    implementation(fileTree("libs") { include("lspatch.jar") })
-
-    val composeBom = platform(libs.compose.bom)
-    implementation(composeBom)
-
-    implementation(libs.androidx.material3)
-
-    implementation(libs.androidx.ui.tooling.preview)
-    debugImplementation(libs.androidx.ui.tooling)
-
-    implementation(libs.androidx.material.icons.core)
-    implementation(libs.androidx.material.icons.extended)
-    implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.navigation.compose)
-    implementation(libs.coil.compose)
-    implementation(libs.coil.network.okhttp)
-    implementation(libs.compose.markdown)
-    implementation(libs.plausible.android.sdk)
+    ksp(libs.androidx.room.compiler)
     implementation(libs.timber)
-    implementation(libs.fetch2)
-    implementation(libs.fetch2okhttp)
-    implementation(libs.rootbeer.lib)
-    implementation(libs.zip.android) {
-        artifact {
-            type = "aar"
-        }
-    }
-    implementation(libs.zipalign.java)
-    implementation(libs.coil.gif)
-    implementation(libs.arsclib)
+    compileOnly(fileTree("libs") { include("*.jar") })
     compileOnly(libs.bcprov.jdk18on)
 
+    // Compose compiler plugin is applied project-wide; keep minimal runtime on all flavors.
+    val composeBom = platform(libs.compose.bom)
+    implementation(composeBom)
+    implementation(libs.androidx.runtime.android)
+
+    // DexKit: packaged on alloy only (ADR 0006)
+    "alloyImplementation"(libs.dexkit)
+    "morpheCompileOnly"(libs.dexkit)
+    "embedCompileOnly"(libs.dexkit)
+
+    // dexlib2 rewriter for Morphe B (ADR 0007). Packaged on Manager channels only;
+    // slim embed stays compileOnly so the Vector payload does not grow.
+    "morpheImplementation"(libs.smali.dexlib2)
+    "alloyImplementation"(libs.smali.dexlib2)
+    "embedCompileOnly"(libs.smali.dexlib2)
+
+    // LSPatch jar: packaged on morphe Manager only (ADR 0005)
+    "morpheImplementation"(fileTree("libs") { include("lspatch.jar") })
+    "alloyCompileOnly"(fileTree("libs") { include("lspatch.jar") })
+    "embedCompileOnly"(fileTree("libs") { include("lspatch.jar") })
+
+    // Manager UI / Install tooling — morphe + alloy only (not slim embed)
+    "morpheImplementation"(libs.gplayapi) {
+        exclude(group = "com.google.code.gson", module = "gson")
+    }
+    "alloyImplementation"(libs.gplayapi) {
+        exclude(group = "com.google.code.gson", module = "gson")
+    }
+
+    val managerComposeBom = platform(libs.compose.bom)
+    "morpheImplementation"(managerComposeBom)
+    "alloyImplementation"(managerComposeBom)
+    "morpheImplementation"(libs.androidx.material3)
+    "alloyImplementation"(libs.androidx.material3)
+    "morpheImplementation"(libs.androidx.ui.tooling.preview)
+    "alloyImplementation"(libs.androidx.ui.tooling.preview)
+    "morpheImplementation"(libs.androidx.ui.tooling)
+    "alloyImplementation"(libs.androidx.ui.tooling)
+    "morpheImplementation"(libs.androidx.material.icons.core)
+    "alloyImplementation"(libs.androidx.material.icons.core)
+    "morpheImplementation"(libs.androidx.material.icons.extended)
+    "alloyImplementation"(libs.androidx.material.icons.extended)
+    "morpheImplementation"(libs.androidx.activity.compose)
+    "alloyImplementation"(libs.androidx.activity.compose)
+    "morpheImplementation"(libs.androidx.navigation.compose)
+    "alloyImplementation"(libs.androidx.navigation.compose)
+    "morpheImplementation"(libs.coil.compose)
+    "alloyImplementation"(libs.coil.compose)
+    "morpheImplementation"(libs.coil.network.okhttp)
+    "alloyImplementation"(libs.coil.network.okhttp)
+    "morpheImplementation"(libs.coil.gif)
+    "alloyImplementation"(libs.coil.gif)
+    "morpheImplementation"(libs.compose.markdown)
+    "alloyImplementation"(libs.compose.markdown)
+    "morpheImplementation"(libs.plausible.android.sdk)
+    "alloyImplementation"(libs.plausible.android.sdk)
+    "morpheImplementation"(libs.fetch2)
+    "alloyImplementation"(libs.fetch2)
+    "morpheImplementation"(libs.fetch2okhttp)
+    "alloyImplementation"(libs.fetch2okhttp)
+    "morpheImplementation"(libs.rootbeer.lib)
+    "alloyImplementation"(libs.rootbeer.lib)
+    "morpheImplementation"(libs.zip.android) {
+        artifact { type = "aar" }
+    }
+    "alloyImplementation"(libs.zip.android) {
+        artifact { type = "aar" }
+    }
+    "morpheImplementation"(libs.zipalign.java)
+    "alloyImplementation"(libs.zipalign.java)
+    "morpheImplementation"(libs.arsclib)
+    "alloyImplementation"(libs.arsclib)
+
+    testImplementation(libs.smali.dexlib2)
     testImplementation(libs.junit)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.test.runner)
@@ -168,5 +234,5 @@ tasks.register("printVersionInfo") {
 base {
     val versionName = android.defaultConfig.versionName
     val sanitizedVersionName = (versionName ?: "").replace(Regex("[^a-zA-Z0-9._-]"), "_").trim('_')
-    archivesName.set("GPlus_v${sanitizedVersionName}")
+    archivesName.set("GrindrPlus_v${sanitizedVersionName}")
 }

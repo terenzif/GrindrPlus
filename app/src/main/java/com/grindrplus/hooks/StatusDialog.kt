@@ -94,7 +94,7 @@ class StatusDialog : Hook(
                         appendLine("• GrindrPlus: $moduleVersion")
                         appendLine("• Bridge Status: $bridgeStatus")
                         if (GrindrPlus.bridgeClient.isConnected()) {
-                            appendLine("• LSPosed: $isLSPosed")
+                            appendLine("• Vector/Xposed: $isLSPosed")
                             appendLine("• Rooted: $isRooted")
                         }
                         appendLine()

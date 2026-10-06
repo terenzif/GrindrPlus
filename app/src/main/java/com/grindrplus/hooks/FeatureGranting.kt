@@ -2,6 +2,8 @@ package com.grindrplus.hooks
 
 import com.grindrplus.GrindrPlus
 import com.grindrplus.core.Config
+import com.grindrplus.core.logi
+import com.grindrplus.core.mapping.MappingDictionary
 import com.grindrplus.ui.Utils
 import com.grindrplus.utils.Feature
 import com.grindrplus.utils.FeatureManager
@@ -18,25 +20,29 @@ class FeatureGranting : Hook(
     "Feature granting",
     "Grant all Grindr features"
 ) {
-    private val isFeatureFlagEnabled = "iv6" // implements IsFeatureFlagEnabled
     private val upsellsV8Model = "com.grindrapp.android.model.UpsellsV8"
     private val insertsModel = "com.grindrapp.android.model.Inserts"
-    private val settingDistanceVisibilityViewModel =
-        "n5b" // search for 'UiState(distanceVisibility='
     private val featureModel = "com.grindrapp.android.usersession.model.Feature"
     private val tapModel = "com.grindrapp.android.taps.model.Tap"
     private val tapInboxModel = "com.grindrapp.android.taps.data.model.TapsInboxEntity"
-    private val alertParams = "P" // search for 'AlertController.AlertParams' in androidx.appcompat.app.AlertDialog
     private val featureManager = FeatureManager()
 
     override fun init() {
         initFeatures()
 
-		// search for 'Assignment.Flag'
-        findClass(isFeatureFlagEnabled).hook("a", HookStage.BEFORE) { param ->
-            val flagKey = callMethod(param.args()[0], "toString") as String
-            if (featureManager.isManaged(flagKey)) {
-                param.setResult(featureManager.isEnabled(flagKey))
+        val isFeatureFlagEnabled =
+            MappingDictionary.resolve("FeatureGranting.isFeatureFlagEnabled", "iv6")
+        val invokeMethod =
+            MappingDictionary.resolve("FeatureGranting.isFeatureFlagEnabled.invokeMethod", "a")
+        if (isFeatureFlagEnabled.isEmpty() || invokeMethod.isEmpty()) {
+            logi("FeatureGranting: isFeatureFlagEnabled soft-skip (empty remap)")
+        } else {
+            // search for 'Assignment.Flag'
+            findClass(isFeatureFlagEnabled).hook(invokeMethod, HookStage.BEFORE) { param ->
+                val flagKey = callMethod(param.args()[0], "toString") as String
+                if (featureManager.isManaged(flagKey)) {
+                    param.setResult(featureManager.isEnabled(flagKey))
+                }
             }
         }
 
@@ -46,13 +52,21 @@ class FeatureGranting : Hook(
             param.setResult(feature !in disallowedFeatures)
         }
 
-        findClass(settingDistanceVisibilityViewModel)
-            .hookConstructor(HookStage.BEFORE) { param ->
-                // n5b(int distanceVisibility, boolean hidePreciseDistance, Set loading)
-                if (param.args().size >= 2) {
-                    param.setArg(1, false) // hidePreciseDistance
+        val settingDistanceVisibilityViewModel = MappingDictionary.resolve(
+            "FeatureGranting.settingDistanceVisibilityViewModel",
+            "n5b"
+        )
+        if (settingDistanceVisibilityViewModel.isEmpty()) {
+            logi("FeatureGranting: settingDistanceVisibilityViewModel soft-skip (empty remap)")
+        } else {
+            findClass(settingDistanceVisibilityViewModel)
+                .hookConstructor(HookStage.BEFORE) { param ->
+                    // n5b(int distanceVisibility, boolean hidePreciseDistance, Set loading)
+                    if (param.args().size >= 2) {
+                        param.setArg(1, false) // hidePreciseDistance
+                    }
                 }
-            }
+        }
 
         listOf(upsellsV8Model, insertsModel).forEach { model ->
             findClass(model)
@@ -72,32 +86,40 @@ class FeatureGranting : Hook(
             }
         }
 
-        val boostAlertStringId = Utils.getId(
-            "incognito_while_boosting_confilct_warning_message",
-            "string",
-            GrindrPlus.context
-        )
+        val alertParamsField =
+            MappingDictionary.resolve("FeatureGranting.alertParamsField", "P")
+        if (alertParamsField.isEmpty()) {
+            logi("FeatureGranting: alertParamsField soft-skip (empty remap)")
+        } else {
+            val boostAlertStringId = Utils.getId(
+                "incognito_while_boosting_confilct_warning_message",
+                "string",
+                GrindrPlus.context
+            )
 
-        val boostAlertString = GrindrPlus.context.resources.getString(boostAlertStringId)
+            val boostAlertString = GrindrPlus.context.resources.getString(boostAlertStringId)
 
-        findClass("androidx.appcompat.app.AlertDialog\$Builder")
-            .hook("show", HookStage.BEFORE) { param ->
-                val builder = param.thisObject()
-                val alertParams = getObjectField(builder, alertParams)
-                val messageString = getObjectField(alertParams, "mMessage")
+            findClass("androidx.appcompat.app.AlertDialog\$Builder")
+                .hook("show", HookStage.BEFORE) { param ->
+                    val builder = param.thisObject()
+                    // search for 'AlertController.AlertParams' in androidx.appcompat.app.AlertDialog
+                    val alertParams = getObjectField(builder, alertParamsField)
+                    val messageString = getObjectField(alertParams, "mMessage")
 
-                if (messageString.equals(boostAlertString)) {
-                    val dialog = callMethod(builder, "create")
-                    val positiveButtonListener = getObjectField(alertParams, "mPositiveButtonListener")
+                    if (messageString.equals(boostAlertString)) {
+                        val dialog = callMethod(builder, "create")
+                        val positiveButtonListener =
+                            getObjectField(alertParams, "mPositiveButtonListener")
 
-                    val positiveButtonId = XposedHelpers.getStaticIntField(
-                        findClass("android.content.DialogInterface"),
-                        "BUTTON_POSITIVE"
-                    )
+                        val positiveButtonId = XposedHelpers.getStaticIntField(
+                            findClass("android.content.DialogInterface"),
+                            "BUTTON_POSITIVE"
+                        )
 
-                    callMethod(positiveButtonListener, "onClick", dialog, positiveButtonId)
+                        callMethod(positiveButtonListener, "onClick", dialog, positiveButtonId)
 
-                    param.setResult(dialog)
+                        param.setResult(dialog)
+                    }
                 }
         }
     }

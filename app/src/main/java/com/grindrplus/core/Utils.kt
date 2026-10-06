@@ -401,7 +401,7 @@ object Utils {
                                 showToast(Toast.LENGTH_LONG, message)
                                 Logger.apply {
                                     e(message)
-                                    writeRaw(e.stackTraceToString())
+                                    writeThrowable(e)
                                 }
                                 onComplete(false)
                             }
@@ -416,7 +416,7 @@ object Utils {
             showToast(Toast.LENGTH_LONG, message)
             Logger.apply {
                 e(message)
-                writeRaw(e.stackTraceToString())
+                writeThrowable(e)
             }
         }
     }
@@ -464,7 +464,7 @@ object Utils {
                                 showToast(Toast.LENGTH_LONG, message)
                                 Logger.apply {
                                     e(message)
-                                    writeRaw(e.stackTraceToString())
+                                    writeThrowable(e)
                                 }
                                 onComplete(false)
                             }
@@ -481,7 +481,7 @@ object Utils {
             showToast(Toast.LENGTH_LONG, message)
             Logger.apply {
                 e(message)
-                writeRaw(e.stackTraceToString())
+                writeThrowable(e)
             }
         }
     }

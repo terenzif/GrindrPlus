@@ -28,6 +28,19 @@ Module APK still comes from GitHub Releases (`manifest.json` mod URL). Mapping p
 
 Yes: Play (or Custom Files) → extract → patch → install. Remote packs apply after first online Grindr start without re-patching.
 
+Patching is owned by Morphe A (`PatchBackend` / `LSPatchIntegratedBackend` / `MorpheOrchestrator`); see [morphe-a.md](morphe-a.md) and [ADR 0003](adr/0003-morphe-a-patch-backend.md).
+
+## Pinning LSPatch / Vector artifacts
+
+Morphe A requires **pinned** LSPatch/Vector artifacts (checksum or explicit revision). **No blind nightlies** in CI or on-device patch flows.
+
+| Item | Today | Target |
+| --- | --- | --- |
+| Dev helper | `scripts/setup_lspatch.gradle.kts` resolves JingMatrix LSPatch via unpinned `nightly.link` | Prefer a **release-tag** ZIP URL + checksum; leave the nightly path only as an explicit local override |
+| Shipped binary | `app/libs/lspatch.jar` (+ extracted `assets/lspatch/so*`) checked in or produced by the helper | Record the exact revision/tag used when refreshing the jar |
+
+Until the Gradle helper is switched to a release URL, treat every `setupLSPatch` run as a supply-chain event: verify the jar before committing, and document the pin in [ADR 0003](adr/0003-morphe-a-patch-backend.md).
+
 ## News tab
 
 Wiki CTA + GitHub Releases list — see [news.md](news.md). No Telegram feed in the UI.

@@ -1,154 +1,104 @@
 package com.grindrplus.hooks
 
-import android.app.Activity
-import android.os.Handler
-import android.os.Looper
+import com.grindrplus.core.mapping.MappingDictionary
 import com.grindrplus.core.logd
 import com.grindrplus.core.loge
 import com.grindrplus.core.logi
 import com.grindrplus.utils.Hook
-import com.grindrplus.utils.HookAdapter
 import com.grindrplus.utils.HookStage
+import com.grindrplus.utils.SoftSkipException
 import com.grindrplus.utils.hook
-import de.robv.android.xposed.XposedHelpers.callMethod
+import android.os.Handler
+import android.os.Looper
 
+/**
+ * Prevents WebSocket disconnections when the app backgrounds.
+ * Causes battery drain — use with caution.
+ *
+ * 26.16.1 remap: client `com.grindrapp.android.network.websocket.a`, factory `jcd`.
+ * SafeDK `internal.b` is absent on this build (soft-skipped).
+ */
 class WebSocketAlive : Hook(
     "Keep Alive WebSocket",
     "Prevents WebSocket disconnections when app goes to background. Causes battery drain, use with caution."
 ) {
-    private val safeDkLifecycleManager = "com.safedk.android.internal.b"
-    private val webSocketClientImpl = "com.grindrapp.android.network.websocket.WebSocketClientImpl"
-    private val webSocketFactory = "Ab.p"
+    private val webSocketClientImpl = MappingDictionary.resolve(
+        "WebSocketAlive.CLIENT",
+        "com.grindrapp.android.network.websocket.a"
+    )
+    private val webSocketFactory = MappingDictionary.resolve(
+        "WebSocketAlive.FACTORY",
+        "jcd"
+    )
 
     override fun init() {
-        hookSafeDkBackgroundDetection()
-        hookWebSocketLifecycle()
-        hookWebSocketFactory()
-    }
-
-    private fun hookSafeDkBackgroundDetection() {
-        try {
-            findClass(safeDkLifecycleManager).hook("isInBackground", HookStage.BEFORE) { param ->
-                logd("Spoofing SafeDK background detection")
-                param.setResult(false)
-            }
-
-            findClass(safeDkLifecycleManager).hook("a", HookStage.BEFORE) { param ->
-                if (param.args().isNotEmpty()) {
-                    val isBackground = param.arg<Boolean>(0)
-                    if (isBackground) {
-                        logd("Preventing SafeDK from setting background state")
-                        param.setResult(null)
-                    }
-                } else {
-                    logd("SafeDK method 'a' called with no parameters")
-                    param.setResult(null)
-                }
-            }
-
-            findClass(safeDkLifecycleManager).hook("b", HookStage.BEFORE) { param ->
-                logd("Preventing SafeDK background identification")
-                param.setResult(null)
-            }
-
-            findClass(safeDkLifecycleManager).hook("onActivityStopped", HookStage.BEFORE) { param ->
-                logd("Intercepting SafeDK onActivityStopped")
-                if (param.args().isNotEmpty()) {
-                    handleActivityStopped(param as HookAdapter<Any>)
-                }
-                param.setResult(null)
-            }
-
-            findClass(safeDkLifecycleManager).hook("registerBackgroundForegroundListener", HookStage.AFTER) { param ->
-                if (param.args().isNotEmpty()) {
-                    val listener = param.arg<Any>(0)
-                    try {
-                        callMethod(listener, "h")
-                    } catch (e: Exception) {
-                        // that's fine, we just want to ensure the listener is registered
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            loge("Failed to hook SafeDK background detection: $e")
+        var ok = 0
+        ok += hookWebSocketLifecycle()
+        ok += hookWebSocketFactory()
+        if (ok == 0) {
+            throw SoftSkipException("Keep Alive WebSocket: client/factory classes not found")
         }
+        logi("Keep Alive WebSocket: applied $ok hook group(s)")
     }
 
-    private fun hookWebSocketLifecycle() {
-        try {
-            findClass(webSocketClientImpl).hook("disconnect", HookStage.BEFORE) { param ->
-                if (isBackgroundTriggeredDisconnect()) {
-                    logd("Preventing background-triggered WebSocket disconnect")
-                    param.setResult(null)
+    private fun hookWebSocketLifecycle(): Int {
+        return try {
+            val clazz = findClass(webSocketClientImpl)
+            // Historic name + current short name for close
+            listOf("disconnect", "a", "d").forEach { method ->
+                try {
+                    clazz.hook(method, HookStage.BEFORE) { param ->
+                        if (isBackgroundTriggeredDisconnect()) {
+                            logd("Preventing background-triggered WebSocket $method")
+                            param.setResult(null)
+                        }
+                    }
+                } catch (_: Throwable) {
                 }
             }
-
-            findClass(webSocketClientImpl).hook("d", HookStage.BEFORE) { param ->
-                val code = param.arg<Int>(0)
-                val reason = param.arg<String>(1)
-
-                if (isBackgroundRelatedDisconnect(code, reason)) {
-                    logd("Blocking background-related WebSocket disconnect: $reason")
-                    param.setResult(null)
+            try {
+                clazz.hook("onClosed", HookStage.AFTER) { param ->
+                    if (param.args().size >= 3) {
+                        val code = param.arg<Int>(1)
+                        val reason = param.arg<String>(2)
+                        if (shouldAutoReconnect(code, reason)) {
+                            scheduleReconnection(param.thisObject(), 2000)
+                        }
+                    }
                 }
+            } catch (_: Throwable) {
             }
-
-            findClass(webSocketClientImpl).hook("onClosed", HookStage.AFTER) { param ->
-                val code = param.arg<Int>(1)
-                val reason = param.arg<String>(2)
-
-                if (shouldAutoReconnect(code, reason)) {
-                    logd("Scheduling WebSocket auto-reconnect")
-                    scheduleReconnection(param.thisObject(), 2000)
+            try {
+                clazz.hook("onFailure", HookStage.AFTER) { param ->
+                    if (param.args().size >= 2) {
+                        val throwable = param.arg<Throwable>(1)
+                        val message = throwable.message?.lowercase() ?: ""
+                        if (isNetworkRelatedFailure(message)) {
+                            scheduleReconnection(param.thisObject(), 5000)
+                        }
+                    }
                 }
+            } catch (_: Throwable) {
             }
-
-            findClass(webSocketClientImpl).hook("onFailure", HookStage.AFTER) { param ->
-                val throwable = param.arg<Throwable>(1)
-                val message = throwable.message?.lowercase() ?: ""
-
-                if (isNetworkRelatedFailure(message)) {
-                    logd("Scheduling WebSocket auto-reconnect after network failure")
-                    scheduleReconnection(param.thisObject(), 5000)
-                }
-            }
-
-            logi("Successfully hooked WebSocket lifecycle methods")
-
+            logi("Hooked WebSocket client $webSocketClientImpl")
+            1
         } catch (e: Exception) {
             loge("Failed to hook WebSocket lifecycle: $e")
+            0
         }
     }
 
-    private fun hookWebSocketFactory() {
-        try {
+    private fun hookWebSocketFactory(): Int {
+        return try {
             findClass(webSocketFactory).hook("a", HookStage.AFTER) { param ->
-                val webSocketUrl = param.arg<String>(0)
-                logd("WebSocket connection created to: $webSocketUrl")
+                if (param.args().isNotEmpty()) {
+                    logd("WebSocket connection created")
+                }
             }
+            1
         } catch (e: Exception) {
             loge("Failed to hook WebSocket factory: $e")
-        }
-    }
-
-    private fun handleActivityStopped(param: HookAdapter<Any>) {
-        try {
-            val thisObject = param.thisObject()
-            val activity = param.arg<Activity>(0)
-
-            val isBackgroundBefore = callMethod(thisObject, "isInBackground") as Boolean
-
-            val backgroundField = thisObject.javaClass.getDeclaredField("g")
-            backgroundField.isAccessible = true
-            val isBackgroundAfter = backgroundField.getBoolean(thisObject)
-
-            if (!isBackgroundBefore && isBackgroundAfter) {
-                logd("Reverting background state change from SafeDK")
-                backgroundField.setBoolean(thisObject, false)
-            }
-
-        } catch (e: Exception) {
-            loge("Error in SafeDK onActivityStopped hook: $e")
+            0
         }
     }
 
@@ -156,47 +106,31 @@ class WebSocketAlive : Hook(
         val stackTrace = Thread.currentThread().stackTrace
         return stackTrace.any {
             it.methodName.contains("background", ignoreCase = true) ||
-                    it.methodName.contains("pause", ignoreCase = true) ||
-                    it.className.contains("lifecycle", ignoreCase = true) ||
-                    it.className.contains("safedk", ignoreCase = true)
+                it.methodName.contains("pause", ignoreCase = true) ||
+                it.methodName.contains("onStop", ignoreCase = true)
         }
     }
 
-    private fun isBackgroundRelatedDisconnect(code: Int, reason: String): Boolean {
-        return reason.contains("background", ignoreCase = true) ||
-                reason.contains("inactive", ignoreCase = true) ||
-                reason.contains("idle", ignoreCase = true) ||
-                code == 1001
+    private fun shouldAutoReconnect(code: Int, reason: String?): Boolean {
+        val r = reason?.lowercase() ?: ""
+        return code == 1001 || r.contains("background") || r.contains("going away")
     }
 
-    private fun shouldAutoReconnect(code: Int, reason: String): Boolean {
-        return code == 1001 ||
-                reason.contains("background", ignoreCase = true) ||
-                reason.contains("inactive", ignoreCase = true)
-    }
+    private fun isNetworkRelatedFailure(message: String): Boolean =
+        message.contains("network") ||
+            message.contains("socket") ||
+            message.contains("timeout") ||
+            message.contains("unreachable")
 
-    private fun isNetworkRelatedFailure(message: String): Boolean {
-        return message.contains("network") ||
-                message.contains("timeout") ||
-                message.contains("connection reset") ||
-                message.contains("socket closed")
-    }
-
-    private fun scheduleReconnection(webSocketClient: Any, delayMs: Long) {
+    private fun scheduleReconnection(client: Any, delayMs: Long) {
         Handler(Looper.getMainLooper()).postDelayed({
             try {
-                val urlField = webSocketClient.javaClass.getDeclaredField("c")
-                urlField.isAccessible = true
-                val authToken = urlField.get(webSocketClient) as? String
-
-                if (authToken != null) {
-                    callMethod(webSocketClient, "b", authToken)
-                    logi("WebSocket reconnection initiated")
-                } else {
-                    logd("Cannot reconnect WebSocket - no auth token found")
+                val connect = client.javaClass.methods.firstOrNull {
+                    it.name == "connect" || it.name == "b" || it.name == "c"
                 }
+                connect?.takeIf { it.parameterTypes.isEmpty() }?.invoke(client)
             } catch (e: Exception) {
-                loge("Failed to auto-reconnect WebSocket: $e")
+                logd("WebSocket reconnect attempt failed: ${e.message}")
             }
         }, delayMs)
     }

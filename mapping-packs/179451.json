@@ -1,9 +1,9 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "versionName": "26.16.1",
   "versionCode": 179451,
   "confidence": "static-jadx",
-  "generatedFrom": "Obfuscation.kt + GrindrPlus.kt + RetrofitUtils + JADX 1.5.1 gap-fill (AddSavedPhraseResponse path) + soft-skips",
+  "generatedFrom": "Obfuscation.kt + GrindrPlus.kt + RetrofitUtils + JADX 1.5.1 gap-fill (AddSavedPhraseResponse path) + soft-skips + Morphe B remaps 2026-10-05",
   "symbols": {
     "core.userAgent": {
       "kind": "class",
@@ -202,6 +202,162 @@
       "kind": "class",
       "name": "n5b",
       "fingerprint": "UiState(distanceVisibility="
+    },
+    "http.userSession.isLoggedInMethod": {
+      "kind": "method",
+      "name": "r",
+      "note": "getJwt().length() > 0"
+    },
+    "http.userSession.authTokenFlowMethod": {
+      "kind": "method",
+      "name": "x",
+      "note": "StateFlow auth token"
+    },
+    "http.userSession.rolesMethod": {
+      "kind": "method",
+      "name": "E",
+      "note": "L-Grindr-Roles"
+    },
+    "http.deviceInfo.lazyField": {
+      "kind": "field",
+      "name": "d",
+      "note": "kotlin.Lazy device info"
+    },
+    "http.userAgent.stringMethod": {
+      "kind": "method",
+      "name": "a",
+      "note": "User-Agent string"
+    },
+    "EnableUnlimited.paywallUtils": {
+      "kind": "class",
+      "name": "xub"
+    },
+    "EnableUnlimited.paywallUtils.showMethod": {
+      "kind": "method",
+      "name": "b"
+    },
+    "EnableUnlimited.persistentAdBannerContainer": {
+      "kind": "class",
+      "name": "h68"
+    },
+    "EnableUnlimited.persistentAdBannerContainer.bindMethod": {
+      "kind": "method",
+      "name": "a"
+    },
+    "EnableUnlimited.interstitialCollector.show": {
+      "kind": "class",
+      "name": "fo1"
+    },
+    "EnableUnlimited.interstitialCollector.o39": {
+      "kind": "class",
+      "name": "o39"
+    },
+    "EnableUnlimited.interstitialCollector.d12": {
+      "kind": "class",
+      "name": "d12"
+    },
+    "EnableUnlimited.interstitialCollector.chatActivity": {
+      "kind": "class",
+      "name": "qy1"
+    },
+    "EnableUnlimited.interstitialCollector.profilesActivity": {
+      "kind": "class",
+      "name": "p49"
+    },
+    "EnableUnlimited.viewsToHide.profileTagCascade": {
+      "kind": "class",
+      "name": "ny8"
+    },
+    "EnableUnlimited.viewsToHide.drawerProfile": {
+      "kind": "class",
+      "name": "yr3"
+    },
+    "EnableUnlimited.viewsToHide.fragmentRadar": {
+      "kind": "class",
+      "name": "eb9"
+    },
+    "EnableUnlimited.userSession.rolesUpdatedMethod": {
+      "kind": "method",
+      "name": "Y"
+    },
+    "QuickBlock.blockViewModel": {
+      "kind": "class",
+      "name": "mu0"
+    },
+    "QuickBlock.blockViewModel.showDialogMethod": {
+      "kind": "method",
+      "name": "J"
+    },
+    "QuickBlock.profileViewHolder.bindMethod": {
+      "kind": "method",
+      "name": "j"
+    },
+    "QuickBlock.profileViewHolder.viewBindingField": {
+      "kind": "field",
+      "name": "b"
+    },
+    "QuickBlock.profileViewHolder.toolbarField": {
+      "kind": "field",
+      "name": "s"
+    },
+    "FeatureGranting.isFeatureFlagEnabled": {
+      "kind": "class",
+      "name": "iv6"
+    },
+    "FeatureGranting.isFeatureFlagEnabled.invokeMethod": {
+      "kind": "method",
+      "name": "a"
+    },
+    "FeatureGranting.alertParamsField": {
+      "kind": "field",
+      "name": "P"
+    },
+    "OnlineIndicator.utils": {
+      "kind": "class",
+      "name": "aq7"
+    },
+    "OnlineIndicator.utils.shouldShowMethod": {
+      "kind": "method",
+      "name": "u"
+    },
+    "OnlineIndicator.profileUtilsV2.thresholdMethod": {
+      "kind": "method",
+      "name": "b"
+    },
+    "DisableUpdates.appUpgradeManager": {
+      "kind": "class",
+      "name": "xa0"
+    },
+    "DisableUpdates.appUpgradeManager.showDeprecatedDialogMethod": {
+      "kind": "method",
+      "name": "b"
+    },
+    "DisableUpdates.appConfiguration.versionField": {
+      "kind": "field",
+      "name": "f"
+    },
+    "EmptyCalls.VIDEO_CALL_HAS_NOT_CHATTED": {
+      "kind": "class",
+      "name": "com.grindrapp.android.exception.VideoCallHasNotChattedException"
+    },
+    "EmptyCalls.CHAT_INDIVIDUAL_FRAGMENT": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.presentation.ui.individual.ChatIndividualFragment"
+    },
+    "WebSocketAlive.CLIENT": {
+      "kind": "class",
+      "name": "com.grindrapp.android.network.websocket.a",
+      "fingerprint": "extends okhttp3.WebSocketListener"
+    },
+    "WebSocketAlive.FACTORY": {
+      "kind": "class",
+      "name": "jcd",
+      "fingerprint": "a(String,String,websocket.a)->WebSocket"
+    },
+    "Favorites.FRAGMENT": {
+      "kind": "class",
+      "name": "com.grindrapp.android.favorites.presentation.ui.FavoritesFragment",
+      "note": "absent on 26.16.1 Cascade V2"
     }
   },
   "hooks": {
@@ -219,11 +375,11 @@
     },
     "DisableShuffle": {
       "status": "skipped",
-      "reason": "fingerprint absent on this DEX"
+      "reason": "fingerprint absent on this DEX (Cascade V2)"
     },
     "EmptyCalls": {
-      "status": "skipped",
-      "reason": "IndividualChatNavViewModel/isTalkBefore absent"
+      "status": "mapped",
+      "reason": "VideoCallHasNotChattedException remap (Morphe B)"
     },
     "NotificationAlerts": {
       "status": "skipped",
@@ -231,7 +387,7 @@
     },
     "ChatTerminal": {
       "status": "skipped",
-      "reason": "chatMessageMetaData absent"
+      "reason": "chatMessageMetaData absent — set ChatTerminal.HANDLER to enable"
     },
     "LocalSavedPhrases": {
       "status": "mapped"
@@ -239,6 +395,32 @@
     "BanManagement": {
       "status": "partial",
       "reason": "deviceUtility skip"
+    },
+    "EnableUnlimited": {
+      "status": "mapped"
+    },
+    "QuickBlock": {
+      "status": "mapped"
+    },
+    "FeatureGranting": {
+      "status": "mapped"
+    },
+    "OnlineIndicator": {
+      "status": "mapped"
+    },
+    "DisableUpdates": {
+      "status": "mapped"
+    },
+    "Favorites": {
+      "status": "skipped",
+      "reason": "FavoritesFragment absent (Cascade V2)"
+    },
+    "WebSocketAlive": {
+      "status": "mapped",
+      "reason": "websocket.a + jcd"
+    },
+    "StatusDialog": {
+      "status": "mapped"
     }
   }
 }

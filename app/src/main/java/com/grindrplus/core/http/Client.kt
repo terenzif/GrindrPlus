@@ -156,7 +156,7 @@ class Client(interceptor: Interceptor) {
                 } catch (e: Exception) {
                     Logger.apply {
                         e("Error removing user from blocks list: ${e.message}")
-                        writeRaw(e.stackTraceToString())
+                        writeThrowable(e)
                     }
                 }
             } else {
@@ -226,7 +226,7 @@ class Client(interceptor: Interceptor) {
                 } catch (e: Exception) {
                     Logger.apply {
                         e("Error removing user from favorites list: ${e.message}")
-                        writeRaw(e.stackTraceToString())
+                        writeThrowable(e)
                     }
                 }
             } else {
@@ -333,7 +333,7 @@ class Client(interceptor: Interceptor) {
             }
         } catch (e: Exception) {
             Logger.e("Failed to get nearby profiles: ${e.message}")
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
             JSONObject()
         }
     }
@@ -363,7 +363,7 @@ class Client(interceptor: Interceptor) {
             }
         } catch (e: Exception) {
             Logger.e("Failed to get blocks: ${e.message}")
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
             emptyList()
         }
     }
@@ -390,7 +390,7 @@ class Client(interceptor: Interceptor) {
                                 } catch (e: Exception) {
                                     Logger.apply {
                                         log("Failed to fetch note for profileId $profileId: ${e.message}")
-                                        writeRaw(e.stackTraceToString())
+                                        writeThrowable(e)
                                     }
                                     ""
                                 }
@@ -403,7 +403,7 @@ class Client(interceptor: Interceptor) {
                                 } catch (e: Exception) {
                                     Logger.apply {
                                         log("Failed to fetch phone number for profileId $profileId: ${e.message}")
-                                        writeRaw(e.stackTraceToString())
+                                        writeThrowable(e)
                                     }
                                     ""
                                 }
@@ -420,7 +420,7 @@ class Client(interceptor: Interceptor) {
             }
         } catch (e: Exception) {
             Logger.e("Failed to get favorites: ${e.message}")
-            Logger.writeRaw(e.stackTraceToString())
+            Logger.writeThrowable(e)
             emptyList()
         }
     }
@@ -471,7 +471,7 @@ class Client(interceptor: Interceptor) {
                     }
                 } catch (e: Exception) {
                     Logger.e("Failed to update profile note: ${e.message}")
-                    Logger.writeRaw(e.stackTraceToString())
+                    Logger.writeThrowable(e)
                 }
                 if (!silent) showToast(Toast.LENGTH_LONG, "Note added successfully")
             } else {

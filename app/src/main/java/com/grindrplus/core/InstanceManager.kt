@@ -3,10 +3,11 @@ package com.grindrplus.core
 import com.grindrplus.utils.HookStage
 import com.grindrplus.utils.hookConstructor
 import de.robv.android.xposed.XposedHelpers.findClass
+import java.util.concurrent.ConcurrentHashMap
 
 class InstanceManager(private val classLoader: ClassLoader) {
-    private val instances = mutableMapOf<String, Any>()
-    private val callbacks = mutableMapOf<String, ((Any) -> Unit)?>()
+    private val instances = ConcurrentHashMap<String, Any>()
+    private val callbacks = ConcurrentHashMap<String, (Any) -> Unit>()
 
     /**
      * Hook constructors for the given classes. Missing / unloadable classes are logged and
@@ -30,7 +31,7 @@ class InstanceManager(private val classLoader: ClassLoader) {
                     "Skipping InstanceManager hook for missing class $className: ${t.message}",
                     LogSource.MODULE
                 )
-                Logger.writeRaw(t.stackTraceToString())
+                Logger.writeThrowable(t)
             }
         }
         return hooked
@@ -42,7 +43,11 @@ class InstanceManager(private val classLoader: ClassLoader) {
     }
 
     fun setCallback(className: String, callback: ((Any) -> Unit)?) {
-        callbacks[className] = callback
+        if (callback == null) {
+            callbacks.remove(className)
+        } else {
+            callbacks[className] = callback
+        }
         instances[className]?.let { callback?.invoke(it) }
     }
 }

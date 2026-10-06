@@ -14,9 +14,13 @@ import com.grindrplus.core.LogSource
 import com.grindrplus.core.Utils
 
 object DialogManager {
+    /** Soft tip warning only — never aborts module init. */
     @Volatile var shouldShowVersionMismatchDialog = false
+    /** Soft awareness when no pack and version is outside BuildConfig tip arrays. */
+    @Volatile var shouldShowNoPackWarning = false
     @Volatile var shouldShowBridgeConnectionError = false
     @Volatile var hasCheckedVersions = false
+    @Volatile var hasMappingPack = false
 
     fun checkVersionCodes(context: Context, versionCodes: IntArray, versionNames: Array<String>) {
         val pkgInfo = context.packageManager.getPackageInfo(context.packageName, 0)
@@ -32,13 +36,35 @@ object DialogManager {
 
         if (!isVersionNameSupported || !isVersionCodeSupported) {
             val installedInfo = "${pkgInfo.versionName} (code: $versionCode)"
-            val expectedInfo = "${versionNames.joinToString(", ")} " +
+            val tipInfo = "${versionNames.joinToString(", ")} " +
                     "(code: ${versionCodes.joinToString(", ")})"
             shouldShowVersionMismatchDialog = true
-            Logger.w("Version mismatch detected. Installed: $installedInfo, Required: $expectedInfo", LogSource.MODULE)
+            Logger.w(
+                "Version tip mismatch (soft warning; init continues). " +
+                    "Installed: $installedInfo, Tip: $tipInfo",
+                LogSource.MODULE
+            )
         }
 
         hasCheckedVersions = true
+    }
+
+    /**
+     * Record whether a mapping pack loaded for the installed version.
+     * When there is no pack and [versionCode] is outside tip arrays, prefer a soft
+     * no-pack awareness dialog over the generic tip-mismatch dialog.
+     */
+    fun checkPackPresence(hasPack: Boolean, versionCode: Long, tipVersionCodes: IntArray) {
+        hasMappingPack = hasPack
+        if (!hasPack && tipVersionCodes.none { it.toLong() == versionCode }) {
+            shouldShowNoPackWarning = true
+            shouldShowVersionMismatchDialog = false
+            Logger.w(
+                "No mapping pack for versionCode=$versionCode — features may be limited " +
+                    "(soft warning; init continues)",
+                LogSource.MODULE
+            )
+        }
     }
 
     fun showVersionMismatchDialog(activity: Activity) {
@@ -53,24 +79,73 @@ object DialogManager {
             }
 
             val installedInfo = "${pkgInfo.versionName} (code: $versionCode)"
-            val expectedInfo = "${BuildConfig.TARGET_GRINDR_VERSION_NAMES.joinToString(", ")} " +
+            val tipInfo = "${BuildConfig.TARGET_GRINDR_VERSION_NAMES.joinToString(", ")} " +
                     "(code: ${BuildConfig.TARGET_GRINDR_VERSION_CODES.joinToString(", ")})"
 
+            val statusLine = if (hasMappingPack) {
+                "A mapping pack is loaded — pack-driven mode is active. " +
+                    "Some hooks may still differ from the tip build."
+            } else {
+                "No mapping pack for this build — GrindrPlus is running in experimental/limited mode. " +
+                    "Some features may not work."
+            }
+
             val dialog = AlertDialog.Builder(activity)
-                .setTitle("GrindrPlus: Version Mismatch")
-                .setMessage("Incompatible Grindr version detected.\n\n" +
+                .setTitle("GrindrPlus: Version Tip Notice")
+                .setMessage(
+                    "Installed Grindr differs from the module tip versions.\n\n" +
                         "• Installed: $installedInfo\n" +
-                        "• Required: $expectedInfo\n\n" +
-                        "GrindrPlus has been disabled. Please install a compatible Grindr version.")
+                        "• Tip: $tipInfo\n\n" +
+                        "$statusLine\n\n" +
+                        "Initialization continues; this is an awareness notice only."
+                )
                 .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .setCancelable(false)
+                .setIcon(android.R.drawable.ic_dialog_info)
+                .setCancelable(true)
                 .create()
             dialog.show()
-            Logger.i("Version mismatch dialog shown", LogSource.MODULE)
+            Logger.i("Version tip soft-warning dialog shown", LogSource.MODULE)
         } catch (e: Exception) {
-            Logger.e("Failed to show version mismatch dialog: ${e.message}", LogSource.MODULE)
-            Utils.showToast(Toast.LENGTH_LONG, "Version mismatch detected. Please install a compatible Grindr version.", activity)
+            Logger.e("Failed to show version tip dialog: ${e.message}", LogSource.MODULE)
+            Utils.showToast(
+                Toast.LENGTH_LONG,
+                "Grindr version differs from tip — running in limited/experimental mode.",
+                activity
+            )
+        }
+    }
+
+    fun showNoPackWarningDialog(activity: Activity) {
+        try {
+            val context = activity.applicationContext
+            val pkgInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            val versionCode: Long = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                pkgInfo.longVersionCode
+            } else {
+                @Suppress("DEPRECATION")
+                pkgInfo.versionCode.toLong()
+            }
+
+            val dialog = AlertDialog.Builder(activity)
+                .setTitle("GrindrPlus: Limited Features")
+                .setMessage(
+                    "No mapping pack for versionCode $versionCode — features may be limited.\n\n" +
+                        "GrindrPlus will keep running with compile-time fallbacks where possible. " +
+                        "This is an awareness notice only; the module is not disabled."
+                )
+                .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+                .setIcon(android.R.drawable.ic_dialog_info)
+                .setCancelable(true)
+                .create()
+            dialog.show()
+            Logger.i("No-pack soft-warning dialog shown", LogSource.MODULE)
+        } catch (e: Exception) {
+            Logger.e("Failed to show no-pack dialog: ${e.message}", LogSource.MODULE)
+            Utils.showToast(
+                Toast.LENGTH_LONG,
+                "No mapping pack for this Grindr version — features may be limited.",
+                activity
+            )
         }
     }
 
