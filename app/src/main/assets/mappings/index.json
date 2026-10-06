@@ -2,6 +2,11 @@
   "schemaVersion": 1,
   "packs": [
     {
+      "versionCode": 185656,
+      "versionName": "26.19.0",
+      "confidence": "static-jadx"
+    },
+    {
       "versionCode": 179451,
       "versionName": "26.16.1",
       "confidence": "static-jadx"
