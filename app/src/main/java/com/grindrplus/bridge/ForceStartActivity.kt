@@ -3,10 +3,8 @@ package com.grindrplus.bridge
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import com.grindrplus.BuildConfig
 import com.grindrplus.core.Constants
-import com.grindrplus.core.LogSource
-import com.grindrplus.core.Logger
+import com.grindrplus.core.DeliveryChannel
 import timber.log.Timber
 
 /**
@@ -20,11 +18,9 @@ class ForceStartActivity : Activity() {
         Timber.tag(TAG).d("ForceStartActivity created")
 
         try {
+            val host = DeliveryChannel.current.bridgeHostPackage
             val serviceIntent = Intent().apply {
-                setClassName(
-                    BuildConfig.APPLICATION_ID,
-                    "${BuildConfig.APPLICATION_ID}.bridge.BridgeService"
-                )
+                setClassName(host, BridgeService::class.java.name)
             }
             startService(serviceIntent)
 
@@ -59,11 +55,9 @@ class ForceStartActivity : Activity() {
         private const val TAG = "ForceStartActivity"
 
         fun createIntent(context: android.content.Context, packageToLaunch: String? = null): Intent {
+            val host = DeliveryChannel.current.bridgeHostPackage
             return Intent().apply {
-                setClassName(
-                    BuildConfig.APPLICATION_ID,
-                    "${BuildConfig.APPLICATION_ID}.bridge.ForceStartActivity"
-                )
+                setClassName(host, ForceStartActivity::class.java.name)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 if (packageToLaunch != null) {
                     putExtra("pkg", packageToLaunch)

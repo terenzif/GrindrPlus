@@ -10,6 +10,7 @@ import com.grindrplus.core.mapping.MappingDictionary
 import com.grindrplus.ui.Utils.getId
 import com.grindrplus.utils.Hook
 import com.grindrplus.utils.HookStage
+import com.grindrplus.utils.SoftSkipException
 import com.grindrplus.utils.hook
 import de.robv.android.xposed.XposedHelpers.callMethod
 import de.robv.android.xposed.XposedHelpers.getObjectField
@@ -20,6 +21,7 @@ class QuickBlock : Hook(
     "Ability to block users quickly"
 ) {
     override fun init() {
+        var hooked = 0
         val profileViewHolder = Obfuscation.G.ProfileDetails.PROFILE_VIEW_HOLDER
         val bindMethod =
             MappingDictionary.resolve("QuickBlock.profileViewHolder.bindMethod", "j")
@@ -50,6 +52,7 @@ class QuickBlock : Hook(
                         true
                     }
                 }
+                hooked++
             }.onFailure { loge("QuickBlock profileViewHolder: ${it.message}") }
         }
 
@@ -79,7 +82,12 @@ class QuickBlock : Hook(
                     }
                     param.setResult(null)
                 }
+                hooked++
             }.onFailure { loge("QuickBlock blockViewModel: ${it.message}") }
+        }
+
+        if (hooked == 0) {
+            throw SoftSkipException("QuickBlock: no sites hooked (missing remaps)")
         }
     }
 }

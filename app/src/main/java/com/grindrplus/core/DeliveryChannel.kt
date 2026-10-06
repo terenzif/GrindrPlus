@@ -21,6 +21,16 @@ enum class DeliveryChannel {
     val isRootedModule: Boolean get() = this == ALLOY
     val showsInstallTab: Boolean get() = this == MORPHE
 
+    /**
+     * Package that hosts [com.grindrplus.bridge.BridgeService] for IPC.
+     * Slim embed payload is not an installed app — bind to Morphe Manager.
+     */
+    val bridgeHostPackage: String
+        get() = when (this) {
+            EMBED -> "com.grindrplus.morphe"
+            else -> BuildConfig.APPLICATION_ID
+        }
+
     companion object {
         val current: DeliveryChannel =
             when (BuildConfig.DELIVERY_CHANNEL) {

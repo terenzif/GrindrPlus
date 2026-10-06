@@ -50,12 +50,16 @@ class MorpheOrchestrator(
             throw IOException("No valid APK files found to patch")
         }
 
-        if (applyMorpheB) {
+        // No-embed copies pre-signed APKs; mutating them here breaks PackageManager verify.
+        // Embed path: LSPatch re-signs outputs after reading mutated inputs.
+        if (applyMorpheB && embedModule) {
             try {
                 morpheB.apply(apks, print)
             } catch (t: Throwable) {
                 print("Morphe B failed (continuing with Morphe A only): ${t.message}")
             }
+        } else if (applyMorpheB && !embedModule) {
+            print("Morphe B: skipped (no-embed preserves signatures from SignClonedGrindrApk)")
         }
 
         patchBackend.patch(

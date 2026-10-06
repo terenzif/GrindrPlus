@@ -154,10 +154,33 @@ class Favorites : Hook(
         if (!DeliveryChannel.current.isRootedModule) return null
         if (!AlloyDexKit.ensureInitialized(GrindrPlus.context)) return null
         // Tip 26.16.1 Cascade V2: FavoritesFragment / fragment_favorite_recycler_view are gone.
-        // Prefer Cascade favorites UI model fingerprints (ADR 0006); still soft-skip if not a Fragment.
-        return AlloyDexKit.findClassByStrings("CascadeFavoritesItemUiModel")
-            ?: AlloyDexKit.findClassByStrings("FavoritesHeaderData")
-            ?: AlloyDexKit.findClassByStrings("fragment_favorite_recycler_view")
-            ?: AlloyDexKit.findClassByStrings("FavoritesFragment")
+        // Prefer FavoritesFragment string first; Cascade UI-model hits are not Fragments.
+        val candidates = listOfNotNull(
+            AlloyDexKit.findClassByStrings("FavoritesFragment"),
+            AlloyDexKit.findClassByStrings("fragment_favorite_recycler_view"),
+            AlloyDexKit.findClassByStrings("CascadeFavoritesItemUiModel"),
+            AlloyDexKit.findClassByStrings("FavoritesHeaderData"),
+        )
+        return candidates.firstOrNull { isFragmentWithOnViewCreated(it) }
+    }
+
+    private fun isFragmentWithOnViewCreated(clazz: Class<*>): Boolean {
+        var c: Class<*>? = clazz
+        var fragment = false
+        while (c != null) {
+            val n = c.name
+            if (n == "androidx.fragment.app.Fragment" || n == "android.app.Fragment") {
+                fragment = true
+                break
+            }
+            c = c.superclass
+        }
+        if (!fragment) return false
+        return try {
+            clazz.getMethod("onViewCreated", View::class.java, android.os.Bundle::class.java)
+            true
+        } catch (_: Throwable) {
+            false
+        }
     }
 }

@@ -6,6 +6,7 @@ import com.grindrplus.core.logi
 import com.grindrplus.core.mapping.MappingDictionary
 import com.grindrplus.utils.Hook
 import com.grindrplus.utils.HookStage
+import com.grindrplus.utils.SoftSkipException
 import com.grindrplus.utils.hook
 import kotlin.time.Duration.Companion.minutes
 
@@ -17,6 +18,7 @@ class OnlineIndicator : Hook(
     override fun init() {
         val savedDurationMinutes = Config.get("online_indicator", 3).toString().toInt()
         val savedDurationMillis = savedDurationMinutes.minutes.inWholeMilliseconds
+        var hooked = 0
 
         val utils = MappingDictionary.resolve("OnlineIndicator.utils", "aq7")
         val shouldShowMethod =
@@ -30,6 +32,7 @@ class OnlineIndicator : Hook(
                         val lastSeen = param.arg<Long>(0)
                         param.setResult(System.currentTimeMillis() - lastSeen <= savedDurationMillis)
                     }
+                hooked++
             }.onFailure { loge("OnlineIndicator utils: ${it.message}") }
         }
 
@@ -50,6 +53,7 @@ class OnlineIndicator : Hook(
                         if (flagKey == "online-until-updates")
                             param.setResult(false)
                     }
+                hooked++
             }.onFailure { loge("OnlineIndicator feature flag: ${it.message}") }
         }
 
@@ -67,7 +71,15 @@ class OnlineIndicator : Hook(
                                 param.setArg(1, savedDurationMillis)
                         }
                     }
+                hooked++
             }.onFailure { loge("OnlineIndicator ProfileUtilsV2: ${it.message}") }
+        }
+
+        if (hooked == 0) {
+            throw SoftSkipException("OnlineIndicator: no sites hooked (missing remaps)")
+        }
+        if (hooked < 3) {
+            logi("OnlineIndicator: partial ($hooked/3 sites hooked)")
         }
     }
 }

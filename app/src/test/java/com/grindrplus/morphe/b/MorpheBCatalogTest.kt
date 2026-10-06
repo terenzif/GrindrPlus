@@ -44,6 +44,14 @@ class MorpheBCatalogTest {
     }
 
     @Test
+    fun selectBaseApk_prefersNamedBaseOverFirstSplit() {
+        val dir = createTempDir("morpheb-base")
+        val config = File(dir, "config.xxhdpi.apk").also { it.writeText("tiny") }
+        val base = File(dir, "base.apk").also { it.writeText("larger-base-content-here") }
+        assertEquals(base, MorpheBPatchEngine.selectBaseApk(listOf(config, base)))
+    }
+
+    @Test
     fun fingerprintScanWritesReportOnHit() {
         val dir = createTempDir("morpheb-bc")
         val apk = File(dir, "base.apk")

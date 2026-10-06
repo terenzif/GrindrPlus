@@ -124,5 +124,6 @@ For Morphe / LSPatch, a normal Google APIs image + Shizuku is enough.
 ### JADX / Frida + AI assist (optional)
 JADX GUI and Frida remain the primary reverse-engineering tools (see HTTP / Frida notes above).
 If you use an AI-assisted JADX or Frida helper in this lab, set **`GEMINI_API_KEY`**
-in the environment (do not commit the key). Shell sessions must inherit the variable;
-missing key means run those helpers without Gemini.
+in the environment (do not commit the key). Prefer a **Machine** or **User** Windows env
+var and restart Cursor so agent shells inherit it. Working smoke-test model (2026-10):
+`gemini-3.1-flash-lite` via Generative Language API `generateContent`.

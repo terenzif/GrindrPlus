@@ -6,6 +6,7 @@ import com.grindrplus.utils.Hook
 import com.grindrplus.utils.HookStage
 import com.grindrplus.utils.SoftSkipException
 import com.grindrplus.utils.hook
+import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 
 /**
@@ -58,23 +59,10 @@ class EmptyCalls : Hook(
         var n = 0
         clazz.declaredMethods.forEach { method ->
             if (Modifier.isAbstract(method.modifiers)) return@forEach
-            val ret = method.returnType
-            val isBool = ret == Boolean::class.javaPrimitiveType || ret == java.lang.Boolean::class.java
-            if (!isBool) return@forEach
-            val name = method.name
-            val looksLikeGate =
-                name.contains("chat", ignoreCase = true) ||
-                    name.contains("video", ignoreCase = true) ||
-                    name.contains("talk", ignoreCase = true) ||
-                    name.contains("call", ignoreCase = true) ||
-                    name == "N" // historic short name
-            if (!looksLikeGate && method.parameterTypes.isNotEmpty()) return@forEach
-            if (!looksLikeGate && method.parameterTypes.isEmpty() && name.length > 2) {
-                // skip unrelated boolean getters unless name is suspicious
-                return@forEach
-            }
+            if (!isBooleanGateCandidate(method)) return@forEach
             try {
-                clazz.hook(name, HookStage.BEFORE) { param ->
+                // Hook the exact Method — never all overloads of a short obfuscated name.
+                method.hook(HookStage.BEFORE) { param ->
                     if (param.args().size == method.parameterTypes.size) {
                         param.setResult(true)
                     }
@@ -85,6 +73,19 @@ class EmptyCalls : Hook(
             }
         }
         return n
+    }
+
+    /** Require chat/video/call/talk signal; never blanket-hook short boolean getters. */
+    private fun isBooleanGateCandidate(method: Method): Boolean {
+        val ret = method.returnType
+        val isBool = ret == Boolean::class.javaPrimitiveType || ret == java.lang.Boolean::class.java
+        if (!isBool) return false
+        val name = method.name
+        return name.contains("chat", ignoreCase = true) ||
+            name.contains("video", ignoreCase = true) ||
+            name.contains("talk", ignoreCase = true) ||
+            name.contains("call", ignoreCase = true) ||
+            name == "N" // historic tip short name with known video-gate role
     }
 
     private fun hookThrowingMethods(className: String, exceptionClass: Class<*>): Int {

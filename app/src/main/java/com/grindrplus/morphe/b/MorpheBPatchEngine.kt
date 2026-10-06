@@ -15,13 +15,7 @@ class MorpheBPatchEngine(
     private val bytecodeBackend: MorpheBytecodeBackend = FingerprintScanBytecodeBackend(),
 ) {
     fun apply(inputApks: List<File>, print: Print): MorpheBApplyResult {
-        val base = inputApks.find {
-            it.name == "base.apk" ||
-                it.name.startsWith("base.apk") ||
-                it.name.contains("grindr-base") ||
-                it.name.endsWith(".apk")
-        } ?: inputApks.firstOrNull()
-            ?: throw IOException("Morphe B: no input APK")
+        val base = selectBaseApk(inputApks)
 
         print("Morphe B: applying static marker to ${base.name}")
         val applied = mutableListOf<String>()
@@ -74,6 +68,18 @@ class MorpheBPatchEngine(
 
     private fun jsonString(value: String): String =
         "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
+    companion object {
+        /** Prefer true base APK; never treat "any .apk" as a match (avoids config splits). */
+        fun selectBaseApk(inputApks: List<File>): File {
+            inputApks.find { it.name == "base.apk" || it.name.startsWith("base.apk") }
+                ?.let { return it }
+            inputApks.find { it.name.contains("grindr-base", ignoreCase = true) }
+                ?.let { return it }
+            return inputApks.maxByOrNull { it.length() }
+                ?: throw IOException("Morphe B: no input APK")
+        }
+    }
 }
 
 data class MorpheBApplyResult(
