@@ -6,7 +6,7 @@
 
 ## Context
 
-The `alloy` APK (`com.grindrplus.alloy`) is the rooted LSPosed channel. Residual tip-DEX sites are fragile under R8 churn. [NexAlloy](https://github.com/NexAlloy/NexAlloy) maps Morphe/ReVanced-style fingerprints to DexKit + Xposed hooks at runtime.
+The `alloy` APK (`com.grindrplus.alloy`) is the rooted Vector channel. Residual tip-DEX sites are fragile under R8 churn. [NexAlloy](https://github.com/NexAlloy/NexAlloy) maps Morphe/ReVanced-style fingerprints to DexKit + Xposed hooks at runtime.
 
 ## Decision
 

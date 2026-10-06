@@ -15,10 +15,10 @@ Legacy `com.grindrplus` is retired as an install ID. See [ADR 0005](adr/0005-dua
 2. Open GrindrPlus → Install → patch/install Grindr again (Morphe A).
 3. Uninstall legacy `com.grindrplus` when satisfied.
 
-## From legacy LSPosed
+## From legacy LSPosed / Vector
 
 1. Install `GrindrPlus-alloy-*.apk`.
-2. Enable the module in LSPosed / Vector and scope `com.grindrapp.android`.
+2. Enable the module in **Vector** and scope `com.grindrapp.android`.
 3. Reboot if required by the framework.
 4. Uninstall legacy `com.grindrplus` when satisfied.
 

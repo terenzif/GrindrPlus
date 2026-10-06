@@ -5,7 +5,7 @@
 <h1 align="center">GrindrPlus</h1>
 
 <p align="center">
-  Fork maintained by <a href="https://github.com/terenzif">@terenzif</a> — Xposed / LSPosed module for Grindr.
+  Fork maintained by <a href="https://github.com/terenzif">@terenzif</a> — Xposed / Vector module for Grindr.
 </p>
 
 <p align="center">
@@ -43,13 +43,13 @@ Compatibility is **pack-driven** per installed Grindr `versionCode` (catalog: `m
 
 Use the manager **LSPatch** tab: download/select Grindr → embed module via integrated LSPatch (Vector-family loader) → install. Details: [docs/morphe-a.md](docs/morphe-a.md), [docs/manager-ui-lspatch.md](docs/manager-ui-lspatch.md).
 
-### Root (Vector / LSPosed)
+### Root (Vector — Alloy APK)
 
-**Requirements:** Magisk / KernelSU + [JingMatrix/Vector](https://github.com/JingMatrix/Vector) (or compatible LSPosed fork).
+**Requirements:** Magisk / KernelSU + [JingMatrix/Vector](https://github.com/JingMatrix/Vector).
 
-1. Install the module APK from [Releases](https://github.com/terenzif/GrindrPlus/releases) (or CI artifacts).
+1. Install **`GrindrPlus-alloy-*.apk`** from [Releases](https://github.com/terenzif/GrindrPlus/releases) (or CI artifacts).
 2. Install a Grindr build that has a mapping pack (tip: **26.16.1**).
-3. Enable the module and add Grindr to the scope.
+3. Enable the module in Vector and add Grindr to the scope.
 4. Open Grindr and verify.
 
 **Quick check:** long-press the **Browse** tab → GrindrPlus status popup; unlimited cascade profiles and no third-party ads. In Settings → Manage Hooks, skipped/partial hooks show a status note (not silent no-ops).
@@ -116,7 +116,7 @@ See [docs/README.md](docs/README.md).
 - Original idea and mod: [ElJaviLuki/GrindrPlus](https://github.com/ElJaviLuki/GrindrPlus)
 - Rewrite and historical maintenance through archive: [R0rt1z2/GrindrPlus](https://github.com/R0rt1z2/GrindrPlus) and contributors
 - Current fork maintenance: [terenzif/GrindrPlus](https://github.com/terenzif/GrindrPlus)
-- LSPosed / LSPatch: [JingMatrix](https://github.com/JingMatrix)
+- Vector / LSPatch: [JingMatrix](https://github.com/JingMatrix) ([Vector](https://github.com/JingMatrix/Vector), [LSPatch](https://github.com/JingMatrix/LSPatch))
 
 ## License
 

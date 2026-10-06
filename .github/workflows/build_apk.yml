@@ -201,7 +201,7 @@ jobs:
 
           **Install**
           - **Morphe** (\`com.grindrplus.morphe\`) — rootless Manager / LSPatch
-          - **Alloy** (\`com.grindrplus.alloy\`) — LSPosed module (JingMatrix)
+          - **Alloy** (\`com.grindrplus.alloy\`) — Vector module ([JingMatrix/Vector](https://github.com/JingMatrix/Vector))
           - **embed** (\`com.grindrplus.morphe.payload\`) — slim \`-m\` payload (build artifact)
 
           UI label is **GrindrPlus** for both user APKs. See \`docs/dual-apk-migration.md\`.

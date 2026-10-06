@@ -10,7 +10,7 @@ enum class DeliveryChannel {
     /** Rootless Manager — Morphe A/B + LSPatch. Package: com.grindrplus.morphe */
     MORPHE,
 
-    /** Rooted LSPosed module + Manager without LSPatch. Package: com.grindrplus.alloy */
+    /** Rooted Vector module + Manager without LSPatch. Package: com.grindrplus.alloy */
     ALLOY,
 
     /** Internal slim embed payload for LSPatch -m (not a user-facing product). */

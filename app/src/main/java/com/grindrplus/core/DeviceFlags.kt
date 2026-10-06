@@ -23,8 +23,8 @@ object DeviceFlags {
     }
 
     /**
-     * LSPosed hooks this method to return true when the framework is active.
-     * Default false for non-LSPosed builds.
+     * Vector (and compatible Xposed frameworks) hook this method to return true when active.
+     * Method name stays `isLSPosed` for module/framework compatibility. Default false.
      */
     @JvmStatic
     fun isLSPosed(): Boolean = false

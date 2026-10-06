@@ -538,17 +538,17 @@ class MainActivity : ComponentActivity() {
                                 )
 
                                 Text(
-                                    text = "• If you were using LSPatch previously, open the LSPatch tab (Play download or Custom Files), or switch to LSPosed JingMatrix.",
+                                    text = "• If you were using LSPatch previously, open the Install tab (Play download or Custom Files), or switch to Alloy + Vector.",
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(bottom = 12.dp)
                                 )
 
                                 Text(
                                     text = buildAnnotatedString {
-                                        append("• If you were using LSPosed, make sure the module is enabled in the LSPosed manager and Grindr app is within its scope. ")
+                                        append("• If you were using Vector (rooted), install GrindrPlus Alloy and enable the module in Vector with Grindr in scope. ")
 
                                         withStyle(style = SpanStyle(textDecoration = TextDecoration.Underline)) {
-                                            append("Do not use the Install section if you're using LSPosed.")
+                                            append("Do not use the Install section if you're on Vector/Alloy.")
                                         }
                                     },
                                     style = MaterialTheme.typography.bodyMedium,

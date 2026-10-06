@@ -104,7 +104,7 @@ object MappingDictionary {
     }
 
     /**
-     * Load pack for [versionCode] from the module APK on disk (LSPosed / Xposed path).
+     * Load pack for [versionCode] from the module APK on disk (Vector / Xposed path).
      * Returns null if the entry is missing or invalid — callers should soft-fail.
      */
     fun loadFromModuleApk(modulePath: String, versionCode: Int): MappingPack? {

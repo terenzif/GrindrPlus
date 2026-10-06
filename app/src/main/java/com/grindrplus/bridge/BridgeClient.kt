@@ -620,7 +620,7 @@ class BridgeClient(private val context: Context) {
             if (ensureConnection(3000)) {
                 Logger.d("Connected to service on-demand for isLSPosed", LogSource.BRIDGE)
             } else {
-                Logger.w("Cannot check LSPosed status, service not bound", LogSource.BRIDGE)
+                Logger.w("Cannot check Vector/Xposed status, service not bound", LogSource.BRIDGE)
                 return false
             }
         }
@@ -630,7 +630,7 @@ class BridgeClient(private val context: Context) {
                 bridgeService?.isLSPosed() ?: false
             }
         } catch (e: Exception) {
-            Logger.e("Error checking LSPosed status: ${e.message}", LogSource.BRIDGE)
+            Logger.e("Error checking Vector/Xposed status: ${e.message}", LogSource.BRIDGE)
             false
         }
     }

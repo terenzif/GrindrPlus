@@ -35,7 +35,7 @@ class EmptyCalls : Hook(
             hooked += hookBooleanGates(chatFragment)
             if (hooked == 0) {
                 // Last resort: swallow exception construction sites by forcing a harmless type —
-                // LSPosed cannot cancel a throw from <init>; scan fragment methods that declare throws.
+                // Xposed/Vector cannot cancel a throw from <init>; scan fragment methods that declare throws.
                 hooked += hookThrowingMethods(chatFragment, ex)
             }
         } catch (t: Throwable) {

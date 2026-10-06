@@ -232,7 +232,7 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
             }
         } else {
             MessageBanner(
-                text = "• Morphe embeds a slim module into Grindr via LSPatch (no LSPosed needed)\n" +
+                text = "• Morphe embeds a slim module into Grindr via LSPatch (no Vector needed)\n" +
                     "• Grindr downloads via Play (Aurora/gplayapi protocol — not the Aurora app)\n" +
                     "• Prefer embed payload from Releases for -m; mappings stay remote/bundled\n" +
                     "• Custom Files still works as offline fallback\n" +
@@ -246,8 +246,8 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
 
             if (isLSPosed()) {
                 MessageBanner(
-                    text = "LSPosed detected — for rooted devices install GrindrPlus Alloy " +
-                        "(com.grindrplus.alloy) from Releases and enable it in LSPosed. " +
+                    text = "Vector/Xposed framework detected — for rooted devices install GrindrPlus Alloy " +
+                        "(com.grindrplus.alloy) from Releases and enable it in Vector. " +
                         "This Morphe app is the rootless Install path.",
                     isVisible = rootedBannerVisible,
                     isPulsating = true,
