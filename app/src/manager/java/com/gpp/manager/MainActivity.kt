@@ -29,7 +29,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
@@ -66,25 +65,23 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.gpp.GrindrPlus
+import com.gpp.bridge.BridgeAccess
 import com.gpp.bridge.BridgeClient
 import com.gpp.bridge.NotificationActionReceiver
 import com.gpp.core.Config
 import com.gpp.core.Constants.GRINDR_PACKAGE_NAME
 import com.gpp.core.DeliveryChannel
+import com.gpp.core.HookCatalog
 import com.gpp.core.Logger
+import com.gpp.core.TaskCatalog
 import com.gpp.manager.MainNavItem.*
 import com.gpp.manager.ui.BlockLogScreen
 import com.gpp.manager.ui.CalculatorScreen
 import com.gpp.manager.ui.HomeScreen
-import com.gpp.manager.ui.InstallPage
 import com.gpp.manager.ui.SettingsScreen
 import com.gpp.manager.ui.NotificationScreen
 import com.gpp.manager.ui.theme.GrindrPlusTheme
 import com.gpp.manager.utils.FileOperationHandler
-import com.gpp.manager.utils.isLSPosed
-import com.gpp.utils.HookManager
-import com.gpp.utils.TaskManager
 import com.onebusaway.plausible.android.AndroidResourcePlausibleConfig
 import com.onebusaway.plausible.android.NetworkFirstPlausibleClient
 import com.onebusaway.plausible.android.Plausible
@@ -103,7 +100,7 @@ internal const val TAG = "GrindrPlus"
 internal const val DATA_URL =
     "https://raw.githubusercontent.com/terenzif/grindr-plus-plus/refs/heads/master/manifest.json"
 
-sealed class MainNavItem(
+open class MainNavItem(
     val icon: ImageVector? = null,
     var title: String,
     val composable: @Composable PaddingValues.(Activity) -> Unit,
@@ -111,24 +108,16 @@ sealed class MainNavItem(
     data object Settings :
         MainNavItem(Icons.Filled.Settings, "Settings", { SettingsScreen() })
 
-    data object InstallPage :
-        MainNavItem(Icons.Rounded.Download, "Install", { InstallPage(it, this) })
-
     data object Home : MainNavItem(Icons.Rounded.Home, "Home", { HomeScreen(this) })
 
     data object BlockLog : MainNavItem(Icons.Filled.History, "Block Log", { BlockLogScreen(this) })
 
     data object Notifications : MainNavItem(Icons.Filled.Newspaper, "News", { NotificationScreen(this) })
 
-    // data object Albums : MainNavItem(Icons.Rounded.PhotoAlbum, "Albums", { ComingSoon() })
-    // data object Experiments : MainNavItem(Icons.Rounded.Science, "Experiments", { ComingSoon() })
-
     companion object {
-        val VALUES by lazy {
+        val VALUES: List<MainNavItem> by lazy {
             buildList {
-                if (DeliveryChannel.current.showsInstallTab) {
-                    add(InstallPage)
-                }
+                FlavorNav.installTab()?.let { add(it) }
                 add(BlockLog)
                 add(Home)
                 add(Notifications)
@@ -140,8 +129,10 @@ sealed class MainNavItem(
 
 class MainActivity : ComponentActivity() {
     companion object {
-        var plausible: Plausible? = null
-        val showUninstallDialog = mutableStateOf(false)
+        var plausible: Plausible?
+            get() = ManagerBridge.plausible
+            set(value) { ManagerBridge.plausible = value }
+        val showUninstallDialog get() = ManagerBridge.showUninstallDialog
     }
 
     private var showPermissionDialog by mutableStateOf(false)
@@ -180,20 +171,18 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun checkUnknownSourcesPermission() {
-        var allow = false
-        allow = packageManager.canRequestPackageInstalls()
+        if (!DeliveryChannel.current.showsInstallTab) return
+        if (packageManager.canRequestPackageInstalls()) return
 
-        if (!allow) {
-            val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
-                data = "package:$packageName".toUri()
-            }
-            Toast.makeText(
-                this,
-                "Please allow unknown sources for GrindrPlus",
-                Toast.LENGTH_LONG
-            ).show()
-            startActivity(intent)
+        val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+            data = "package:$packageName".toUri()
         }
+        Toast.makeText(
+            this,
+            "Please allow unknown sources for GrindrPlus",
+            Toast.LENGTH_LONG
+        ).show()
+        startActivity(intent)
     }
 
     private fun registerNotificationReceiver() {
@@ -259,17 +248,18 @@ class MainActivity : ComponentActivity() {
             var serviceBound by remember { mutableStateOf(false) }
             var firstLaunchDialog by remember { mutableStateOf(false) }
             var patchInfoDialog by remember { mutableStateOf(false) }
-            var showUninstallDialogState by remember { showUninstallDialog }
+            var showUninstallDialogState by remember { ManagerBridge.showUninstallDialog }
             var calculatorScreen = remember { mutableStateOf(false) }
 
             LaunchedEffect(Unit) {
-                GrindrPlus.bridgeClient = BridgeClient(this@MainActivity)
-                GrindrPlus.bridgeClient.connectAsync { connected ->
+                val bridge = BridgeClient(this@MainActivity)
+                BridgeAccess.client = bridge
+                bridge.connectAsync { connected ->
                     activityScope.launch(Dispatchers.IO) {
-                        Logger.initialize(this@MainActivity, GrindrPlus.bridgeClient, false)
+                        Logger.initialize(this@MainActivity, bridge, false)
                         Config.initialize()
-                        HookManager().registerHooks(false)
-                        TaskManager().registerTasks(false)
+                        HookCatalog.registerSettings()
+                        TaskCatalog.registerSettings()
                         
                         withContext(Dispatchers.Main) {
                             calculatorScreen.value = Config.get("discreet_icon", false) as Boolean

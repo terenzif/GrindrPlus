@@ -1,7 +1,7 @@
 package com.gpp.core
 
 import android.content.Context
-import com.gpp.GrindrPlus
+import com.gpp.bridge.BridgeAccess
 import com.gpp.core.GrindrCloneUtils
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -162,7 +162,7 @@ object Config {
 
     suspend fun readRemoteConfig(): JSONObject {
         return try {
-            GrindrPlus.bridgeClient.getConfig()
+            BridgeAccess.requireClient().getConfig()
         } catch (e: Exception) {
             Logger.e("Failed to read config file: ${e.message}", LogSource.MANAGER)
             Logger.writeThrowable(e)
@@ -175,7 +175,7 @@ object Config {
 
     suspend fun writeRemoteConfig(json: JSONObject) {
         try {
-            GrindrPlus.bridgeClient.setConfig(json)
+            BridgeAccess.requireClient().setConfig(json)
         } catch (e: IOException) {
             Logger.e("Failed to write config file: ${e.message}", LogSource.MANAGER)
             Logger.writeThrowable(e)
@@ -212,7 +212,7 @@ object Config {
 
         if (rawValue == null) {
             if (autoPut) {
-                GrindrPlus.executeAsync {
+                BridgeAccess.executeAsync {
                     put(name, default)
                 }
             }

@@ -3,7 +3,7 @@ package com.gpp.manager.blocks
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.gpp.GrindrPlus
+import com.gpp.bridge.BridgeAccess
 import com.gpp.core.LogSource
 import com.gpp.core.Logger
 import com.gpp.manager.ui.components.BlockLogFilters
@@ -90,7 +90,7 @@ class BlockLogViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
             try {
-                val eventsArray = GrindrPlus.bridgeClient.getBlockEvents()
+                val eventsArray = BridgeAccess.requireClient().getBlockEvents()
                 val eventsList = mutableListOf<BlockEvent>()
                 val packageSet = mutableSetOf<String>()
 
@@ -131,7 +131,7 @@ class BlockLogViewModel : ViewModel() {
     fun clearEvents() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                GrindrPlus.bridgeClient.clearBlockEvents()
+                BridgeAccess.requireClient().clearBlockEvents()
                 loadEvents()
             } catch (e: Exception) {
                 Logger.e("Failed to clear block events: ${e.message}", LogSource.MANAGER)

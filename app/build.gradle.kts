@@ -88,15 +88,36 @@ android {
     }
 
     sourceSets {
-        // Manager UI / Install / LSPatch — morphe + alloy only (not slim embed).
+        // Manager UI — morphe + alloy only (not slim embed).
         // Register on both java + kotlin dirs so AGP built-in Kotlin picks .kt files.
         getByName("morphe") {
             java.srcDir("src/manager/java")
             kotlin.srcDir("src/manager/java")
+            // Rootless Install / Play / LSPatch orchestration
+            java.srcDir("src/manager-install/java")
+            kotlin.srcDir("src/manager-install/java")
+            // Morphe B DEX rewriter (ADR 0007)
+            java.srcDir("src/morphe-b/java")
+            kotlin.srcDir("src/morphe-b/java")
         }
         getByName("alloy") {
             java.srcDir("src/manager/java")
             kotlin.srcDir("src/manager/java")
+            // Vector module runtime + mapping packs
+            java.srcDir("src/module/java")
+            kotlin.srcDir("src/module/java")
+            assets.srcDir("src/module/assets")
+        }
+        getByName("embed") {
+            // Slim LSPatch -m payload: module runtime only
+            java.srcDir("src/module/java")
+            kotlin.srcDir("src/module/java")
+            assets.srcDir("src/module/assets")
+        }
+        // Unit tests cover Morphe B without a product flavor on the test classpath.
+        getByName("test") {
+            java.srcDir("src/morphe-b/java")
+            kotlin.srcDir("src/morphe-b/java")
         }
     }
 }
@@ -133,10 +154,9 @@ dependencies {
     "morpheCompileOnly"(libs.dexkit)
     "embedCompileOnly"(libs.dexkit)
 
-    // dexlib2 rewriter for Morphe B (ADR 0007). Packaged on Manager channels only;
-    // slim embed stays compileOnly so the Vector payload does not grow.
+    // dexlib2 rewriter for Morphe B (ADR 0007) — Morphe Manager only.
     "morpheImplementation"(libs.smali.dexlib2)
-    "alloyImplementation"(libs.smali.dexlib2)
+    "alloyCompileOnly"(libs.smali.dexlib2)
     "embedCompileOnly"(libs.smali.dexlib2)
 
     // LSPatch jar: packaged on morphe Manager only (ADR 0005).
@@ -159,11 +179,8 @@ dependencies {
         }
     }
 
-    // Manager UI / Install tooling — morphe + alloy only (not slim embed)
+    // Install / Play download tooling — Morphe only (Alloy has no Install tab)
     "morpheImplementation"(libs.gplayapi) {
-        exclude(group = "com.google.code.gson", module = "gson")
-    }
-    "alloyImplementation"(libs.gplayapi) {
         exclude(group = "com.google.code.gson", module = "gson")
     }
 
@@ -195,21 +212,14 @@ dependencies {
     "morpheImplementation"(libs.plausible.android.sdk)
     "alloyImplementation"(libs.plausible.android.sdk)
     "morpheImplementation"(libs.fetch2)
-    "alloyImplementation"(libs.fetch2)
     "morpheImplementation"(libs.fetch2okhttp)
-    "alloyImplementation"(libs.fetch2okhttp)
     "morpheImplementation"(libs.rootbeer.lib)
     "alloyImplementation"(libs.rootbeer.lib)
     "morpheImplementation"(libs.zip.android) {
         artifact { type = "aar" }
     }
-    "alloyImplementation"(libs.zip.android) {
-        artifact { type = "aar" }
-    }
     "morpheImplementation"(libs.zipalign.java)
-    "alloyImplementation"(libs.zipalign.java)
     "morpheImplementation"(libs.arsclib)
-    "alloyImplementation"(libs.arsclib)
 
     testImplementation(libs.smali.dexlib2)
     testImplementation(libs.junit)

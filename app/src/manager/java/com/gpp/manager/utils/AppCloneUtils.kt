@@ -3,8 +3,6 @@ package com.gpp.manager.utils
 import android.content.Context
 import android.content.pm.PackageManager
 import timber.log.Timber
-import com.gpp.manager.installation.steps.numberToWords
-
 object AppCloneUtils {
     const val MAX_CLONES = 5
     const val GRINDR_PACKAGE_PREFIX = "com.grindrapp.android."
