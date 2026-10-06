@@ -46,7 +46,7 @@ jobs:
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
         with:
-          name: grindrplus-debug-${{ github.sha }}
+          name: gpp-debug-${{ github.sha }}
           path: |
             app/build/outputs/apk/morphe/debug/*.apk
             app/build/outputs/apk/alloy/debug/*.apk

@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Package IDs: `com.grindrplus.morphe`, `com.grindrplus.alloy`; embed `com.grindrplus.morphe.payload` is not a Releases product.
+- Package IDs: `com.gpp.morphe`, `com.gpp.alloy`; embed `com.gpp.morphe.payload` is not a Releases product.
 - Do not favor rooted channel for Manager UX continuity.
 - Exclude tmp logs, APKs, `.kotlin/`, bak jars, secrets from commit.
 - Verify with fresh `./gradlew` evidence before claiming green.

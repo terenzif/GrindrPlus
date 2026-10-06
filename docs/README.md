@@ -13,7 +13,7 @@
   - [0007 — Morphe B bytecodePatch](adr/0007-morphe-b-bytecodepatch.md)
 - [Morphe A](morphe-a.md) — patch orchestrator (`PatchBackend` / LSPatch integrated)
 - [Morphe B](morphe-b.md) — post-green static feature parity
-- [Dual APK migration](dual-apk-migration.md) — `com.grindrplus.morphe` / `com.grindrplus.alloy`
+- [Dual APK migration](dual-apk-migration.md) — `com.gpp.morphe` / `com.gpp.alloy`
 - [Ver.5 green checklist](ver5-green-checklist.md)
 - [E2E Settings ↔ runtime runbook](e2e-settings-runtime-runbook.md)
 - [E2E Wave 4 results](e2e-wave4-results.md)
@@ -36,7 +36,7 @@ Read here how to [set up dev environment](env_setup.md)
 
 ## Patches
 
-Patches are located in `com.grindrplus.hooks` package.
+Patches are located in `com.gpp.hooks` package.
 When targeting an obfuscated class/method, leave a comment with some sensible code snippet
 used to search for the class in newer versions of the G app.
 

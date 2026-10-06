@@ -20,7 +20,7 @@ That step already invokes `org.lsposed.patch.LSPatch` with `-l 2` (integrated), 
 ### 1. Morphe A = orchestrator, not feature rewrite
 
 - Wrap and stabilize the existing LSPatch-integrated path (`-l 2`).
-- Do not relocate or redesign hooks under `com.grindrplus.hooks` as part of Morphe A.
+- Do not relocate or redesign hooks under `com.gpp.hooks` as part of Morphe A.
 - Vector / LSPatch embedding stays the rootless mechanism; GrindrPlus remains the module payload.
 
 ### 2. Extract `PatchBackend` from `PatchApkStep`

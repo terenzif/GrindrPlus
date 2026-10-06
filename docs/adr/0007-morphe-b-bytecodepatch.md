@@ -11,7 +11,7 @@ Morphe B today embeds a JSON marker and uses RUNTIME_REMAP. Tip-DEX residuals ne
 ## Decision
 
 1. Integrate MorpheApp patcher **inside** `MorpheBPatchEngine` via [MorpheBytecodeBackend](../../app/src/main/java/com/grindrplus/morphe/b/MorpheBytecodeBackend.kt) (not as Morphe Manager product).
-2. Pipeline: **B (bytecode) → A (LSPatch `-l 2` + slim embed) → SessionInstaller** on `com.grindrplus.morphe`.
+2. Pipeline: **B (bytecode) → A (LSPatch `-l 2` + slim embed) → SessionInstaller** on `com.gpp.morphe`.
 3. Fail-soft per patch; Settings stay honest on miss.
 4. Pilot Chat terminal and/or Favorites Cascade residual after patcher dependency lands.
 

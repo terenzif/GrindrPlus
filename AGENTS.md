@@ -24,7 +24,7 @@
 - Morphe B is static feature parity work and starts only after Ver.5 acceptance (“green”); residual tip-DEX gaps need a real DEX rewriter, not marker-only static resources (`docs/adr/0007-morphe-b-bytecodepatch.md`).
 - Repo “Morphe A/B” naming is Ver.5 product pillars and is distinct from upstream MorpheApp.
 - NexAlloy (ex ReVancedXposed) is the closest rooted reference for Morphe-style fingerprints at Vector/Xposed runtime; Alloy DexKit integration is `docs/adr/0006-alloy-dexkit-fingerprints.md` and does not cover the rootless LSPatch channel.
-- Dual APK IDs are locked in `docs/adr/0005-dual-apk-morphe-alloy.md` (`morphe` / `alloy`); legacy `com.grindrplus*` is migrated to `com.gpp*`; Morphe keeps Manager+Install, Alloy is Vector-scoped without the Install tab.
+- Dual APK IDs are locked in `docs/adr/0005-dual-apk-morphe-alloy.md` (`morphe` / `alloy`); legacy `com.gpp*` is migrated to `com.gpp*`; Morphe keeps Manager+Install, Alloy is Vector-scoped without the Install tab.
 - Rooted framework product name is **Vector** ([JingMatrix/Vector](https://github.com/JingMatrix/Vector)); keep legacy `isLsPosed` API/log identifiers for module compatibility. Module `xposedminversion` targets Vector API **103**.
 - Mapping is pack-driven by Grindr `versionCode` (`mapping-packs/` plus `app/src/main/assets/mappings/`). Add a new pack for a new version; do not freeze an old pack as destiny. Soft-fail: missing/invalid packs must not hard-abort init.
 - Module/APK artifact naming uses **gpp** and must not embed the Grindr host version in `versionName` / archives.

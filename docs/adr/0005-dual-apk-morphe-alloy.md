@@ -6,7 +6,7 @@
 
 ## Context
 
-A single `com.grindrplus` APK mixed Vector/LSPosed-module UX and LSPatch install UX. Users need a clear product split. Continuity must favor the **rootless / UI-first** audience, not rooted power users. Display name stays **GrindrPlus** for both; distinction is package ID and Releases assets.
+A single legacy `com.grindrplus` APK mixed Vector/LSPosed-module UX and LSPatch install UX. Users need a clear product split. Continuity must favor the **rootless / UI-first** audience, not rooted power users. Display name is **Grindr++** for both; distinction is package ID and Releases assets.
 
 ## Decision
 
@@ -14,14 +14,14 @@ A single `com.grindrplus` APK mixed Vector/LSPosed-module UX and LSPatch install
 
 | Flavor | `applicationId` | Launcher label | Role |
 | --- | --- | --- | --- |
-| `morphe` | `com.grindrplus.morphe` | GrindrPlus | Rootless Manager: Morphe A/B + LSPatch `-l 2` install path |
-| `alloy` | `com.grindrplus.alloy` | GrindrPlus | Rooted Vector module + Manager **without** LSPatch tab |
+| `morphe` | `com.gpp.morphe` | Grindr++ | Rootless Manager: Morphe A/B + LSPatch `-l 2` install path |
+| `alloy` | `com.gpp.alloy` | Grindr++ | Rooted Vector module + Manager **without** LSPatch tab (Vector API 103+) |
 
 Third-level names are architecture-explicit: **morphe** = Morphe A/B + embed; **alloy** = NexAlloy-style fingerprint → DexKit → Vector (Phase 2).
 
-### 2. No bare `com.grindrplus` continuity on one channel only
+### 2. No bare `com.gpp` continuity on one channel only
 
-Both IDs are new. Legacy `com.grindrplus` requires a one-time migrate (reinstall / re-patch / re-scope). UI brand stays GrindrPlus.
+Both IDs are new. Legacy `com.grindrplus*` requires a one-time migrate (reinstall / re-patch / re-scope). UI brand is Grindr++.
 
 ### 3. Slim embed payload is not a third product
 
@@ -34,7 +34,7 @@ LSPatch `-m` must not embed the fat Compose Manager into Grindr. Build may produ
 
 ### 5. Bridge / signature
 
-Custom permission `com.grindrplus.permission.ACCESS_BRIDGE_SERVICE` remains signature-protected and shared by name across flavors signed with the same key. Do not assume a single `applicationId` for Manager vs in-process hooks; query the active delivery package explicitly where needed.
+Custom permission `com.gpp.permission.ACCESS_BRIDGE_SERVICE` remains signature-protected and shared by name across flavors signed with the same key. Do not assume a single `applicationId` for Manager vs in-process hooks; query the active delivery package explicitly where needed.
 
 ## Consequences
 
@@ -44,6 +44,6 @@ Custom permission `com.grindrplus.permission.ACCESS_BRIDGE_SERVICE` remains sign
 
 ## Migration
 
-1. Uninstall or keep legacy `com.grindrplus` until cutover.
-2. Install `GrindrPlus-morphe-*.apk` and/or `GrindrPlus-alloy-*.apk`.
-3. Morphe: re-run patch/install for Grindr. Alloy: enable module in Vector and scope Grindr.
+1. Uninstall legacy `com.grindrplus*` until cutover.
+2. Install `gpp-morphe-*.apk` / `gpp_v*-morphe-*.apk` and/or `gpp-alloy-*.apk` / `gpp_v*-alloy-*.apk`.
+3. Morphe: re-run patch/install for Grindr. Alloy: enable module in Vector and scope **only** Grindr (never the module package itself).

@@ -98,7 +98,7 @@ Then tap on Grindr in LSPatch in installed apps, open Module scope and enable Gr
 Install [Magisk](https://github.com/topjohnwu/Magisk) (or KernelSU), enable Zygisk,
 then install **[Vector](https://github.com/JingMatrix/Vector)** as the Zygisk module
 (JingMatrix’s modern Xposed framework; successor to the JingMatrix LSPosed fork).
-Use the **`com.grindrplus.alloy`** APK, enable the module in Vector, and scope Grindr.
+Use the **`com.gpp.alloy`** APK, enable the module in Vector, and scope Grindr.
 Rooting carries risks — study them before deciding.
 
 Legacy “LSPosed” naming in APIs (`isLsPosed`, log tags) remains for framework

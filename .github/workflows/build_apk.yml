@@ -154,7 +154,7 @@ jobs:
       - name: Upload debug artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: "Debug APKs - ${{ env.DATE_TODAY }}-${{ env.COMMIT_SHA }}"
+          name: "gpp-debug-${{ env.DATE_TODAY }}-${{ env.COMMIT_SHA }}"
           path: |
             ${{ env.MORPHE_DEBUG }}
             ${{ env.ALLOY_DEBUG }}
@@ -162,7 +162,7 @@ jobs:
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: "Release APKs - ${{ env.DATE_TODAY }}-${{ env.COMMIT_SHA }}"
+          name: "gpp-release-${{ env.DATE_TODAY }}-${{ env.COMMIT_SHA }}"
           path: |
             ${{ env.MORPHE_RELEASE }}
             ${{ env.ALLOY_RELEASE }}

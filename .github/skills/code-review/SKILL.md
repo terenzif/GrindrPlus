@@ -29,7 +29,7 @@ Deprioritize style nits, rename bikesheds, and “support every Grindr version i
 ### Mapping packs
 
 - Bundled packs live under `app/src/main/assets/mappings/<versionCode>.json`; remote copies under repo `mapping-packs/`.
-- Runtime loader: `com.grindrplus.core.mapping.MappingDictionary`.
+- Runtime loader: `com.gpp.core.mapping.MappingDictionary`.
 - Preferred init path: **`loadForVersion(modulePath, versionCode, cacheDir)`** — order is **remote → device cache → module APK assets → literals**. Soft-fails on network/parse/I/O (log + continue). `loadFromModuleApk` remains the assets-only step inside that chain.
 - Do **not** require `GrindrPlus.context.assets` for packs — that `Context` is Grindr’s, not the module’s. `load(context, …)` is for manager app / tests only.
 - `Obfuscation` / core / Retrofit resolve through `MappingDictionary.resolve(key, fallback)` with compile-time literal fallbacks.

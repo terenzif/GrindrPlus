@@ -112,5 +112,5 @@ Mismatches log warnings only; init continues (literals / soft-fail).
 
 - ADR: [adr/0001-mapping-pack-schema-v2.md](adr/0001-mapping-pack-schema-v2.md)
 - Bundled multi-version corpus notes: Project store `docs/mapping-packs-multiversion.md`
-- Loader: `com.grindrplus.core.mapping.MappingDictionary`
+- Loader: `com.gpp.core.mapping.MappingDictionary`
 - Analysis handoff: [codebase-analysis-critical-issues.md](codebase-analysis-critical-issues.md)

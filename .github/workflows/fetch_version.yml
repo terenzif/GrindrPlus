@@ -42,5 +42,5 @@ jobs:
             echo "No version changes."
             exit 0
           fi
-          git commit -m "GrindrPlus: Fetch latest Play Grindr version"
+          git commit -m "gpp: Fetch latest Play Grindr version"
           git push

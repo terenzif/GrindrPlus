@@ -6,12 +6,12 @@
 
 ## Context
 
-The `alloy` APK (`com.grindrplus.alloy`) is the rooted Vector channel. Residual tip-DEX sites are fragile under R8 churn. [NexAlloy](https://github.com/NexAlloy/NexAlloy) maps Morphe/ReVanced-style fingerprints to DexKit + Xposed hooks at runtime.
+The `alloy` APK (`com.gpp.alloy`) is the rooted Vector channel. Residual tip-DEX sites are fragile under R8 churn. [NexAlloy](https://github.com/NexAlloy/NexAlloy) maps Morphe/ReVanced-style fingerprints to DexKit + Xposed hooks at runtime.
 
 ## Decision
 
 1. Depend on `org.luckypray:dexkit` for **alloy** (`alloyImplementation`); other flavors `compileOnly` so shared hooks compile.
-2. Façade: `com.grindrplus.alloy.AlloyDexKit` (`ensureInitialized`, `findClassByStrings`).
+2. Façade: `com.gpp.alloy.AlloyDexKit` (`ensureInitialized`, `findClassByStrings`).
 3. Pilot: [Favorites.kt](../../app/src/main/java/com/grindrplus/hooks/Favorites.kt) falls back to DexKit string search when pack remap class is missing (Alloy only).
 4. Init: `GrindrPlus.initializeCore` calls `AlloyDexKit.ensureInitialized` before `HookManager.init` on Alloy.
 

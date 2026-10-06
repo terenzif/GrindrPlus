@@ -13,10 +13,10 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <uses-permission android:name="com.grindrplus.permission.ACCESS_BRIDGE_SERVICE" />
+    <uses-permission android:name="com.gpp.permission.ACCESS_BRIDGE_SERVICE" />
 
     <permission
-        android:name="com.grindrplus.permission.ACCESS_BRIDGE_SERVICE"
+        android:name="com.gpp.permission.ACCESS_BRIDGE_SERVICE"
         android:protectionLevel="signature" />
 
     <application
@@ -32,10 +32,10 @@
                 android:value="true" />
         <meta-data
                 android:name="xposeddescription"
-                android:value="Xposed Module to enhance Grindr" />
+                android:value="Grindr++ Vector / Xposed module" />
         <meta-data
                 android:name="xposedminversion"
-                android:value="93" />
+                android:value="103" />
         <meta-data
                 android:name="xposedscope"
                 android:value="com.grindrapp.android" />
@@ -80,14 +80,14 @@
         </activity-alias>
 
         <receiver
-            android:name="com.grindrplus.bridge.NotificationActionReceiver"
+            android:name="com.gpp.bridge.NotificationActionReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.grindrplus.COPY_ACTION" />
-                <action android:name="com.grindrplus.VIEW_PROFILE_ACTION" />
-                <action android:name="com.grindrplus.CUSTOM_ACTION" />
-                <action android:name="com.grindrplus.DEFAULT_ACTION" />
+                <action android:name="com.gpp.COPY_ACTION" />
+                <action android:name="com.gpp.VIEW_PROFILE_ACTION" />
+                <action android:name="com.gpp.CUSTOM_ACTION" />
+                <action android:name="com.gpp.DEFAULT_ACTION" />
             </intent-filter>
         </receiver>
     </application>

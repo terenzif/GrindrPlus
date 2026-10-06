@@ -5,20 +5,21 @@ plugins {
 }
 
 android {
-    namespace = "com.grindrplus"
+    namespace = "com.gpp"
     compileSdk = 35
 
     defaultConfig {
-        // Supported hook target (see supported_target.json). Not the same as Play scrape.
-        val grindrVersionName = listOf("26.16.1")
-        val grindrVersionCode = listOf(179451)
+        // Soft tip targets for DialogManager (pack-driven runtime is version-agnostic).
+        // Module versionName must NOT embed the Grindr host version (CI/artifacts stay gpp-scoped).
+        val grindrVersionName = listOf("26.19.0", "26.16.1")
+        val grindrVersionCode = listOf(185656, 179451)
         val gitCommitHash = getGitCommitHash() ?: "unknown"
 
         // applicationId set per delivery flavor (ADR 0005)
         minSdk = 26
         targetSdk = 34
         versionCode = 14
-        versionName = "4.7.2-${grindrVersionName.let { it.joinToString("_") }}_$gitCommitHash"
+        versionName = "4.7.2-$gitCommitHash"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -43,18 +44,18 @@ android {
     productFlavors {
         create("morphe") {
             dimension = "delivery"
-            applicationId = "com.grindrplus.morphe"
+            applicationId = "com.gpp.morphe"
             buildConfigField("String", "DELIVERY_CHANNEL", "\"morphe\"")
         }
         create("alloy") {
             dimension = "delivery"
-            applicationId = "com.grindrplus.alloy"
+            applicationId = "com.gpp.alloy"
             buildConfigField("String", "DELIVERY_CHANNEL", "\"alloy\"")
         }
         // Internal slim -m payload (not a primary Releases product). ADR 0005.
         create("embed") {
             dimension = "delivery"
-            applicationId = "com.grindrplus.morphe.payload"
+            applicationId = "com.gpp.morphe.payload"
             buildConfigField("String", "DELIVERY_CHANNEL", "\"embed\"")
         }
     }
@@ -87,12 +88,15 @@ android {
     }
 
     sourceSets {
-        // Manager UI / Install / LSPatch orchestration — not shipped in slim embed payload.
+        // Manager UI / Install / LSPatch — morphe + alloy only (not slim embed).
+        // Register on both java + kotlin dirs so AGP built-in Kotlin picks .kt files.
         getByName("morphe") {
             java.srcDir("src/manager/java")
+            kotlin.srcDir("src/manager/java")
         }
         getByName("alloy") {
             java.srcDir("src/manager/java")
+            kotlin.srcDir("src/manager/java")
         }
     }
 }
@@ -227,12 +231,12 @@ fun getGitCommitHash(): String? {
 tasks.register("printVersionInfo") {
     doLast {
         val versionName = android.defaultConfig.versionName
-        println("VERSION_INFO: GrindrPlus v$versionName")
+        println("VERSION_INFO: Grindr++ v$versionName")
     }
 }
 
 base {
     val versionName = android.defaultConfig.versionName
     val sanitizedVersionName = (versionName ?: "").replace(Regex("[^a-zA-Z0-9._-]"), "_").trim('_')
-    archivesName.set("GrindrPlus_v${sanitizedVersionName}")
+    archivesName.set("gpp_v${sanitizedVersionName}")
 }

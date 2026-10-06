@@ -5,10 +5,10 @@
 
     <application>
         <activity
-            android:name="com.grindrplus.manager.MainActivity"
+            android:name="com.gpp.manager.MainActivity"
             tools:node="remove" />
         <activity-alias
-            android:name="com.grindrplus.manager.MainActivityAlias"
+            android:name="com.gpp.manager.MainActivityAlias"
             tools:node="remove" />
     </application>
 </manifest>
