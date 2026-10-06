@@ -34,7 +34,7 @@ This module is **not** affiliated with Grindr LLC. Use at your own risk.
 
 ## State now
 
-- Dual APK: **Morphe** (Manager + LSPatch) and **Alloy** (Vector module).
+- Dual APK: **Morphe** (Manager + LSPatch installer only — not a Vector module) and **Alloy** (sole Vector module).
 - Remote mapping packs so version jumps do not always need a new APK.
 - In-app **News** = wiki CTA + GitHub Releases (no Telegram feed).
 - Soft-fail hooks: missing DEX fingerprints skip instead of crashing the host.

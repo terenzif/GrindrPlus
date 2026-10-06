@@ -9,7 +9,7 @@
 - Do not treat README or personal/lab-use wording as architectural or technology constraints.
 - Do not invent product constraints the user never decided; treat user corrections as authoritative over agent assumptions.
 - Ver.5 must stay version-agnostic: no hardcoded single Grindr version as destiny.
-- Prefer dual delivery via two APKs (same UI name Grindr++): `com.gpp.morphe` (rootless Morphe A/B + LSPatch) and `com.gpp.alloy` (rooted Vector; NexAlloy-style DexKit later). Slim LSPatch `-m` embed is build-only, not a third user product.
+- Prefer dual delivery via two APKs (same UI name Grindr++): `com.gpp.morphe` (rootless Manager / LSPatch installer only — never a Vector module) and `com.gpp.alloy` (sole rooted Vector registrant; NexAlloy-style DexKit later). Slim LSPatch `-m` embed is build-only, not a third user product.
 - Do not give product/update continuity or the primary Manager UX to the rooted channel; rootless users rely on Manager UI, while rooted users typically use Vector.
 - Delivery sequence is fixed: Morphe A complete in Ver.5 → Ver.5 green → then Morphe B.
 - Prefer integrating MorpheApp `bytecodePatch` / patches-template as the Morphe B DEX rewriter inside the orchestrator, not as a separate Morphe Manager product.

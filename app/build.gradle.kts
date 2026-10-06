@@ -139,10 +139,25 @@ dependencies {
     "alloyImplementation"(libs.smali.dexlib2)
     "embedCompileOnly"(libs.smali.dexlib2)
 
-    // LSPatch jar: packaged on morphe Manager only (ADR 0005)
+    // LSPatch jar: packaged on morphe Manager only (ADR 0005).
+    // Fat jar embeds checker-qual — drop the Maven copy on Morphe to avoid dex duplicates.
     "morpheImplementation"(fileTree("libs") { include("lspatch.jar") })
     "alloyCompileOnly"(fileTree("libs") { include("lspatch.jar") })
     "embedCompileOnly"(fileTree("libs") { include("lspatch.jar") })
+    // lspatch.jar is a fat jar; drop overlapping Maven jars on Morphe dex merge.
+    configurations.configureEach {
+        if (name.startsWith("morphe", ignoreCase = true)) {
+            exclude(group = "org.checkerframework", module = "checker-qual")
+            exclude(group = "com.google.code.findbugs", module = "jsr305")
+            exclude(group = "org.jetbrains", module = "annotations")
+            exclude(group = "com.google.guava", module = "guava")
+            exclude(group = "com.google.guava", module = "failureaccess")
+            exclude(group = "com.google.guava", module = "listenablefuture")
+            exclude(group = "com.google.j2objc", module = "j2objc-annotations")
+            exclude(group = "com.google.errorprone", module = "error_prone_annotations")
+            exclude(group = "org.codehaus.mojo", module = "animal-sniffer-annotations")
+        }
+    }
 
     // Manager UI / Install tooling — morphe + alloy only (not slim embed)
     "morpheImplementation"(libs.gplayapi) {

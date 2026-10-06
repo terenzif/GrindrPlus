@@ -29,8 +29,9 @@ LSPatch `-m` must not embed the fat Compose Manager into Grindr. Build may produ
 
 ### 4. Dependency ownership
 
-- `morphe`: pin and package LSPatch v0.8; own Install / MorpheOrchestrator UX.
-- `alloy`: no packaged `lspatch.jar`; Vector/Xposed meta + module entry; Install nav omitted.
+- `morphe`: pin and package LSPatch v0.8; own Install / MorpheOrchestrator UX. **Not** a Vector/Xposed module — no `xposedmodule` meta, no `assets/xposed_init`. Vector must never list Morphe Manager as a module.
+- `alloy`: no packaged `lspatch.jar`; sole user-facing Vector registrant (`xposedmodule` + `xposed_init`, API 103+); Install nav omitted.
+- `embed`: slim LSPatch `-m` payload keeps Xposed entry for injection into Grindr; not installed as a standalone Vector module product.
 
 ### 5. Bridge / signature
 
@@ -46,4 +47,5 @@ Custom permission `com.gpp.permission.ACCESS_BRIDGE_SERVICE` remains signature-p
 
 1. Uninstall legacy `com.grindrplus*` until cutover.
 2. Install `gpp-morphe-*.apk` / `gpp_v*-morphe-*.apk` and/or `gpp-alloy-*.apk` / `gpp_v*-alloy-*.apk`.
-3. Morphe: re-run patch/install for Grindr. Alloy: enable module in Vector and scope **only** Grindr (never the module package itself).
+3. Morphe: re-run patch/install for Grindr (Manager only — ignore if Vector ever listed an old Morphe APK; uninstall/reinstall Manager without Xposed meta).
+4. Alloy: enable module in Vector and scope **only** Grindr (never the module package itself; never Morphe).

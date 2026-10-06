@@ -4,13 +4,13 @@ import com.gpp.BuildConfig
 
 /**
  * Product delivery channel for the dual-APK split (ADR 0005).
- * UI label stays "GrindrPlus" for both; package IDs differ.
+ * UI label is Grindr++ for both; package IDs differ.
  */
 enum class DeliveryChannel {
-    /** Rootless Manager — Morphe A/B + LSPatch. Package: com.gpp.morphe */
+    /** Rootless Manager / LSPatch installer only — not a Vector module. Package: com.gpp.morphe */
     MORPHE,
 
-    /** Rooted Vector module + Manager without LSPatch. Package: com.gpp.alloy */
+    /** Sole rooted Vector module + Manager without LSPatch. Package: com.gpp.alloy */
     ALLOY,
 
     /** Internal slim embed payload for LSPatch -m (not a user-facing product). */
