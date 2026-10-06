@@ -24,7 +24,7 @@
 
 **Grindr++** is its own product. It rose from the archived GrindrPlus line (ElJaviLuki → R0rt1z2, then this tree) after that project was frozen and after the PairIP / VM phase. The code still lives in the `com.grindrplus` Android package so existing installs keep working. The name, the mark, and the roadmap do not.
 
-The phoenix is the product mark: a masked head, not a fork badge.
+The phoenix is the product mark: a masked head, ready to take them all.
 
 **Current target:** Grindr **26.16.1** (`versionCode` 179451), with per-hook soft-fail and an updated version gate. Historical baseline still documented: **25.20.0**.
 
