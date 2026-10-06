@@ -19,10 +19,10 @@ All network / parse / I/O failures **soft-fail** (log + continue). Init must not
 
 | Piece | Value |
 | --- | --- |
-| Default base | `https://raw.githubusercontent.com/terenzif/GrindrPlus/master/mapping-packs` |
+| Default base | `https://raw.githubusercontent.com/terenzif/grindr-plus-plus/master/mapping-packs` |
 | Pack file | `{base}/{versionCode}.json` |
-| Example (26.16.1) | https://raw.githubusercontent.com/terenzif/GrindrPlus/master/mapping-packs/179451.json |
-| Repo folder | [`mapping-packs/`](https://github.com/terenzif/GrindrPlus/tree/master/mapping-packs) |
+| Example (26.16.1) | https://raw.githubusercontent.com/terenzif/grindr-plus-plus/master/mapping-packs/179451.json |
+| Repo folder | [`mapping-packs/`](https://github.com/terenzif/grindr-plus-plus/tree/master/mapping-packs) |
 
 ### Override base URL
 
@@ -35,7 +35,7 @@ Write a one-line file (no trailing slash required):
 Example alternate (release tag tree):
 
 ```
-https://raw.githubusercontent.com/terenzif/GrindrPlus/mapping-packs/mapping-packs
+https://raw.githubusercontent.com/terenzif/grindr-plus-plus/mapping-packs/mapping-packs
 ```
 
 Or any raw/CDN base that serves `{versionCode}.json`.
@@ -44,7 +44,7 @@ Or any raw/CDN base that serves `{versionCode}.json`.
 
 1. Fingerprint the Grindr APK (`versionCode` / R8 names) as usual.
 2. Write `mapping-packs/<versionCode>.json` (schemaVersion 1).
-3. Open a PR / push to `master` on **terenzif/GrindrPlus**.
+3. Open a PR / push to `master` on **terenzif/grindr-plus-plus**.
 4. Optional: also copy into `app/src/main/assets/mappings/` so the next module build ships it offline.
 5. Optional alternate channel: attach the JSON to a GitHub Release / tag named `mapping-packs` and point devices at that raw base via the override file.
 

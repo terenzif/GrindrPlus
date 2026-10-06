@@ -26,13 +26,13 @@ object Constants {
     )
 
     const val SPLINE_DATA_ENDPOINT =
-        "https://raw.githubusercontent.com/terenzif/GrindrPlus/refs/heads/master/spline.json"
+        "https://raw.githubusercontent.com/terenzif/grindr-plus-plus/refs/heads/master/spline.json"
 
     /**
      * In-app News tab external link (wiki Home; Releases remain download channel).
      */
-    const val NEWS_PAGE_URL = "https://github.com/terenzif/GrindrPlus/wiki"
+    const val NEWS_PAGE_URL = "https://github.com/terenzif/grindr-plus-plus/wiki"
 
     /** Same as [NEWS_PAGE_URL] — kept for docs / alternate call sites. */
-    const val NEWS_WIKI_URL = "https://github.com/terenzif/GrindrPlus/wiki"
+    const val NEWS_WIKI_URL = "https://github.com/terenzif/grindr-plus-plus/wiki"
 }

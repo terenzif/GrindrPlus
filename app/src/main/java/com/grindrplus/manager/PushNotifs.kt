@@ -27,7 +27,7 @@ class GPlusMessage(
  * Not Telegram — fork-maintained JSON on GitHub. News UI uses Releases + wiki.
  */
 const val CHANNEL_PING_URL =
-    "https://raw.githubusercontent.com/terenzif/GrindrPlus/refs/heads/master/news.json"
+    "https://raw.githubusercontent.com/terenzif/grindr-plus-plus/refs/heads/master/news.json"
 
 val tgMessages = MutableStateFlow<List<GPlusMessage>>(listOf())
 
@@ -43,7 +43,7 @@ suspend fun fetchNotifs(context: Context) = withContext(Dispatchers.IO) {
             .url(CHANNEL_PING_URL)
             .header(
                 "User-Agent",
-                "GrindrPlus/terenzif (Android; news-ping)"
+                "Grindr++/terenzif (Android; news-ping)"
             )
             .build()
 
@@ -89,7 +89,7 @@ suspend fun fetchNotifs(context: Context) = withContext(Dispatchers.IO) {
 
 fun sendNotification(
     context: Context,
-    msg: String = "GrindrPlus update — open News for wiki & Releases."
+    msg: String = "Grindr++ update — open News for wiki & Releases."
 ) {
     val nm = context.getSystemService(NotificationManager::class.java)
 
@@ -98,14 +98,14 @@ fun sendNotification(
         "GPlus Updates",
         NotificationManager.IMPORTANCE_HIGH
     ).apply {
-        description = "Notifications for GrindrPlus fork updates"
+        description = "Notifications for Grindr++ updates"
     }
 
     nm.createNotificationChannel(channel)
 
     NotificationCompat.Builder(context, "update_gplus").apply {
         setSmallIcon(R.drawable.ic_launcher_foreground)
-        setContentTitle("GrindrPlus News")
+        setContentTitle("Grindr++ News")
         setContentText(msg)
         setContentIntent(
             PendingIntent.getActivity(

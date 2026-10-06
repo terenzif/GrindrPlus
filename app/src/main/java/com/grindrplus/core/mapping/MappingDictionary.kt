@@ -30,7 +30,7 @@ object MappingDictionary {
      * Pack URL: `{base}/{versionCode}.json`
      */
     const val DEFAULT_REMOTE_BASE_URL =
-        "https://raw.githubusercontent.com/terenzif/GrindrPlus/master/mapping-packs"
+        "https://raw.githubusercontent.com/terenzif/grindr-plus-plus/master/mapping-packs"
 
     @Volatile
     private var active: MappingPack? = null
@@ -253,7 +253,7 @@ object MappingDictionary {
                 instanceFollowRedirects = true
                 setRequestProperty(
                     "User-Agent",
-                    "GrindrPlus-MappingDictionary/1 (+https://github.com/terenzif/GrindrPlus)"
+                    "GrindrPlusPlus-MappingDictionary/1 (+https://github.com/terenzif/grindr-plus-plus)"
                 )
             }
             val code = conn.responseCode

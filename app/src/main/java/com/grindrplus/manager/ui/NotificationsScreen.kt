@@ -75,7 +75,7 @@ fun NotificationScreen(
                 )
 
                 Text(
-                    text = "Fork news for terenzif/GrindrPlus. Tap to open the GitHub wiki. " +
+                    text = "News for Grindr++. Tap to open the GitHub wiki. " +
                         "APKs are on Releases (list below).",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
@@ -133,7 +133,7 @@ fun NotificationScreen(
                                 .fillMaxWidth()
                                 .clickable {
                                     context.startActivity(Intent(Intent.ACTION_VIEW).apply {
-                                        data = "https://github.com/terenzif/GrindrPlus/releases".toUri()
+                                        data = "https://github.com/terenzif/grindr-plus-plus/releases".toUri()
                                     })
                                 },
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)

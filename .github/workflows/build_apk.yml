@@ -1,6 +1,6 @@
 name: Build APK and Release
 
-# Fork-friendly build for terenzif/GrindrPlus.
+# Build for terenzif/grindr-plus-plus.
 # - Always builds debug + release APKs and uploads artifacts (no upstream Telegram required).
 # - Signs release only when KEYSTORE_* secrets are present.
 # - Publishes a GitHub Release when create_release=true or on v* tags (needs contents:write).
@@ -170,9 +170,9 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${{ steps.tag.outputs.tag }}"
-          TITLE="GrindrPlus ${{ env.VERSION_INFO }} (${TAG})"
+          TITLE="Grindr++ ${{ env.VERSION_INFO }} (${TAG})"
           NOTES="$(cat <<EOF
-          Fork build for **terenzif/GrindrPlus**.
+          Build for **terenzif/grindr-plus-plus**.
 
           - Commit: \`${{ env.COMMIT_SHA }}\`
           - Version info: \`${{ env.VERSION_INFO }}\`

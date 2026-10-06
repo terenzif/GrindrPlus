@@ -186,7 +186,7 @@ fun DebugLogsScreen(
         ReportIssueDialog(
             onDismiss = { showReportDialog = false },
             onOpenGitHub = {
-                val intent = Intent(Intent.ACTION_VIEW, "https://github.com/terenzif/GrindrPlus/issues".toUri())
+                val intent = Intent(Intent.ACTION_VIEW, "https://github.com/terenzif/grindr-plus-plus/issues".toUri())
                 context.startActivity(intent)
                 showReportDialog = false
             }
