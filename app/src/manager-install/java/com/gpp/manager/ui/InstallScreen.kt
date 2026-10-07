@@ -18,17 +18,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Download
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -40,9 +39,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gpp.core.Config
-import com.gpp.core.DeviceFlags
 import com.gpp.core.Constants.GRINDR_PACKAGE_NAME
-import com.gpp.core.Logger
+import com.gpp.core.DeviceFlags
 import com.gpp.manager.DATA_URL
 import com.gpp.manager.ManagerBridge
 import com.gpp.manager.TAG
@@ -50,157 +48,62 @@ import com.gpp.manager.activityScope
 import com.gpp.manager.installation.Installation
 import com.gpp.manager.installation.steps.Print
 import com.gpp.manager.ui.components.BannerType
-import com.gpp.manager.ui.components.CloneDialog
+import com.gpp.manager.ui.components.FileDialog
 import com.gpp.manager.ui.components.MessageBanner
 import com.gpp.manager.ui.components.VersionSelector
 import com.gpp.manager.utils.ErrorHandler
 import com.gpp.manager.utils.StorageUtils
-import com.scottyab.rootbeer.RootBeer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
-import com.gpp.manager.ui.components.FileDialog
 
 private val logEntries = mutableStateListOf<LogEntry>()
 
 @Composable
-fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: InstallScreenViewModel = viewModel()) {
-    // 1. State from ViewModel
+fun InstallPage(
+    context: Activity,
+    innerPadding: PaddingValues,
+    viewModel: InstallScreenViewModel = viewModel(),
+) {
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val versionData = viewModel.versionData
 
-    // 2. UI-Specific State
     var selectedVersion by remember { mutableStateOf<Data?>(null) }
-    var isInstalling by remember { mutableStateOf(false) }
-    var isCloning by remember { mutableStateOf(false) }
-    var installationSuccessful by remember { mutableStateOf(false) }
-    val isRooted = remember { RootBeer(context).isRooted }
-    var showCloneDialog by remember { mutableStateOf(false) }
-    var installation by remember { mutableStateOf<Installation?>(null) }
+    var isWorking by remember { mutableStateOf(false) }
+    var success by remember { mutableStateOf(false) }
     var warningBannerVisible by remember { mutableStateOf(true) }
-    var rootedBannerVisible by remember { mutableStateOf(isRooted) }
+    val vectorFrameworkPresent = DeviceFlags.isLSPosed()
+    var rootedBannerVisible by remember { mutableStateOf(vectorFrameworkPresent) }
     var showCustomFileDialog by remember { mutableStateOf(false) }
-    var useCustomFiles by remember { mutableStateOf(false) }
+    var showAdvanced by remember { mutableStateOf(false) }
     var customVersionName by remember { mutableStateOf("custom") }
     var customBundleUri by remember { mutableStateOf<Uri?>(null) }
     var customModUri by remember { mutableStateOf<Uri?>(null) }
 
-    // 3. Side Effects
+    val grindrInstalled = remember { isPackageInstalled(context, GRINDR_PACKAGE_NAME) }
+    val cloneInstalled = remember {
+        isPackageInstalled(context, Installation.PRODUCT_CLONE_PACKAGE)
+    }
+
     val manifestUrl = (Config.get("custom_manifest", DATA_URL) as String).ifBlank { null }
 
     LaunchedEffect(Unit) {
         viewModel.loadVersionData(manifestUrl.toString())
     }
 
-    // Creates a background task to auto-select the latest version
     LaunchedEffect(versionData.size) {
         if (selectedVersion == null && versionData.isNotEmpty()) {
             selectedVersion = versionData.first()
-            addLog("Auto-selected latest version: ${selectedVersion?.modVer}", LogType.INFO)
+            addLog("Module build: ${selectedVersion?.modVer}", LogType.INFO)
         }
-    }
-
-    LaunchedEffect(selectedVersion) {
-        if (selectedVersion == null) return@LaunchedEffect
-
-        val mapsApiKey = (Config.get("maps_api_key", "") as String).ifBlank { null }
-
-        installation = Installation(
-            context,
-            selectedVersion!!.modVer,
-            selectedVersion!!.modUrl,
-            selectedVersion!!.grindrUrl,
-            mapsApiKey
-        )
     }
 
     val print: Print = { output ->
         val logType = ConsoleLogger.parseLogType(output)
-        context.runOnUiThread {
-            addLog(output, logType)
-        }
-    }
-
-    fun startCustomInstallation() {
-        if (customBundleUri == null || customModUri == null) {
-            showToast(context, "Please select both bundle and mod files")
-            return
-        }
-
-        isInstalling = true
-        addLog("Starting custom installation with version name: $customVersionName...", LogType.INFO)
-
-        activityScope.launch {
-            try {
-                val bundleFile = createTempFileFromUri(context, customBundleUri!!, "grindr-$customVersionName.zip")
-                val modFile = createTempFileFromUri(context, customModUri!!, "mod-$customVersionName.zip")
-
-                val mapsApiKey = (Config.get("maps_api_key", "") as String).ifBlank { null }
-
-                val customInstallation = Installation(
-                    context,
-                    customVersionName,
-                    modFile.absolutePath,
-                    bundleFile.absolutePath,
-                    mapsApiKey
-                )
-
-                withContext(Dispatchers.IO) {
-                    customInstallation.installCustom(
-                        bundleFile,
-                        modFile,
-                        print
-                    )
-                }
-
-                addLog("Custom installation completed successfully!", LogType.SUCCESS)
-                showToast(context, "Installation complete!")
-                installationSuccessful = true
-            } catch (e: Exception) {
-                handleInstallationError(e, context)
-            } finally {
-                isInstalling = false
-            }
-        }
-    }
-
-    if (showCloneDialog) {
-        CloneDialog(
-            context = context,
-            onDismiss = { showCloneDialog = false },
-            onStartCloning = { packageName, appName, debuggable, embedLSPatch ->
-                showCloneDialog = false
-                isCloning = true
-                activityScope.launch {
-                    addLog("Starting Grindr cloning process...", LogType.INFO)
-                    addLog("Target package: $packageName", LogType.INFO)
-                    addLog("Target app name: $appName", LogType.INFO)
-
-                    val success = try {
-                        installation!!.cloneGrindr(
-                            packageName, appName, debuggable, embedLSPatch,
-                            print
-                        )
-                        true
-                    } catch (e: Exception) {
-                        Logger.i("Cloning failed: ${e.localizedMessage}")
-                        addLog("Cloning failed: ${e.localizedMessage}", LogType.ERROR)
-                        false
-                    }
-
-                    if (success) {
-                        addLog("Grindr clone created successfully!", LogType.SUCCESS)
-                    } else {
-                        addLog("Failed to clone Grindr", LogType.ERROR)
-                    }
-
-                    isCloning = false
-                }
-            }
-        )
+        context.runOnUiThread { addLog(output, logType) }
     }
 
     if (showCustomFileDialog) {
@@ -211,11 +114,9 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
                 customVersionName = versionName
                 customBundleUri = bundleUri
                 customModUri = modUri
-                useCustomFiles = true
                 showCustomFileDialog = false
-                addLog("Custom files selected. Version: $versionName", LogType.INFO)
-                addLog("Bundle: ${bundleUri.lastPathSegment}, Mod: ${modUri.lastPathSegment}", LogType.INFO)
-            }
+                addLog("Emergency custom files selected: $versionName", LogType.INFO)
+            },
         )
     }
 
@@ -223,199 +124,201 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
         modifier = Modifier
             .padding(innerPadding)
             .padding(16.dp)
-            .fillMaxSize()
+            .fillMaxSize(),
     ) {
-        if (isLoading) {
-            LoadingScreen()
-        } else if (errorMessage != null) {
-            ErrorScreen(errorMessage!!) {
+        when {
+            isLoading -> LoadingScreen()
+            errorMessage != null -> ErrorScreen(errorMessage!!) {
                 viewModel.loadVersionData(manifestUrl.toString())
             }
-        } else {
-            MessageBanner(
-                text = "• Morphe embeds a slim module into Grindr via LSPatch (no Vector needed)\n" +
-                    "• Grindr downloads via Play (Aurora/gplayapi protocol — not the Aurora app)\n" +
-                    "• Prefer embed payload from Releases for -m; mappings stay remote/bundled\n" +
-                    "• Custom Files still works as offline fallback\n" +
-                    "• Don't close the app mid-install; Grindr may crash on first launch",
-                isVisible = warningBannerVisible,
-                isPulsating = isInstalling || isCloning,
-                modifier = Modifier.fillMaxWidth(),
-                type = BannerType.WARNING,
-                onDismiss = { warningBannerVisible = false }
-            )
-
-            if (DeviceFlags.isLSPosed()) {
+            else -> {
                 MessageBanner(
-                    text = "Vector/Xposed framework detected — for rooted devices install GrindrPlus Alloy " +
-                        "(com.gpp.alloy) from Releases and enable it in Vector. " +
-                        "This Morphe app is the rootless Install path.",
-                    isVisible = rootedBannerVisible,
-                    isPulsating = true,
+                    text = "• Creates Grindr++ from the Grindr APK already installed from Play\n" +
+                        "• Stock Grindr stays untouched; Grindr++ is a separate clone\n" +
+                        "• After a Play update, tap again to re-patch with mapping packs\n" +
+                        "• Don't close GrindMod mid-patch",
+                    isVisible = warningBannerVisible,
+                    isPulsating = isWorking,
                     modifier = Modifier.fillMaxWidth(),
-                    type = BannerType.ERROR,
-                    onDismiss = { rootedBannerVisible = false }
+                    type = BannerType.WARNING,
+                    onDismiss = { warningBannerVisible = false },
                 )
-            }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                VersionSelector(
-                    versions = if (useCustomFiles)
-                        listOf(Data(customVersionName, "", "")) + versionData
-                    else
-                        versionData,
-                    selectedVersion = if (useCustomFiles && customBundleUri != null)
-                        Data(customVersionName, "", "")
-                    else
-                        selectedVersion,
-                    onVersionSelected = { selected ->
-                        if (selected.modVer == customVersionName && useCustomFiles) {
-                        } else if (selected.modVer == "custom") {
-                            showCustomFileDialog = true
-                        } else {
-                            selectedVersion = selected
-                            useCustomFiles = false
-                            addLog("Selected version ${selected.modVer}", LogType.INFO)
-                        }
-                    },
-                    isEnabled = !isInstalling && !isCloning,
-                    modifier = Modifier.fillMaxWidth(),
-                    customOption = "Use Custom Files..."
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ConsoleOutput(
-                logEntries = logEntries,
-                modifier = Modifier.weight(0.5f),
-                onClear = {
-                    logEntries.clear()
-                    addLog("Successfully cleared logs!", LogType.SUCCESS)
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                OutlinedButton(
-                    onClick = {
-                        activityScope.launch {
-                            try {
-                                withContext(Dispatchers.IO) {
-                                    StorageUtils.cleanupOldInstallationFiles(
-                                        context, true, selectedVersion?.modVer
-                                    )
-                                }
-                                addLog(
-                                    "Cleaned up old installation files",
-                                    LogType.SUCCESS
-                                )
-                            } catch (e: Exception) {
-                                addLog(
-                                    "Failed to clean up: ${e.localizedMessage}",
-                                    LogType.ERROR
-                                )
-                            }
-                        }
-                    },
-                    enabled = !isInstalling && !isCloning,
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.primary,
-                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(
-                            alpha = 0.38f
-                        )
-                    ),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        "Clean Up",
-                        modifier = Modifier.padding(vertical = 8.dp)
+                if (vectorFrameworkPresent) {
+                    MessageBanner(
+                        text = "Vector detected — rooted users should use GrindMod Alloy " +
+                            "(com.gpp.alloy) and the Modding toggle in Settings. " +
+                            "This Install tab is the rootless Morphe path.",
+                        isVisible = rootedBannerVisible,
+                        isPulsating = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        type = BannerType.ERROR,
+                        onDismiss = { rootedBannerVisible = false },
                     )
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Button(
-                    onClick = {
-                        if (installationSuccessful) {
-                            launchGrindr(context)
-                        } else {
-                            if (useCustomFiles && customBundleUri != null && customModUri != null) {
-                                startCustomInstallation()
-                            } else {
-                                if (selectedVersion == null) {
-                                    showToast(context, "Please select a version first")
-                                    return@Button
-                                }
-
-                                startInstallation(
-                                    selectedVersion!!,
-                                    onStarted = { isInstalling = true },
-                                    onCompleted = { success ->
-                                        isInstalling = false
-                                        installationSuccessful = success
-                                    },
-                                    context,
-                                    print
-                                )
-                            }
-                        }
-                    },
-                    enabled = ((selectedVersion != null || (useCustomFiles && customBundleUri != null && customModUri != null)) ||
-                            installationSuccessful) && !isInstalling && !isCloning,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(
-                            alpha = 0.12f
-                        ),
-                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(
-                            alpha = 0.38f
-                        )
-                    ),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = if (isInstalling) {
-                            "Installing..."
-                        } else if (installationSuccessful) {
-                            "Open Grindr"
-                        } else {
-                            "Install"
-                        },
-                        modifier = Modifier.padding(vertical = 8.dp)
+                if (!grindrInstalled) {
+                    MessageBanner(
+                        text = "Install Grindr from the Play Store first, then return here " +
+                            "to create Grindr++.",
+                        isVisible = true,
+                        isPulsating = false,
+                        modifier = Modifier.fillMaxWidth(),
+                        type = BannerType.ERROR,
+                        onDismiss = {},
                     )
                 }
-            }
 
-            if (isGrindrInstalled(context)) {
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Button(
-                    onClick = { showCloneDialog = true },
-                    enabled = !isInstalling && !isCloning,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                VersionSelector(
+                    versions = versionData,
+                    selectedVersion = selectedVersion,
+                    onVersionSelected = { selected ->
+                        selectedVersion = selected
+                        addLog("Module build ${selected.modVer}", LogType.INFO)
+                    },
+                    isEnabled = !isWorking,
+                    modifier = Modifier.fillMaxWidth(),
+                    customOption = null,
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ConsoleOutput(
+                    logEntries = logEntries,
+                    modifier = Modifier.weight(0.5f),
+                    onClear = {
+                        logEntries.clear()
+                        addLog("Logs cleared", LogType.SUCCESS)
+                    },
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "Clone",
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-                    Text(
-                        text = if (isCloning) "Cloning..." else "Clone Grindr",
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
+                    OutlinedButton(
+                        onClick = {
+                            activityScope.launch {
+                                try {
+                                    withContext(Dispatchers.IO) {
+                                        StorageUtils.cleanupOldInstallationFiles(
+                                            context,
+                                            true,
+                                            selectedVersion?.modVer,
+                                        )
+                                    }
+                                    addLog("Cleaned up old files", LogType.SUCCESS)
+                                } catch (e: Exception) {
+                                    addLog("Cleanup failed: ${e.localizedMessage}", LogType.ERROR)
+                                }
+                            }
+                        },
+                        enabled = !isWorking,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text("Clean Up", modifier = Modifier.padding(vertical = 8.dp))
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Button(
+                        onClick = {
+                            when {
+                                success -> launchPackage(
+                                    context,
+                                    Installation.PRODUCT_CLONE_PACKAGE,
+                                    "Grindr++",
+                                )
+                                else -> startCreateGrindrPlus(
+                                    version = selectedVersion,
+                                    context = context,
+                                    print = print,
+                                    onStarted = { isWorking = true },
+                                    onCompleted = { ok ->
+                                        isWorking = false
+                                        success = ok
+                                    },
+                                )
+                            }
+                        },
+                        enabled = (selectedVersion != null || success) &&
+                            !isWorking &&
+                            (grindrInstalled || success),
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(
+                            text = when {
+                                isWorking -> "Patching…"
+                                success -> "Open Grindr++"
+                                cloneInstalled -> "Update Grindr++"
+                                else -> "Create Grindr++"
+                            },
+                            modifier = Modifier.padding(vertical = 8.dp),
+                        )
+                    }
+                }
+
+                TextButton(
+                    onClick = { showAdvanced = !showAdvanced },
+                    enabled = !isWorking,
+                ) {
+                    Text(if (showAdvanced) "Hide emergency fallback" else "Emergency: custom files")
+                }
+
+                if (showAdvanced) {
+                    OutlinedButton(
+                        onClick = { showCustomFileDialog = true },
+                        enabled = !isWorking,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("Select custom Grindr bundle + mod")
+                    }
+                    if (customBundleUri != null && customModUri != null) {
+                        Button(
+                            onClick = {
+                                isWorking = true
+                                activityScope.launch {
+                                    try {
+                                        val bundleFile = createTempFileFromUri(
+                                            context,
+                                            customBundleUri!!,
+                                            "grindr-$customVersionName.zip",
+                                        )
+                                        val modFile = createTempFileFromUri(
+                                            context,
+                                            customModUri!!,
+                                            "mod-$customVersionName.zip",
+                                        )
+                                        val mapsApiKey =
+                                            (Config.get("maps_api_key", "") as String).ifBlank { null }
+                                        val installation = Installation(
+                                            context,
+                                            customVersionName,
+                                            modFile.absolutePath,
+                                            mapsApiKey,
+                                        )
+                                        withContext(Dispatchers.IO) {
+                                            installation.installCustom(bundleFile, modFile, print)
+                                        }
+                                        addLog("Custom install completed", LogType.SUCCESS)
+                                        success = true
+                                    } catch (e: Exception) {
+                                        handleInstallationError(e, context)
+                                    } finally {
+                                        isWorking = false
+                                    }
+                                }
+                            },
+                            enabled = !isWorking,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text("Run custom install (same-package)")
+                        }
+                    }
                 }
             }
         }
@@ -426,28 +329,21 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
 fun LoadingScreen() {
     Box(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 24.dp)
+            modifier = Modifier.padding(horizontal = 24.dp),
         ) {
             CircularProgressIndicator(
                 color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                "Loading available versions...",
+                "Loading module builds…",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                "If loading appears stuck, please force close the app and try again.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                color = MaterialTheme.colorScheme.onBackground,
             )
         }
     }
@@ -458,74 +354,56 @@ fun ErrorScreen(errorMessage: String, onRetry: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             text = "Error: $errorMessage",
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.error
+            color = MaterialTheme.colorScheme.error,
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = onRetry,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            Text("Retry")
-        }
+        Button(onClick = onRetry) { Text("Retry") }
     }
 }
 
-private fun startInstallation(
-    version: Data,
+private fun startCreateGrindrPlus(
+    version: Data?,
+    context: Activity,
+    print: Print,
     onStarted: () -> Unit,
     onCompleted: (Boolean) -> Unit,
-    context: Activity,
-    print: Print
 ) {
-    if (version.modUrl.isBlank()) {
-        addLog(
-            "Manifest entry missing mod URL. Use Custom Files or fix manifest.json.",
-            LogType.ERROR
-        )
+    if (version == null || version.modUrl.isBlank()) {
+        addLog("Manifest entry missing mod URL.", LogType.ERROR)
         showToast(context, "Missing module download URL.")
         onCompleted(false)
         return
     }
-
-    if (version.grindrUrl.isBlank()) {
-        addLog(
-            "No Grindr CDN URL — will download from Play (gplayapi / Aurora protocol).",
-            LogType.INFO
-        )
+    if (!isPackageInstalled(context, GRINDR_PACKAGE_NAME)) {
+        addLog("Grindr is not installed from Play.", LogType.ERROR)
+        showToast(context, "Install Grindr from Play Store first.")
+        onCompleted(false)
+        return
     }
 
     onStarted()
-
-    addLog("Starting installation for version ${version.modVer}...", LogType.INFO)
+    addLog("Creating/updating Grindr++ from installed Grindr…", LogType.INFO)
+    addLog("Module: ${version.modVer}", LogType.INFO)
 
     activityScope.launch {
         try {
             val mapsApiKey = (Config.get("maps_api_key", "") as String).ifBlank { null }
-
             val installation = Installation(
                 context,
                 version.modVer,
                 version.modUrl,
-                version.grindrUrl,
-                mapsApiKey
+                mapsApiKey,
             )
-
             withContext(Dispatchers.IO) {
-                installation.install(
-                    print = print
-                )
+                installation.createOrUpdateGrindrPlus(print)
             }
-
-            addLog("Installation completed successfully!", LogType.SUCCESS)
-            showToast(context, "Installation complete!")
+            addLog("Grindr++ ready!", LogType.SUCCESS)
+            showToast(context, "Grindr++ installed")
             onCompleted(true)
         } catch (e: Exception) {
             handleInstallationError(e, context)
@@ -554,59 +432,48 @@ private fun handleInstallationError(e: Exception, context: Context) {
         if (context is Activity) {
             context.runOnUiThread { ManagerBridge.showUninstallDialog.value = true }
         } else {
-            showToast(context, "Installation failed: Signature mismatch. Please uninstall Grindr first.")
+            showToast(context, "Signature mismatch. Uninstall the previous Grindr++ clone first.")
         }
     } else {
-        showToast(context, "Installation failed: ${e.localizedMessage}")
+        showToast(context, "Failed: ${e.localizedMessage}")
     }
 
-    ErrorHandler.logError(
-        context,
-        TAG,
-        "Installation failed",
-        e
-    )
+    ErrorHandler.logError(context, TAG, "Installation failed", e)
 }
 
 private fun addLog(message: String, type: LogType = LogType.INFO) {
     if (message.contains("<>:")) {
         val prefix = message.split("<>:")[0]
-
-        logEntries.find { it.message.startsWith(prefix) }?.let {
-            logEntries.remove(it)
-        }
+        logEntries.find { it.message.startsWith(prefix) }?.let { logEntries.remove(it) }
     }
-
-    val logEntry = ConsoleLogger.log(message.replace("<>:", ":"), type)
-    logEntries.add(logEntry)
+    logEntries.add(ConsoleLogger.log(message.replace("<>:", ":"), type))
 }
 
 private fun showToast(context: Context, message: String) {
     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
 }
 
-private fun launchGrindr(context: Context) {
+private fun launchPackage(context: Context, packageName: String, label: String) {
     try {
-        val launchIntent = context.packageManager.getLaunchIntentForPackage(GRINDR_PACKAGE_NAME)
+        val launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)
         if (launchIntent != null) {
             context.startActivity(launchIntent)
         } else {
-            showToast(context, "Could not launch Grindr. App may need to be opened manually.")
+            showToast(context, "Could not launch $label")
         }
     } catch (e: Exception) {
-        showToast(context, "Error launching Grindr: ${e.localizedMessage}")
+        showToast(context, "Error launching $label: ${e.localizedMessage}")
     }
 }
 
-private fun isGrindrInstalled(context: Context): Boolean {
+private fun isPackageInstalled(context: Context, packageName: String): Boolean {
     return try {
-        context.packageManager.getPackageInfo(GRINDR_PACKAGE_NAME, 0)
+        context.packageManager.getPackageInfo(packageName, 0)
         true
     } catch (_: PackageManager.NameNotFoundException) {
         false
     }
 }
-
 
 fun installNavItem(): com.gpp.manager.MainNavItem =
     com.gpp.manager.MainNavItem(

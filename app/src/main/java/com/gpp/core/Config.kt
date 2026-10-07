@@ -13,7 +13,17 @@ import java.util.concurrent.atomic.AtomicReference
 object Config {
     private var localConfig = JSONObject()
     @Volatile private var currentPackageName = Constants.GRINDR_PACKAGE_NAME
-    private val GLOBAL_SETTINGS = listOf("first_launch", "analytics", "discreet_icon", "material_you", "debug_mode", "disable_permission_checks", "custom_manifest", "maps_api_key")
+    private val GLOBAL_SETTINGS = listOf(
+        "first_launch",
+        "analytics",
+        "discreet_icon",
+        "material_you",
+        "debug_mode",
+        "disable_permission_checks",
+        "custom_manifest",
+        "maps_api_key",
+        "vector_modding_enabled",
+    )
     private val configMutex = Mutex()
     private val configCache = AtomicReference<Map<String, Any>>(emptyMap())
 

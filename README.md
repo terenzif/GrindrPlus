@@ -22,11 +22,11 @@
 
 ## What this is
 
-**Grindr++** is its own product. It rose from the archived GrindrPlus line (ElJaviLuki → R0rt1z2, then this tree) after that project was frozen and after the PairIP / VM phase. Dual delivery uses `com.gpp.morphe` (rootless) and `com.gpp.alloy` (rooted Vector). The name, the mark, and the roadmap do not follow the archived product.
+**Grindr++** is the product. **GrindMod** is the Manager app (`com.gpp.morphe` / `com.gpp.alloy`). It rose from the archived GrindrPlus line (ElJaviLuki → R0rt1z2, then this tree) after that project was frozen and after the PairIP / VM phase. Not affiliated with legacy XDA **GrindrMod**.
 
-The phoenix is the product mark: a masked head, not a fork badge.
+The phoenix/mask is the product mark. GrindMod’s launcher adds a small gear badge so it is not confused with Grindr++.
 
-**Ver.5 direction:** version-agnostic module driven by **mapping packs** (schema v2), soft-fail hooks, Settings↔runtime truthfulness, and **Morphe A** rootless install (patch + embed Vector/LSPatch). Pack catalog: `mapping-packs/index.json`. Vision: [docs/vision.md](docs/vision.md).
+**Ver.5 direction:** version-agnostic module driven by **mapping packs** (schema v2), soft-fail hooks, Settings↔runtime truthfulness, and **Morphe A** rootless install (export Play-installed Grindr → Grindr++ clone → LSPatch). Pack catalog: `mapping-packs/index.json`. Vision: [docs/vision.md](docs/vision.md).
 
 **Mapping packs:** JSON per `versionCode` under `app/src/main/assets/mappings/` (bundled offline) **and** remotely from GitHub `mapping-packs/` so a new Grindr build can get a remapped pack **without** a full module APK rebuild. Loader: `MappingDictionary` — remote → device cache → assets → literals (soft-fail; active pack does not fall back to wrong-version literals). Details: [docs/remote-mapping-packs.md](docs/remote-mapping-packs.md).
 
@@ -34,7 +34,7 @@ This module is **not** affiliated with Grindr LLC. Use at your own risk.
 
 ## State now
 
-- Dual APK: **Morphe** (Manager + LSPatch installer only — not a Vector module) and **Alloy** (sole Vector module).
+- Dual APK: **Morphe** (GrindMod Manager + Install → Grindr++ clone — not a Vector module) and **Alloy** (GrindMod + Vector; Settings modding toggle).
 - Remote mapping packs so version jumps do not always need a new APK.
 - In-app **News** = wiki CTA + GitHub Releases (no Telegram feed).
 - Soft-fail hooks: missing DEX fingerprints skip instead of crashing the host.
@@ -56,15 +56,20 @@ Compatibility is **pack-driven** per installed Grindr `versionCode` (catalog: `m
 
 ### Rootless (Ver.5 / Morphe A — recommended product path)
 
-Use the manager **LSPatch** tab: download/select Grindr → embed module via integrated LSPatch (Vector-family loader) → install. Details: [docs/morphe-a.md](docs/morphe-a.md), [docs/manager-ui-lspatch.md](docs/manager-ui-lspatch.md).
+1. Install **stock Grindr** from the Play Store.
+2. Install **`gpp-morphe-*.apk`** (GrindMod) from [Releases](https://github.com/terenzif/grindr-plus-plus/releases).
+3. Open GrindMod → **Install** → **Create Grindr++** (copies the installed Play APK, clones as `com.grindrapp.android.plus`, LSPatch embed).
+4. Open **Grindr++** for the modded app; stock **Grindr** stays for Play updates. Re-run Create/Update after Store updates.
+
+Details: [docs/morphe-a.md](docs/morphe-a.md), [docs/manager-ui-lspatch.md](docs/manager-ui-lspatch.md).
 
 ### Root (Vector — Alloy APK)
 
 **Requirements:** Magisk / KernelSU + [JingMatrix/Vector](https://github.com/JingMatrix/Vector) (API 103+).
 
-1. Install **`gpp-alloy-*.apk`** from [Releases](https://github.com/terenzif/grindr-plus-plus/releases) (or CI artifacts).
-2. Install a Grindr build that has a mapping pack.
-3. Enable the module in Vector and add Grindr to the scope.
+1. Install **`gpp-alloy-*.apk`** (GrindMod Alloy) from [Releases](https://github.com/terenzif/grindr-plus-plus/releases).
+2. Install stock Grindr (mapping pack required for your `versionCode`).
+3. Enable modding in GrindMod **Settings → Modding active** (root + Vector CLI) *or* enable the module in Vector with Grindr in scope.
 4. Open Grindr and verify.
 
 **Quick check:** long-press the **Browse** tab → Grindr++ status popup; unlimited cascade profiles and no third-party ads. In Settings → Manage Hooks, skipped/partial hooks show a status note (not silent no-ops).

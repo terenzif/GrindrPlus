@@ -237,8 +237,16 @@ fun AboutDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Grindr++",
+                    text = "GrindMod",
                     style = MaterialTheme.typography.headlineMedium
+                )
+                Text(
+                    text = "Manager for Grindr++",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "Not affiliated with legacy XDA GrindrMod.",
+                    style = MaterialTheme.typography.bodySmall
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))

@@ -1,25 +1,22 @@
 # Dual APK migration (Morphe / Alloy)
 
-GrindrPlus ships two packages (same launcher label **GrindrPlus**):
+GrindMod ships two packages (Manager label **GrindMod**):
 
-| Channel | Package | Artifact |
+| Audience | Package | Artifact |
 | --- | --- | --- |
-| Rootless | `com.gpp.morphe` | `GrindrPlus-morphe-*.apk` |
-| Rooted | `com.gpp.alloy` | `GrindrPlus-alloy-*.apk` |
+| Rootless | `com.gpp.morphe` | `gpp-morphe-*.apk` |
+| Rooted | `com.gpp.alloy` | `gpp-alloy-*.apk` |
 
-Legacy `com.gpp` is retired as an install ID. See [ADR 0005](adr/0005-dual-apk-morphe-alloy.md).
+Product / Morphe clone label: **Grindr++** (`com.grindrapp.android.plus`).
 
-## From legacy rootless / LSPatch
+## Morphe
 
-1. Install `GrindrPlus-morphe-*.apk`.
-2. Open GrindrPlus → Install → patch/install Grindr again (Morphe A).
-3. Uninstall legacy `com.gpp` when satisfied.
+1. Install stock Grindr from Play.
+2. Install `gpp-morphe-*.apk`.
+3. GrindMod → Install → Create / Update Grindr++.
 
-## From legacy LSPosed / Vector
+## Alloy
 
-1. Install `GrindrPlus-alloy-*.apk`.
-2. Enable the module in **Vector** and scope `com.grindrapp.android`.
-3. Reboot if required by the framework.
-4. Uninstall legacy `com.gpp` when satisfied.
-
-Both packages may coexist. Do not embed the full Manager into Grindr; Morphe uses a slim `-m` payload when available.
+1. Install `gpp-alloy-*.apk`.
+2. Enable the module in **Vector** and scope `com.grindrapp.android`, **or** use GrindMod Settings → **Modding active**.
+3. Do not expect a Grindr++ clone on Alloy — stock Grindr + hooks.

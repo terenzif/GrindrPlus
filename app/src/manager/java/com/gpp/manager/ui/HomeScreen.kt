@@ -53,14 +53,20 @@ fun HomeScreen(innerPadding: PaddingValues, viewModel: HomeViewModel = viewModel
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "Grindr++",
+                text = "GrindMod",
                 fontSize = 48.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "take them all",
+                text = "manager for Grindr++",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "take them all",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Gray
             )
         }
 

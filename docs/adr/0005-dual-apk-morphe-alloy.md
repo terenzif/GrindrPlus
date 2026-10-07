@@ -1,51 +1,56 @@
 # ADR 0005: Dual APK — Morphe (rootless) and Alloy (rooted)
 
-- **Status:** Accepted
+- **Status:** Accepted (amended 2026-10-07)
 - **Date:** 2026-10-05
 - **Related:** [vision.md](../vision.md), [0003-morphe-a-patch-backend.md](0003-morphe-a-patch-backend.md), [0004-morphe-b.md](0004-morphe-b.md)
 
 ## Context
 
-A single legacy `com.grindrplus` APK mixed Vector/LSPosed-module UX and LSPatch install UX. Users need a clear product split. Continuity must favor the **rootless / UI-first** audience, not rooted power users. Display name is **Grindr++** for both; distinction is package ID and Releases assets.
+A single legacy `com.grindrplus` APK mixed Vector/LSPosed-module UX and LSPatch install UX. Users need a clear product split. Continuity must favor the **rootless / UI-first** audience, not rooted power users.
+
+**Product naming (2026-10-07):** umbrella product is **Grindr++**; Manager UI for both flavors is **GrindMod** (`com.gpp.*`). Morphe also installs a **Grindr++** clone beside stock Play Grindr.
 
 ## Decision
 
-### 1. Exactly two user-facing APKs (option 1)
+### 1. Exactly two user-facing APKs
 
 | Flavor | `applicationId` | Launcher label | Role |
 | --- | --- | --- | --- |
-| `morphe` | `com.gpp.morphe` | Grindr++ | Rootless Manager: Morphe A/B + LSPatch `-l 2` install path |
-| `alloy` | `com.gpp.alloy` | Grindr++ | Rooted Vector module + Manager **without** LSPatch tab (Vector API 103+) |
+| `morphe` | `com.gpp.morphe` | **GrindMod** | Rootless Manager: export installed Play Grindr → clone `com.grindrapp.android.plus` labeled **Grindr++** → LSPatch `-l 2` |
+| `alloy` | `com.gpp.alloy` | **GrindMod** | Rooted Vector module + Manager **without** Install tab; Settings toggle for Vector enable/disable (root + CLI) |
 
-Third-level names are architecture-explicit: **morphe** = Morphe A/B + embed; **alloy** = NexAlloy-style fingerprint → DexKit → Vector (Phase 2).
+### 2. Drawer model (asymmetric by design)
 
-### 2. No bare `com.gpp` continuity on one channel only
+```text
+Rootless:  Grindr (Play) | Grindr++ (clone) | GrindMod (Manager)
+Rooted:    Grindr (Play + hooks) | GrindMod (Alloy)
+```
 
-Both IDs are new. Legacy `com.grindrplus*` requires a one-time migrate (reinstall / re-patch / re-scope). UI brand is Grindr++.
+Alloy has no Grindr++ clone; experts toggle modding from GrindMod Settings (or Vector). Hot reload (API 102) is code-swap only — not enable/disable.
 
-### 3. Slim embed payload is not a third product
+### 3. Rootless install source
 
-LSPatch `-m` must not embed the fat Compose Manager into Grindr. Build may produce an internal **embedPayload** artifact (hooks + bridge + Xposed entry) for the Morphe patch pipeline. Users do not install it from the primary Releases list.
+**Primary:** copy APK/splits from installed `com.grindrapp.android` (Play). No CDN / ambiguous third-party Grindr download as happy path. Custom Files remain emergency fallback only.
 
-### 4. Dependency ownership
+### 4. Slim embed payload is not a third product
 
-- `morphe`: pin and package LSPatch v0.8; own Install / MorpheOrchestrator UX. **Not** a Vector/Xposed module — no `xposedmodule` meta, no `assets/xposed_init`. Vector must never list Morphe Manager as a module.
-- `alloy`: no packaged `lspatch.jar`; sole user-facing Vector registrant (`xposedmodule` + `xposed_init`, API 103+); Install nav omitted.
-- `embed`: slim LSPatch `-m` payload keeps Xposed entry for injection into Grindr; not installed as a standalone Vector module product.
+LSPatch `-m` embed payload is build-only for the Morphe pipeline.
 
-### 5. Bridge / signature
+### 5. Dependency ownership
 
-Custom permission `com.gpp.permission.ACCESS_BRIDGE_SERVICE` remains signature-protected and shared by name across flavors signed with the same key. Do not assume a single `applicationId` for Manager vs in-process hooks; query the active delivery package explicitly where needed.
+- `morphe`: LSPatch; Install UX; never a Vector module.
+- `alloy`: sole Vector registrant (API 103+); Install nav omitted; root CLI toggle allowed.
+- Bridge permission `com.gpp.permission.ACCESS_BRIDGE_SERVICE` stays signature-shared.
 
 ## Consequences
 
-- **Positive:** Clear UX; rootless keeps the primary narrative; rooted channel is explicit; embed size/stability can be controlled.
-- **Negative:** One-time package migration; CI ships two APKs; Bridge/package queries must be flavor-aware.
-- **Follow-ups:** ADR 0006 (Alloy DexKit), Morphe B bytecode rewriter (0004/0007), slim embed stripping.
+- **Positive:** Stock Play stays; patch visible as Grindr++; Manager disambiguated as GrindMod; no Grindr CDN host.
+- **Negative:** Dual storage on Morphe; Alloy UX differs (documented).
+- **Follow-ups:** ADR 0006, Morphe B rewriter.
 
 ## Migration
 
-1. Uninstall legacy `com.grindrplus*` until cutover.
-2. Install `gpp-morphe-*.apk` / `gpp_v*-morphe-*.apk` and/or `gpp-alloy-*.apk` / `gpp_v*-alloy-*.apk`.
-3. Morphe: re-run patch/install for Grindr (Manager only — ignore if Vector ever listed an old Morphe APK; uninstall/reinstall Manager without Xposed meta).
-4. Alloy: enable module in Vector and scope **only** Grindr (never the module package itself; never Morphe).
+1. Uninstall legacy `com.grindrplus*` / old same-package patched hosts as needed.
+2. Install `gpp-morphe-*.apk` and/or `gpp-alloy-*.apk`.
+3. Morphe: install stock Grindr from Play → GrindMod Install → Create Grindr++.
+4. Alloy: enable in Vector (or GrindMod Settings → Modding active); scope **only** Grindr.

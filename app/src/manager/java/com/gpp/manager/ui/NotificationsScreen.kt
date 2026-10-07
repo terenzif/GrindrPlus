@@ -75,7 +75,7 @@ fun NotificationScreen(
                 )
 
                 Text(
-                    text = "News for Grindr++. Tap to open the GitHub wiki. " +
+                    text = "News for GrindMod / Grindr++. Tap to open the GitHub wiki. " +
                         "APKs are on Releases (list below).",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier

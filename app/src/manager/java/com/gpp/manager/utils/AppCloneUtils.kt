@@ -6,14 +6,15 @@ import timber.log.Timber
 object AppCloneUtils {
     const val MAX_CLONES = 5
     const val GRINDR_PACKAGE_PREFIX = "com.grindrapp.android."
-    const val GRINDR_PACKAGE_NAME = "com.grindr"
-
     /**
-     * Check if Grindr is installed on the device
+     * Check if stock Play Grindr is installed on the device
      */
     fun isGrindrInstalled(context: Context): Boolean {
         return try {
-            context.packageManager.getPackageInfo(GRINDR_PACKAGE_NAME, 0)
+            context.packageManager.getPackageInfo(
+                com.gpp.core.Constants.GRINDR_PACKAGE_NAME,
+                0,
+            )
             true
         } catch (e: PackageManager.NameNotFoundException) {
             false

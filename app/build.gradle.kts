@@ -256,7 +256,7 @@ fun getGitCommitHash(): String? {
 tasks.register("printVersionInfo") {
     doLast {
         val versionName = android.defaultConfig.versionName
-        println("VERSION_INFO: Grindr++ v$versionName")
+        println("VERSION_INFO: GrindMod / Grindr++ v$versionName")
     }
 }
 

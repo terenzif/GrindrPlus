@@ -15,8 +15,8 @@ Official product vision for the Ver.5 release line. Implementation details live 
 | --- | --- |
 | **Platform** | Soft-fail mapping platform (schema evolution, catalog, fingerprints), truthful Settings↔runtime contract, no hard abort on unsupported `versionCode`. |
 | **E2E Settings ↔ hooks** | Every Manage Hooks toggle (and high-priority Other Settings) has a documented ON/OFF assert path; UI state matches runtime. See [e2e-settings-runtime-runbook.md](e2e-settings-runtime-runbook.md) and [adr/0002-settings-hook-truthfulness.md](adr/0002-settings-hook-truthfulness.md). |
-| **Morphe A** | Orchestrator-rootless delivery: patch + embed Vector/LSPatch around the existing integrated `-l 2` path. Not a feature rewrite. See [adr/0003-morphe-a-patch-backend.md](adr/0003-morphe-a-patch-backend.md). |
-| **Dual APK** | Two user-facing packages, same UI label **GrindrPlus**: `com.gpp.morphe` (rootless) and `com.gpp.alloy` (rooted Vector). See [adr/0005-dual-apk-morphe-alloy.md](adr/0005-dual-apk-morphe-alloy.md). |
+| **Morphe A** | Orchestrator-rootless delivery: export installed Play Grindr → clone Grindr++ → LSPatch `-l 2` embed. Not a feature rewrite. See [adr/0003-morphe-a-patch-backend.md](adr/0003-morphe-a-patch-backend.md). |
+| **Dual APK** | Two user-facing packages, Manager label **GrindMod**: `com.gpp.morphe` (rootless; creates **Grindr++** clone from installed Play Grindr) and `com.gpp.alloy` (rooted Vector; Settings modding toggle). Product umbrella **Grindr++**. See [adr/0005-dual-apk-morphe-alloy.md](adr/0005-dual-apk-morphe-alloy.md). |
 
 Anonymous **opt-in** telemetry remains allowed (existing Manager switch `analytics` in `SettingsViewModel`).
 

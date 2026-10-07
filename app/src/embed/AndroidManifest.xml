@@ -9,7 +9,7 @@
             android:value="true" />
         <meta-data
             android:name="xposeddescription"
-            android:value="Grindr++ Morphe embed payload (LSPatch -m)"
+            android:value="GrindMod Morphe embed payload for Grindr++ (LSPatch -m)"
             tools:replace="android:value" />
         <meta-data
             android:name="xposedminversion"

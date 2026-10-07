@@ -15,7 +15,7 @@ enum class LogSource { MODULE, MANAGER, HOOK, TASK, BRIDGE, UNKNOWN, HTTP }
 
 @SuppressLint("StaticFieldLeak", "ConstantLocale")
 object Logger {
-    private const val TAG = "GrindrPlus"
+    private const val TAG = "GrindMod"
     private var isModuleContext = false
     private var bridgeClient: BridgeClient? = null
     private val hookPrefixes = ConcurrentHashMap<String, String>()

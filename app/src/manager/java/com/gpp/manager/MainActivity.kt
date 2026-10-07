@@ -96,7 +96,7 @@ import timber.log.Timber.DebugTree
 
 
 internal val activityScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-internal const val TAG = "GrindrPlus"
+internal const val TAG = "GrindMod"
 internal const val DATA_URL =
     "https://raw.githubusercontent.com/terenzif/grindr-plus-plus/refs/heads/master/manifest.json"
 
@@ -179,7 +179,7 @@ class MainActivity : ComponentActivity() {
         }
         Toast.makeText(
             this,
-            "Please allow unknown sources for GrindrPlus",
+            "Please allow unknown sources for GrindMod",
             Toast.LENGTH_LONG
         ).show()
         startActivity(intent)
@@ -297,7 +297,7 @@ class MainActivity : ComponentActivity() {
                         if (Config.get("first_launch", true) as Boolean) {
                             firstLaunchDialog = true
                             patchInfoDialog = true
-                            plausible?.pageView("app://grindrplus/first_launch")
+                            plausible?.pageView("app://grindrmod/first_launch")
                             Config.put("first_launch", false)
                         }
                     }
@@ -337,7 +337,7 @@ class MainActivity : ComponentActivity() {
                                 )
 
                                 Text(
-                                    text = "GrindrPlus needs notification permission to alert you when someone blocks or unblocks you.",
+                                    text = "GrindMod needs notification permission to alert you when someone blocks or unblocks you.",
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(bottom = 16.dp)
                                 )
@@ -384,7 +384,7 @@ class MainActivity : ComponentActivity() {
                                 verticalArrangement = Center
                             ) {
                                 Text(
-                                    text = "Welcome to GrindrPlus!",
+                                    text = "Welcome to GrindMod!",
                                     style = MaterialTheme.typography.headlineSmall,
                                     modifier = Modifier.padding(bottom = 16.dp)
                                 )
@@ -528,17 +528,17 @@ class MainActivity : ComponentActivity() {
                                 )
 
                                 Text(
-                                    text = "• If you were using LSPatch previously, open the Install tab (Play download or Custom Files), or switch to Alloy + Vector.",
+                                    text = "• Rootless: Install tab creates Grindr++ from the Play-installed Grindr APK (stock stays).",
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(bottom = 12.dp)
                                 )
 
                                 Text(
                                     text = buildAnnotatedString {
-                                        append("• If you were using Vector (rooted), install GrindrPlus Alloy and enable the module in Vector with Grindr in scope. ")
+                                        append("• Rooted: install GrindMod Alloy and use Settings → Modding active (or Vector). ")
 
                                         withStyle(style = SpanStyle(textDecoration = TextDecoration.Underline)) {
-                                            append("Do not use the Install section if you're on Vector/Alloy.")
+                                            append("Do not use the Install tab on Alloy.")
                                         }
                                     },
                                     style = MaterialTheme.typography.bodyMedium,

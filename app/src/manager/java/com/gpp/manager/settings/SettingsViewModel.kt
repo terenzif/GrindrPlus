@@ -12,12 +12,16 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gpp.core.Config
+import com.gpp.core.DeliveryChannel
 import com.gpp.manager.DATA_URL
 import com.gpp.manager.settings.SettingsUtils.testMapsApiKey
 import com.gpp.manager.utils.AppIconManager
+import com.gpp.manager.vector.VectorModToggle
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @SuppressLint("StaticFieldLeak")
 class SettingsViewModel(
@@ -370,7 +374,7 @@ class SettingsViewModel(
                     TextSetting(
                         id = "custom_manifest",
                         title = "Custom Manifest URL",
-                        description = "Custom LSPatch manifest URL (mod + optional Grindr APK links). Default: this fork's manifest.json",
+                        description = "Custom manifest URL (module build list). Grindr comes from the installed Play app, not this URL.",
                         value = Config.get("custom_manifest", DATA_URL) as String,
                         onValueChange = {
                             viewModelScope.launch {
@@ -461,7 +465,7 @@ class SettingsViewModel(
                     )
                 }
 
-                _settingGroups.value = listOf(
+                val groups = mutableListOf(
                     SettingGroup(
                         id = "hooks",
                         title = "Manage Hooks",
@@ -472,17 +476,64 @@ class SettingsViewModel(
                         title = "Manage Tasks",
                         settings = taskSettings
                     ),
-                    SettingGroup(
-                        id = "other",
-                        title = "Other Settings",
-                        settings = otherSettings
-                    ),
-                    SettingGroup(
-                        id = "manager",
-                        title = "Manager Settings",
-                        settings = managerSettings
-                    ),
                 )
+
+                if (DeliveryChannel.current.isRootedModule) {
+                    groups += SettingGroup(
+                        id = "alloy_vector",
+                        title = "Vector modding",
+                        settings = listOf(
+                            SwitchSetting(
+                                id = "vector_modding_enabled",
+                                title = "Modding active",
+                                description = "When on, GrindMod Alloy hooks Grindr (modded). " +
+                                    "When off, Grindr runs stock. Uses root + Vector CLI; " +
+                                    "restarts Grindr (no device reboot). " +
+                                    if (VectorModToggle.isCliAvailable()) {
+                                        "CLI ready."
+                                    } else {
+                                        "CLI not detected — toggle may fail; use Vector Manager."
+                                    },
+                                isChecked = Config.get("vector_modding_enabled", true) as Boolean,
+                                onCheckedChange = { enabled ->
+                                    viewModelScope.launch {
+                                        val result = withContext(Dispatchers.IO) {
+                                            VectorModToggle.setModdingEnabled(context, enabled)
+                                        }
+                                        if (result.ok) {
+                                            Config.put("vector_modding_enabled", enabled)
+                                            Toast.makeText(
+                                                context,
+                                                result.message,
+                                                Toast.LENGTH_LONG,
+                                            ).show()
+                                        } else {
+                                            Toast.makeText(
+                                                context,
+                                                result.message,
+                                                Toast.LENGTH_LONG,
+                                            ).show()
+                                        }
+                                        loadSettings()
+                                    }
+                                },
+                            ),
+                        ),
+                    )
+                }
+
+                groups += SettingGroup(
+                    id = "other",
+                    title = "Other Settings",
+                    settings = otherSettings
+                )
+                groups += SettingGroup(
+                    id = "manager",
+                    title = "Manager Settings",
+                    settings = managerSettings
+                )
+
+                _settingGroups.value = groups
             } finally {
                 _isLoading.value = false
             }

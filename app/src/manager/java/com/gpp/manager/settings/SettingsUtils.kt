@@ -49,7 +49,7 @@ object SettingsUtils {
                         showTestDialog(
                             false,
                             "Success!",
-                            "Your Google Maps API key is working correctly. You can use it with GrindrPlus.",
+                            "Your Google Maps API key is working correctly. You can use it with GrindMod.",
                             rawResponse
                         )
                     }

@@ -73,7 +73,8 @@ class BlockLogViewModel : ViewModel() {
             .let { events ->
                 if (currentFilters.packageNameFilter.isNotEmpty()) {
                     events.filter { event ->
-                        val eventPackage = event.packageName ?: AppCloneUtils.GRINDR_PACKAGE_NAME
+                        val eventPackage = event.packageName
+                            ?: com.gpp.core.Constants.GRINDR_PACKAGE_NAME
                         currentFilters.packageNameFilter.contains(eventPackage)
                     }
                 } else {

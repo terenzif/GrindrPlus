@@ -91,7 +91,7 @@ object AnonymousTelemetry {
             val request = Request.Builder()
                 .url(endpoint)
                 .post(body)
-                .header("User-Agent", "GrindrPlus-Telemetry/1")
+                .header("User-Agent", "GrindMod-Telemetry/1")
                 .build()
             client.newCall(request).execute().use { resp ->
                 if (!resp.isSuccessful) {

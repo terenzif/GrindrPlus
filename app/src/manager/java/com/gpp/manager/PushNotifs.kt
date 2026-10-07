@@ -43,7 +43,7 @@ suspend fun fetchNotifs(context: Context) = withContext(Dispatchers.IO) {
             .url(CHANNEL_PING_URL)
             .header(
                 "User-Agent",
-                "Grindr++/terenzif (Android; news-ping)"
+                "GrindMod/terenzif (Android; news-ping)"
             )
             .build()
 
@@ -95,17 +95,17 @@ fun sendNotification(
 
     val channel = android.app.NotificationChannel(
         "update_gpp",
-        "GPP Updates",
+        "GrindMod Updates",
         NotificationManager.IMPORTANCE_HIGH
     ).apply {
-        description = "Notifications for Grindr++ updates"
+        description = "Notifications for GrindMod / Grindr++ updates"
     }
 
     nm.createNotificationChannel(channel)
 
     NotificationCompat.Builder(context, "update_gpp").apply {
         setSmallIcon(R.drawable.ic_launcher_foreground)
-        setContentTitle("Grindr++ News")
+        setContentTitle("GrindMod News")
         setContentText(msg)
         setContentIntent(
             PendingIntent.getActivity(

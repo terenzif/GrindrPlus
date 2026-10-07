@@ -16,3 +16,11 @@ tmp*
 # Antigravity working files
 *.txt
 __pycache__/
+
+# Brand WIP / attempts (public surface = masters only)
+docs/brand/**/attempts/
+docs/brand/**/wip/
+docs/brand/**/*-attempt*
+
+# Local APK staging — never PR
+release-stage/

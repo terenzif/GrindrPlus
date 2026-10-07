@@ -4,15 +4,16 @@ import android.content.Context
 import android.widget.Toast
 import com.gpp.manager.ManagerBridge
 import com.gpp.manager.installation.steps.CheckStorageSpaceStep
-import com.gpp.manager.installation.steps.Print
-import com.gpp.manager.installation.steps.Step
 import com.gpp.manager.installation.steps.CloneGrindrStep
 import com.gpp.manager.installation.steps.DownloadStep
+import com.gpp.manager.installation.steps.ExportInstalledGrindrStep
 import com.gpp.manager.installation.steps.ExtractBundleStep
+import com.gpp.manager.installation.steps.InjectCloneIconStep
 import com.gpp.manager.installation.steps.InstallApkStep
 import com.gpp.manager.installation.steps.PatchApkStep
-import com.gpp.manager.installation.steps.PlayGrindrDownloadStep
+import com.gpp.manager.installation.steps.Print
 import com.gpp.manager.installation.steps.SignClonedGrindrApk
+import com.gpp.manager.installation.steps.Step
 import com.gpp.manager.utils.KeyStoreUtils
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -23,13 +24,18 @@ import java.io.File
 import java.io.IOException
 import kotlin.system.measureTimeMillis
 
-
+/**
+ * Morphe install orchestrator.
+ *
+ * Primary product path [createOrUpdateGrindrPlus]: export Play-installed Grindr →
+ * clone as [PRODUCT_CLONE_PACKAGE] / [PRODUCT_CLONE_LABEL] → inject brand icon →
+ * LSPatch embed → session install.
+ */
 class Installation(
     private val context: Context,
     val version: String,
-    modUrl: String,
-    grindrUrl: String,
-    private val mapsApiKey: String?
+    private val modUrl: String,
+    private val mapsApiKey: String?,
 ) {
     private val keyStoreUtils = KeyStoreUtils(context)
     private val folder = context.getExternalFilesDir(null)
@@ -40,65 +46,60 @@ class Installation(
     private val bundleFile = File(folder, "grindr-$version.zip")
 
     private val installStep = InstallApkStep(outputDir)
-    private val patchApkStep = PatchApkStep(unzipFolder, outputDir, modFile, keyStoreUtils.keyStore, mapsApiKey)
 
-    /** Grindr: Play (gplayapi / Aurora protocol) when URL blank; else HTTP CDN URL. */
-    private val grindrDownloadStep = if (grindrUrl.isBlank()) {
-        PlayGrindrDownloadStep(bundleFile)
-    } else {
-        DownloadStep(bundleFile, grindrUrl, "Grindr bundle")
+    companion object {
+        /** Stable product clone package (coexists with stock Play Grindr). */
+        const val PRODUCT_CLONE_PACKAGE = "com.grindrapp.android.plus"
+
+        /** Launcher label for the patched clone. */
+        const val PRODUCT_CLONE_LABEL = "Grindr++"
     }
 
-    private val commonSteps = listOf(
-        // Order matters
-        CheckStorageSpaceStep(folder),
-        grindrDownloadStep,
-        DownloadStep(modFile, modUrl, "mod"),
-        ExtractBundleStep(bundleFile, unzipFolder),
-    )
-
-    suspend fun install(print: Print) = performOperation(
-        steps = commonSteps + listOf(patchApkStep, installStep),
-        operationName = "install-$version",
-        print = print,
-    )
-
-    suspend fun cloneGrindr(
-        packageName: String,
-        appName: String,
-        debuggable: Boolean,
-        embedLSpatch: Boolean,
-        print: Print,
-    ) = performOperation(
-        steps = commonSteps + listOf(
+    /**
+     * Create or update the Grindr++ clone from the device's Play-installed Grindr.
+     */
+    suspend fun createOrUpdateGrindrPlus(print: Print) = performOperation(
+        steps = listOf(
+            CheckStorageSpaceStep(folder),
+            ExportInstalledGrindrStep(bundleFile),
+            DownloadStep(modFile, modUrl, "mod"),
+            ExtractBundleStep(bundleFile, unzipFolder),
             CloneGrindrStep(
                 folder = unzipFolder,
-                packageName = packageName,
-                appName = appName,
-                debuggable = debuggable,
+                packageName = PRODUCT_CLONE_PACKAGE,
+                appName = PRODUCT_CLONE_LABEL,
+                debuggable = false,
             ),
+            InjectCloneIconStep(unzipFolder),
             SignClonedGrindrApk(keyStoreUtils, unzipFolder),
-            PatchApkStep(unzipFolder, outputDir, modFile,
-                keyStoreUtils.keyStore, mapsApiKey, embedLSpatch),
-            installStep
+            PatchApkStep(
+                unzipFolder,
+                outputDir,
+                modFile,
+                keyStoreUtils.keyStore,
+                mapsApiKey,
+                embedLSPatch = true,
+            ),
+            installStep,
         ),
-        operationName = "clone",
+        operationName = "grindr_plus_from_installed",
         print = print,
     )
 
+    /** Offline fallback: local Grindr bundle zip + local mod zip (same-package patch). */
     suspend fun installCustom(
         bundleFile: File,
         modFile: File,
-        print: Print
+        print: Print,
     ) = performOperation(
         steps = listOf(
             CheckStorageSpaceStep(folder),
             ExtractBundleStep(bundleFile, unzipFolder),
             PatchApkStep(unzipFolder, outputDir, modFile, keyStoreUtils.keyStore, mapsApiKey),
-            InstallApkStep(outputDir)
+            InstallApkStep(outputDir),
         ),
         operationName = "custom_install",
-        print = print
+        print = print,
     )
 
     suspend fun performOperation(
@@ -108,7 +109,7 @@ class Installation(
         print: Print,
     ) = try {
         withContext(Dispatchers.IO) {
-            ManagerBridge.plausible?.pageView("app://grindrplus/$operationName")
+            ManagerBridge.plausible?.pageView("app://grindrmod/$operationName")
 
             val time = measureTimeMillis {
                 for (step in steps) {
@@ -124,8 +125,8 @@ class Installation(
 
             ManagerBridge.plausible?.event(
                 "${operationName}_success",
-                "app://grindrplus/${operationName}_success",
-                props = mapOf("time" to time)
+                "app://grindrmod/${operationName}_success",
+                props = mapOf("time" to time),
             )
 
             onSuccess()
@@ -135,15 +136,15 @@ class Installation(
         showToast("$operationName was cancelled")
         ManagerBridge.plausible?.event(
             "${operationName}_cancelled",
-            "app://grindrplus/${operationName}_cancelled"
+            "app://grindrmod/${operationName}_cancelled",
         )
         throw e
     } catch (e: Exception) {
         val errorMsg = "$operationName failed: ${e.localizedMessage}"
         ManagerBridge.plausible?.event(
             "${operationName}_failed",
-            "app://grindrplus/${operationName}_failure",
-            props = mapOf("error" to e.message)
+            "app://grindrmod/${operationName}_failure",
+            props = mapOf("error" to e.message),
         )
         print(errorMsg)
         showToast(errorMsg)
