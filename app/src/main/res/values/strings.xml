@@ -1,3 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Grindr++</string>
+    <string name="app_name">GrindMod</string>
+    <string name="xposed_module_description">GrindMod Alloy — Vector module for Grindr++ (API 102)</string>
+    <string name="xposed_embed_description">GrindMod Morphe embed payload (LSPatch -m)</string>
 </resources>

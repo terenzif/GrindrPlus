@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Embed payload: slim libxposed entry for LSPatch -m into Grindr (not a Releases product). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:description="@string/xposed_embed_description">
+        <meta-data
+            android:name="xposedmodule"
+            tools:node="remove" />
+        <meta-data
+            android:name="xposeddescription"
+            tools:node="remove" />
+        <meta-data
+            android:name="xposedminversion"
+            tools:node="remove" />
+        <meta-data
+            android:name="xposedscope"
+            tools:node="remove" />
+
+        <activity
+            android:name="com.gpp.manager.MainActivity"
+            tools:node="remove" />
+        <activity-alias
+            android:name="com.gpp.manager.MainActivityAlias"
+            tools:node="remove" />
+        <service
+            android:name="com.gpp.bridge.BridgeService"
+            android:exported="true"
+            android:foregroundServiceType="specialUse"
+            tools:node="merge">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="xposed_module"
+                tools:replace="android:value" />
+        </service>
+    </application>
+</manifest>

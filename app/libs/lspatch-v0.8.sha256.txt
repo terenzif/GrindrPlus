@@ -1,0 +1,6 @@
+# LSPatch pin (Morphe A / ADR 0003)
+# Source: https://github.com/JingMatrix/LSPatch/releases/tag/v0.8
+# Artifact URL: https://github.com/JingMatrix/LSPatch/releases/download/v0.8/lspatch.jar
+# Upstream SHA256: B81094AC3D088849D9781E2678A87562936F8E0D78C4D136A9072DCE40F72208
+# Installed as: app/libs/lspatch.jar (+ assets/lspatch/*)
+# Note: setupLSPatch strips ListenableFuture + errorprone annotations after install.

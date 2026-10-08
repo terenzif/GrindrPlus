@@ -73,15 +73,14 @@ body:
       required: true
 
   - type: dropdown
-    id: using-lsposed
+    id: using-vector
     attributes:
-      label: Are you using LSPosed?
+      label: Are you using Vector (rooted)?
       description: |
-        ⚠️ **WARNING: The original LSPosed is no longer maintained and therefore not fully functional.**
-        
-        Users should use JingMatrix's maintained fork instead: https://github.com/JingMatrix/LSPosed/releases
-        
-        **__IF YOU ARE NOT ROOTED, YOU ARE NOT USING LSPOSSED. ANSWER "NO" TO THIS QUESTION AND SKIP THE NEXT FIELD.__**
+        Rooted installs should use **[JingMatrix/Vector](https://github.com/JingMatrix/Vector)**
+        (modern Xposed framework; successor to the JingMatrix LSPosed fork).
+
+        Rootless / Morphe + LSPatch users: answer **No** and skip the next field.
       options:
         - "No"
         - "Yes"
@@ -89,13 +88,13 @@ body:
      required: true
 
   - type: input
-    id: lsposed-version
+    id: vector-version
     attributes:
-      label: LSPosed version
+      label: Vector version
       description: |
-        If you are using LSPosed, enter the version (e.g. `1.9.2 (7024)`).
-        *If you are not using LSPosed, leave this field blank.*
-      placeholder: Enter the LSPosed version
+        If you are using Vector, enter the version (e.g. `2.2` or a canary build id).
+        *If you are not using Vector, leave this field blank.*
+      placeholder: Enter the Vector version
     validations:
       required: false
 
@@ -179,6 +178,6 @@ body:
       description: |
         Sometimes the module logs alone aren't enough to determine the root cause of an issue. Android system logs can provide additional context about what's happening at the system level.
         
-        If you're comfortable with it, take logs and grep for `Grindr`, `LSPosed`, `LSPatch` if possible. For information about how to capture these logs, check the LineageOS website [here](https://wiki.lineageos.org/how-to/logcat/).
+        If you're comfortable with it, take logs and grep for `Grindr`, `Vector`, `LSPosed`, `LSPatch` if possible. For information about how to capture these logs, check the LineageOS website [here](https://wiki.lineageos.org/how-to/logcat/).
       render: shell
       placeholder: Paste your Android logs here if available

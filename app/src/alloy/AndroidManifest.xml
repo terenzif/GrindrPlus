@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Alloy: rooted Vector module (sole user-facing Xposed registrant). libxposed API 102. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Install-only permissions are Morphe's; Alloy scopes Grindr via Vector. -->
+    <uses-permission
+        android:name="android.permission.REQUEST_INSTALL_PACKAGES"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.REQUEST_DELETE_PACKAGES"
+        tools:node="remove" />
+
+    <application
+        android:description="@string/xposed_module_description">
+        <!-- Legacy xposed* meta removed — registration is META-INF/xposed/* (ADR 0008). -->
+        <meta-data
+            android:name="xposedmodule"
+            tools:node="remove" />
+        <meta-data
+            android:name="xposeddescription"
+            tools:node="remove" />
+        <meta-data
+            android:name="xposedminversion"
+            tools:node="remove" />
+        <meta-data
+            android:name="xposedscope"
+            tools:node="remove" />
+
+        <provider
+            android:name="io.github.libxposed.service.XposedProvider"
+            android:authorities="${applicationId}.XposedService"
+            android:exported="true"
+            tools:ignore="ExportedContentProvider" />
+
+        <service
+            android:name="com.gpp.bridge.BridgeService"
+            android:exported="true"
+            android:foregroundServiceType="specialUse"
+            tools:node="merge">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="xposed_module"
+                tools:replace="android:value" />
+        </service>
+    </application>
+</manifest>

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Fetch the latest Play-scraped Grindr version into latest_play.json.
 
-This is telemetry / spoof input only — it is NOT the supported hook target.
-Hook support is tracked in supported_target.json (and BuildConfig in app/build.gradle.kts).
+This is telemetry / spoof input only (e.g. DisableUpdates). Runtime hook support
+is pack-driven via mapping-packs/ — there is no single hardcoded “supported” tip.
 """
 
 import argparse
@@ -129,8 +129,8 @@ def main() -> None:
         # Keep deprecated version.json in sync with Play scrape for old consumers.
         save_version_to_json(version, build, 'version.json')
         print(
-            'Note: supported_target.json is NOT updated by this script '
-            '(hook mappings must be updated manually).'
+            'Note: mapping packs are NOT updated by this script '
+            '(add/refresh packs under mapping-packs/ for new versionCodes).'
         )
 
 

@@ -1,0 +1,469 @@
+{
+  "schemaVersion": 2,
+  "versionName": "26.19.0",
+  "versionCode": 185656,
+  "confidence": "static-jadx",
+  "generatedFrom": "JADX decompile of device tip APK 26.19.0/185656 + fingerprint remap from 179451 pack (2026-10-06). Unresolved R8 sites soft-skipped (empty name) — do not reuse 26.16.1 short names (collisions).",
+  "symbols": {
+    "core.userAgent": {
+      "kind": "class",
+      "name": "br30",
+      "fingerprint": "grindr3/"
+    },
+    "core.userSession": {
+      "kind": "class",
+      "name": "hu30",
+      "fingerprint": "implements qs30 / headerGrindrRoles",
+      "note": "impl of qs30 (was atc / UserSession)"
+    },
+    "core.deviceInfo": {
+      "kind": "class",
+      "name": "jkb",
+      "fingerprint": "field AdvertisingIdClient.Info"
+    },
+    "core.grindrLocationProvider": {
+      "kind": "class",
+      "name": "mth",
+      "fingerprint": "system settings insufficient for location request, attempting to resolve"
+    },
+    "core.serverDrivenCascadeRepo": {
+      "kind": "class",
+      "name": "wq6",
+      "note": "CascadeService field owner",
+      "fingerprint": "field CascadeService"
+    },
+    "core.ageVerificationActivity": {
+      "kind": "class",
+      "name": "com.grindrapp.android.ageverification.presentation.ui.AgeVerificationActivity"
+    },
+    "core.browseExploreActivity": {
+      "kind": "class",
+      "name": "",
+      "note": "BrowseExploreMapActivity FQN absent on 26.19.0"
+    },
+    "core.serverNotification": {
+      "kind": "class",
+      "name": "com.grindrapp.android.network.websocket.model.WebSocketNotification$ServerNotification",
+      "fingerprint": "ServerNotification"
+    },
+    "retrofit.fail": {
+      "kind": "class",
+      "name": "ehd",
+      "fingerprint": "Fail(failValue="
+    },
+    "retrofit.success": {
+      "kind": "class",
+      "name": "fhd",
+      "fingerprint": "Success(successValue="
+    },
+    "retrofit.successValue": {
+      "kind": "field",
+      "name": "successValue",
+      "note": "was a on 26.16.1; readable name retained by R8"
+    },
+    "retrofit.failValue": {
+      "kind": "field",
+      "name": "failValue",
+      "note": "was a on 26.16.1; readable name retained by R8"
+    },
+    "DisableBoosting.DRAWER_PROFILE_UI_STATE": {
+      "kind": "class",
+      "name": "jhc",
+      "fingerprint": "DrawerProfileUiState(showBoostMeButton="
+    },
+    "DisableBoosting.RADAR_UI_MODEL": {
+      "kind": "class",
+      "name": "dyt",
+      "fingerprint": "RadarUiModel(roamButton="
+    },
+    "DisableBoosting.FAB_UI_MODEL": {
+      "kind": "class",
+      "name": "wle",
+      "fingerprint": "FabUiModel(isVisible="
+    },
+    "DisableBoosting.RIGHT_NOW_MICROS_FAB_UI_MODEL": {
+      "kind": "class",
+      "name": "",
+      "note": "RightNowMicrosFabUiModel toString not resolved (p9w is MapperInput)"
+    },
+    "DisableBoosting.BOOST_STATE_CLASS": {
+      "kind": "class",
+      "name": "",
+      "note": "MicrosDrawerItemState$Unavailable absent / unresolved"
+    },
+    "DisableBoosting.NAVBAR_CLASS": {
+      "kind": "class",
+      "name": "j0j",
+      "fingerprint": "HomeScreenBottomNavigationUiModel("
+    },
+    "DisableBoosting.SMALL_PERSISTENT_VECTOR": {
+      "kind": "class",
+      "name": "",
+      "note": "SmallPersistentVector FQN absent on this DEX"
+    },
+    "DisableBoosting.SUBSCRIBE_FOR_BOOST_REDEEM": {
+      "kind": "class",
+      "name": "",
+      "note": "lambda not confidently resolved"
+    },
+    "DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP": {
+      "kind": "class",
+      "name": "",
+      "note": "h76 collision on 26.19.0 — soft-skip"
+    },
+    "DisableBoosting.SHOW_TAPS_AND_VIEWED_ME_POPUP_METHOD": {
+      "kind": "method",
+      "name": ""
+    },
+    "AntiBlock.CHAT_DELETE_CONVERSATION_PLUGIN": {
+      "kind": "class",
+      "name": "",
+      "note": "Deleting conversations string in DEX pool but no JADX owner yet"
+    },
+    "AntiBlock.INBOX_FRAGMENT_V2_DELETE_CONVERSATIONS": {
+      "kind": "class",
+      "name": "xs9",
+      "fingerprint": "chat_read_receipt + deleteConversationUseCase"
+    },
+    "AntiBlock.INDIVIDUAL_UNBLOCK_ACTIVITY_VIEW_MODEL": {
+      "kind": "class",
+      "name": "",
+      "note": "io6 collision — soft-skip"
+    },
+    "AntiBlock.CONVERSATION_DELETE_NOTIFICATION": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.model.ConversationDeleteNotification"
+    },
+    "ProfileDetails.BLOCKED_PROFILES_OBSERVER": {
+      "kind": "class",
+      "name": "",
+      "note": "Observer fingerprint not re-resolved"
+    },
+    "ProfileDetails.PROFILE_VIEW_HOLDER": {
+      "kind": "class",
+      "name": "",
+      "note": "r29 collision — soft-skip"
+    },
+    "ProfileDetails.DISTANCE_UTILS": {
+      "kind": "class",
+      "name": "l6c",
+      "method": "c",
+      "note": "concrete impl of k6c (utils.distance.DistanceUtils)"
+    },
+    "ProfileDetails.PROFILE_BAR_VIEW": {
+      "kind": "class",
+      "name": "com.grindrapp.android.ui.profileV2.ProfileBarView"
+    },
+    "ProfileDetails.PROFILE_VIEW_STATE": {
+      "kind": "class",
+      "name": "vys",
+      "fingerprint": "ProfileViewState(profileId="
+    },
+    "ProfileDetails.SERVER_DRIVEN_CASCADE_CACHED_STATE": {
+      "kind": "class",
+      "name": "",
+      "note": "removed; use CascadeProfileUiData"
+    },
+    "ProfileDetails.SERVER_DRIVEN_CASCADE_CACHED_PROFILE": {
+      "kind": "class",
+      "name": "vp6",
+      "fingerprint": "CascadeProfileUiData(profileId="
+    },
+    "ProfileDetails.CASCADE_PROFILE_UI_DATA": {
+      "kind": "class",
+      "name": "vp6",
+      "fingerprint": "CascadeProfileUiData(profileId="
+    },
+    "ChatIndicators.CHAT_REST_SERVICE": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.data.datasource.api.service.ChatRestService"
+    },
+    "LocalSavedPhrases.AddSavedPhraseResponse": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.data.datasource.api.model.AddSavedPhraseResponse",
+      "fingerprint": "chat.data.datasource.api.model"
+    },
+    "LocalSavedPhrases.PhrasesRestService": {
+      "kind": "class",
+      "name": "com.grindrapp.android.api.PhrasesRestService"
+    },
+    "UnlimitedAlbums.AlbumsRestService": {
+      "kind": "class",
+      "name": "com.grindrapp.android.api.albums.AlbumsRestService"
+    },
+    "BanManagement.LoginRestService": {
+      "kind": "class",
+      "name": "com.grindrapp.android.api.LoginRestService"
+    },
+    "BanManagement.bannedArgs": {
+      "kind": "class",
+      "name": "rd3",
+      "fingerprint": "BannedArgs(bannedType="
+    },
+    "BanManagement.deviceUtility": {
+      "kind": "class",
+      "name": "",
+      "note": "dual fingerprint android_id+profile_tag_search_history not in one utility"
+    },
+    "ExpiringMedia.ExpiringImage": {
+      "kind": "class",
+      "name": "qq7",
+      "fingerprint": "ExpiringImage(text="
+    },
+    "ExpiringMedia.ExpiringPhotoStatusResponse": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.data.datasource.api.model.ExpiringPhotoStatusResponse"
+    },
+    "FeatureGranting.settingDistanceVisibilityViewModel": {
+      "kind": "class",
+      "name": "mly",
+      "fingerprint": "UiState(distanceVisibility="
+    },
+    "http.userSession.isLoggedInMethod": {
+      "kind": "method",
+      "name": "N",
+      "note": "getJwt().length() > 0 via userSessionStateFlow"
+    },
+    "http.userSession.authTokenFlowMethod": {
+      "kind": "method",
+      "name": "G",
+      "note": "StateFlow sessionFlow auth token"
+    },
+    "http.userSession.rolesMethod": {
+      "kind": "method",
+      "name": "x",
+      "note": "returns headerGrindrRoles (L-Grindr-Roles)"
+    },
+    "http.deviceInfo.lazyField": {
+      "kind": "field",
+      "name": "deviceInfoData$delegate",
+      "note": "kotlin.Lazy device info (was d)"
+    },
+    "http.userAgent.stringMethod": {
+      "kind": "method",
+      "name": "a",
+      "note": "User-Agent string"
+    },
+    "EnableUnlimited.paywallUtils": {
+      "kind": "class",
+      "name": "",
+      "note": "xub collision — soft-skip pending paywall fingerprint"
+    },
+    "EnableUnlimited.paywallUtils.showMethod": {
+      "kind": "method",
+      "name": ""
+    },
+    "EnableUnlimited.persistentAdBannerContainer": {
+      "kind": "class",
+      "name": "",
+      "note": "h68 collision — soft-skip"
+    },
+    "EnableUnlimited.persistentAdBannerContainer.bindMethod": {
+      "kind": "method",
+      "name": ""
+    },
+    "EnableUnlimited.interstitialCollector.show": {
+      "kind": "class",
+      "name": "",
+      "note": "fo1 collision — soft-skip"
+    },
+    "EnableUnlimited.interstitialCollector.o39": {
+      "kind": "class",
+      "name": "",
+      "note": "o39 collision — soft-skip"
+    },
+    "EnableUnlimited.interstitialCollector.d12": {
+      "kind": "class",
+      "name": "",
+      "note": "d12 collision — soft-skip"
+    },
+    "EnableUnlimited.interstitialCollector.chatActivity": {
+      "kind": "class",
+      "name": "",
+      "note": "qy1 collision — soft-skip"
+    },
+    "EnableUnlimited.interstitialCollector.profilesActivity": {
+      "kind": "class",
+      "name": "",
+      "note": "p49 collision — soft-skip"
+    },
+    "EnableUnlimited.viewsToHide.profileTagCascade": {
+      "kind": "class",
+      "name": "",
+      "note": "ny8 collision — soft-skip"
+    },
+    "EnableUnlimited.viewsToHide.drawerProfile": {
+      "kind": "class",
+      "name": "",
+      "note": "yr3 collision — soft-skip"
+    },
+    "EnableUnlimited.viewsToHide.fragmentRadar": {
+      "kind": "class",
+      "name": "",
+      "note": "eb9 collision — soft-skip"
+    },
+    "EnableUnlimited.userSession.rolesUpdatedMethod": {
+      "kind": "method",
+      "name": "e0",
+      "note": "synchronized e0(List) updates grantedRoles (was Y on 26.16.1)"
+    },
+    "QuickBlock.blockViewModel": {
+      "kind": "class",
+      "name": "",
+      "note": "mu0 collision — soft-skip"
+    },
+    "QuickBlock.blockViewModel.showDialogMethod": {
+      "kind": "method",
+      "name": ""
+    },
+    "QuickBlock.profileViewHolder.bindMethod": {
+      "kind": "method",
+      "name": ""
+    },
+    "QuickBlock.profileViewHolder.viewBindingField": {
+      "kind": "field",
+      "name": ""
+    },
+    "QuickBlock.profileViewHolder.toolbarField": {
+      "kind": "field",
+      "name": ""
+    },
+    "FeatureGranting.isFeatureFlagEnabled": {
+      "kind": "class",
+      "name": "i2l",
+      "note": "implements h2l"
+    },
+    "FeatureGranting.isFeatureFlagEnabled.invokeMethod": {
+      "kind": "method",
+      "name": "a"
+    },
+    "FeatureGranting.alertParamsField": {
+      "kind": "field",
+      "name": "",
+      "note": "not re-resolved on 26.19.0"
+    },
+    "OnlineIndicator.utils": {
+      "kind": "class",
+      "name": "",
+      "note": "aq7 collision — soft-skip"
+    },
+    "OnlineIndicator.utils.shouldShowMethod": {
+      "kind": "method",
+      "name": ""
+    },
+    "OnlineIndicator.profileUtilsV2.thresholdMethod": {
+      "kind": "method",
+      "name": "",
+      "note": "ProfileUtilsV2 FQN absent"
+    },
+    "DisableUpdates.appUpgradeManager": {
+      "kind": "class",
+      "name": "gb2",
+      "fingerprint": "deprecation_message / deprecationDialog"
+    },
+    "DisableUpdates.appUpgradeManager.showDeprecatedDialogMethod": {
+      "kind": "method",
+      "name": "o",
+      "note": "o(AppCompatActivity) builds deprecation dialog"
+    },
+    "DisableUpdates.appConfiguration.versionField": {
+      "kind": "field",
+      "name": "appVersion",
+      "note": "h52.appVersion spoof target (was f); AppConfiguration FQN is now h52 — hook still hardcodes platform.config.AppConfiguration"
+    },
+    "EmptyCalls.VIDEO_CALL_HAS_NOT_CHATTED": {
+      "kind": "class",
+      "name": "com.grindrapp.android.exception.VideoCallHasNotChattedException"
+    },
+    "EmptyCalls.CHAT_INDIVIDUAL_FRAGMENT": {
+      "kind": "class",
+      "name": "com.grindrapp.android.chat.presentation.ui.individual.ChatIndividualFragment"
+    },
+    "WebSocketAlive.CLIENT": {
+      "kind": "class",
+      "name": "com.grindrapp.android.network.websocket.a",
+      "fingerprint": "extends okhttp3.WebSocketListener"
+    },
+    "WebSocketAlive.FACTORY": {
+      "kind": "class",
+      "name": "pk50",
+      "fingerprint": "a(String,String,websocket.a)->h6u"
+    },
+    "Favorites.FRAGMENT": {
+      "kind": "class",
+      "name": "",
+      "note": "FavoritesFragment absent on Cascade V2"
+    }
+  },
+  "hooks": {
+    "DisableBoosting": {
+      "status": "partial",
+      "reason": "drawer/radar/fab/navbar remapped; RightNow/BOOST_STATE/SmallPersistent/SHOW_TAPS soft-skipped"
+    },
+    "AntiBlock": {
+      "status": "partial",
+      "reason": "xs9 inbox + ConversationDeleteNotification; delete-plugin + unblock VM soft-skipped"
+    },
+    "ProfileDetails": {
+      "status": "partial",
+      "reason": "l6c/vys/vp6/ProfileBarView; PROFILE_VIEW_HOLDER soft-skipped"
+    },
+    "ChatIndicators": {
+      "status": "mapped"
+    },
+    "DisableShuffle": {
+      "status": "skipped",
+      "reason": "fingerprint absent on this DEX (Cascade V2)"
+    },
+    "EmptyCalls": {
+      "status": "mapped",
+      "reason": "VideoCallHasNotChattedException + ChatIndividualFragment FQNs present"
+    },
+    "NotificationAlerts": {
+      "status": "skipped",
+      "reason": "notification_reminder_time absent"
+    },
+    "ChatTerminal": {
+      "status": "skipped",
+      "reason": "chatMessageMetaData absent"
+    },
+    "LocalSavedPhrases": {
+      "status": "mapped"
+    },
+    "BanManagement": {
+      "status": "partial",
+      "reason": "deviceUtility skip"
+    },
+    "EnableUnlimited": {
+      "status": "partial",
+      "reason": "rolesUpdatedMethod e0 remapped; paywall/interstitial/viewsToHide soft-skipped (R8 collisions)"
+    },
+    "QuickBlock": {
+      "status": "skipped",
+      "reason": "blockViewModel / profileViewHolder unresolved (R8 collisions)"
+    },
+    "FeatureGranting": {
+      "status": "partial",
+      "reason": "i2l + mly remapped; alertParamsField soft-skipped"
+    },
+    "OnlineIndicator": {
+      "status": "skipped",
+      "reason": "utils + ProfileUtilsV2 unresolved"
+    },
+    "DisableUpdates": {
+      "status": "partial",
+      "reason": "gb2.o remapped; AppConfiguration FQN still hardcoded to platform.config in hook"
+    },
+    "Favorites": {
+      "status": "skipped",
+      "reason": "FavoritesFragment absent (Cascade V2)"
+    },
+    "WebSocketAlive": {
+      "status": "mapped",
+      "reason": "websocket.a + pk50"
+    },
+    "StatusDialog": {
+      "status": "mapped"
+    }
+  }
+}

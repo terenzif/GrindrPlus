@@ -1,0 +1,258 @@
+package com.gpp.hooks
+
+import android.widget.Toast
+import com.gpp.GrindrPlus
+import com.gpp.bridge.BridgeService
+import com.gpp.core.Config
+import com.gpp.core.DatabaseHelper
+import com.gpp.core.Logger
+import com.gpp.core.Obfuscation
+import com.gpp.core.logd
+import com.gpp.core.loge
+import com.gpp.utils.Hook
+import com.gpp.utils.HookStage
+import com.gpp.utils.hook
+import com.gpp.utils.hookConstructor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+
+class AntiBlock : Hook(
+    "Anti Block",
+    "Notifies you when someone blocks or unblocks you"
+) {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var myProfileId: Long = 0
+
+    override fun cleanup() {
+        scope.cancel()
+        // Ensure anti-block notifications are not left permanently disabled
+        GrindrPlus.shouldTriggerAntiblock = true
+        GrindrPlus.blockCaller = ""
+    }
+
+    override fun init() {
+        val unblockVm = Obfuscation.G.AntiBlock.INDIVIDUAL_UNBLOCK_ACTIVITY_VIEW_MODEL
+        if (unblockVm.isNotEmpty()) {
+            // was "R"; DialogMessage(116) lives in io6.L on 26.16.1
+            findClass(unblockVm)
+                .hook("L", HookStage.BEFORE) { param ->
+                    GrindrPlus.shouldTriggerAntiblock = false
+                }
+
+            findClass(unblockVm)
+                .hook("L", HookStage.AFTER) { param ->
+                    scope.launch {
+                        try {
+                            delay(700) // Wait for WS to unblock
+                        } finally {
+                            withContext(NonCancellable) {
+                                GrindrPlus.shouldTriggerAntiblock = true
+                            }
+                        }
+                    }
+                }
+        }
+
+        if (Config.get("force_old_anti_block_behavior", false) as Boolean) {
+            findClass(Obfuscation.G.AntiBlock.CONVERSATION_DELETE_NOTIFICATION)
+                .hookConstructor(HookStage.BEFORE) { param ->
+                    @Suppress("UNCHECKED_CAST")
+                    val profiles = param.args().firstOrNull() as? List<String> ?: emptyList()
+                    param.setArg(0, emptyList<String>())
+                }
+        } else {
+            // search for '("chat_read_receipt", conversationId, null);'
+            findClass(Obfuscation.G.AntiBlock.INBOX_FRAGMENT_V2_DELETE_CONVERSATIONS)
+                .hook("b", HookStage.BEFORE) { param ->
+                    GrindrPlus.shouldTriggerAntiblock = false
+                    GrindrPlus.blockCaller = "inboxFragmentV2DeleteConversations"
+                }
+
+            // search for '("chat_read_receipt", conversationId, null);'
+            findClass(Obfuscation.G.AntiBlock.INBOX_FRAGMENT_V2_DELETE_CONVERSATIONS)
+                .hook("b", HookStage.AFTER) { param ->
+                    val numberOfChatsToDelete = (param.args().firstOrNull() as? List<*>)?.size ?: 0
+                    if (numberOfChatsToDelete <= 0) {
+                        // No chats to delete: reset flags immediately without launching a coroutine
+                        GrindrPlus.shouldTriggerAntiblock = true
+                        GrindrPlus.blockCaller = ""
+                    } else {
+                        scope.launch {
+                            try {
+                                logd("Request to delete $numberOfChatsToDelete chats")
+                                delay(300L * numberOfChatsToDelete)
+                            } finally {
+                                withContext(NonCancellable) {
+                                    GrindrPlus.shouldTriggerAntiblock = true
+                                    GrindrPlus.blockCaller = ""
+                                }
+                            }
+                        }
+                    }
+                }
+
+            // search for 'Deleting conversations'
+            findClass(Obfuscation.G.AntiBlock.CHAT_DELETE_CONVERSATION_PLUGIN)
+                .hook("b", HookStage.BEFORE) { param ->
+                    myProfileId = GrindrPlus.myProfileId.toLong()
+                    if (GrindrPlus.shouldTriggerAntiblock)
+                        return@hook
+
+                    val whitelist = listOf(
+                        "inboxFragmentV2DeleteConversations",
+                    )
+                    if (GrindrPlus.blockCaller in whitelist)
+                        return@hook
+
+                    param.setResult(null)
+                }
+
+            findClass(Obfuscation.G.AntiBlock.CONVERSATION_DELETE_NOTIFICATION)
+                .hookConstructor(HookStage.BEFORE) { param ->
+                    @Suppress("UNCHECKED_CAST")
+                    if (GrindrPlus.shouldTriggerAntiblock) {
+                        val profiles = param.args().firstOrNull() as? List<String> ?: emptyList()
+                        param.setArg(0, emptyList<String>())
+                    }
+                }
+
+            scope.launch {
+                GrindrPlus.serverNotifications.collect { notification ->
+                    if (notification.typeValue != "chat.v1.conversation.delete") return@collect
+                    if (!GrindrPlus.shouldTriggerAntiblock) return@collect
+
+                    val conversationIds = notification.payload
+                        ?.optJSONArray("conversationIds") ?: return@collect
+
+                    val conversationIdStrings = (0 until conversationIds.length())
+                        .map { index -> conversationIds.getString(index) }
+
+                    val myId = GrindrPlus.myProfileId.toLongOrNull() ?: return@collect
+
+                    val otherProfileId = conversationIdStrings
+                        .flatMap { conversationId ->
+                            conversationId.split(":").mapNotNull { it.toLongOrNull() }
+                        }
+                        .firstOrNull { id -> id != myId }
+
+                    if (otherProfileId == null || otherProfileId == myId) {
+                        logd("Skipping block/unblock handling for my own profile or no valid profile found")
+                        return@collect
+                    }
+
+                    try {
+                        if (DatabaseHelper.query(
+                                "SELECT * FROM blocks WHERE profileId = ?",
+                                arrayOf(otherProfileId.toString())
+                            ).isNotEmpty()
+                        ) {
+                            return@collect
+                        }
+                    } catch (e: Exception) {
+                        loge("Error checking if user is blocked: ${e.message}")
+                        Logger.writeThrowable(e)
+                    }
+
+                    try {
+                        val response = fetchProfileData(otherProfileId.toString())
+                        if (handleProfileResponse(otherProfileId,
+                                conversationIdStrings.joinToString(","), response)) {
+                        }
+                    } catch (e: Exception) {
+                        loge("Error handling block/unblock request: ${e.message ?: "Unknown error"}")
+                        Logger.writeThrowable(e)
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun fetchProfileData(profileId: String): String {
+        val response = GrindrPlus.httpClient.sendRequestAsync(
+            url = "https://grindr.mobi/v4/profiles/$profileId",
+            method = "GET"
+        )
+
+        if (response.isSuccessful) {
+            return response.body?.string() ?: "Empty response"
+        } else {
+            throw Exception("Failed to fetch profile data: ${response.body?.string()}")
+        }
+    }
+
+    private suspend fun handleProfileResponse(profileId: Long, conversationIds: String, response: String): Boolean {
+        try {
+            val jsonResponse = JSONObject(response)
+            val profilesArray = jsonResponse.optJSONArray("profiles")
+
+            if (profilesArray == null || profilesArray.length() == 0) {
+                var displayName = ""
+                try {
+                    displayName = (DatabaseHelper.query(
+                        "SELECT name FROM chat_conversations WHERE conversation_id = ?",
+                        arrayOf(conversationIds)
+                    ).firstOrNull()?.get("name") as? String)?.takeIf {
+                            name -> name.isNotEmpty() } ?: profileId.toString()
+                } catch (e: Exception) {
+                    loge("Error fetching display name: ${e.message}")
+                    Logger.writeThrowable(e)
+                    displayName = profileId.toString()
+                }
+                displayName = if (displayName == profileId.toString() || displayName == "null")
+                { profileId.toString() } else { "$displayName ($profileId)" }
+                GrindrPlus.bridgeClient.logBlockEvent(profileId.toString(), displayName, true,
+                    GrindrPlus.packageName)
+                if (Config.get("anti_block_use_toasts", false) as Boolean) {
+                    GrindrPlus.showToast(Toast.LENGTH_LONG, "Blocked by $displayName")
+                } else {
+                    GrindrPlus.bridgeClient.sendNotificationWithMultipleActions(
+                        "Blocked by User",
+                        "You have been blocked by user $displayName",
+                        10000000 + (profileId % 10000000).toInt(),
+                        listOf("Copy ID"),
+                        listOf("COPY"),
+                        listOf(profileId.toString(), profileId.toString()),
+                        BridgeService.CHANNEL_BLOCKS,
+                        "Block Notifications",
+                        "Notifications when users block you"
+                    )
+                }
+                return true
+            } else {
+                val profile = profilesArray.getJSONObject(0)
+                var displayName = profile.optString("displayName", profileId.toString())
+                    .takeIf { it.isNotEmpty() && it != "null" } ?: profileId.toString()
+                displayName = if (displayName != profileId.toString()) "$displayName ($profileId)" else displayName
+                GrindrPlus.bridgeClient.logBlockEvent(profileId.toString(), displayName, false,
+                    GrindrPlus.packageName)
+                if (Config.get("anti_block_use_toasts", false) as Boolean) {
+                    GrindrPlus.showToast(Toast.LENGTH_LONG, "Unblocked by $displayName")
+                } else {
+                    GrindrPlus.bridgeClient.sendNotificationWithMultipleActions(
+                        "Unblocked by $displayName",
+                        "$displayName has unblocked you.",
+                        20000000 + (profileId % 10000000).toInt(),
+                        listOf("Copy ID"),
+                        listOf("COPY"),
+                        listOf(profileId.toString()),
+                        BridgeService.CHANNEL_UNBLOCKS,
+                        "Unblock Notifications",
+                        "Notifications when users unblock you"
+                    )
+                }
+                return false
+            }
+        } catch (e: Exception) {
+            loge("Error handling profile response: ${e.message ?: "Unknown error"}")
+            Logger.writeThrowable(e)
+            return false
+        }
+    }
+}

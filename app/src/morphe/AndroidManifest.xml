@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Morphe: rootless Manager / LSPatch installer only — NOT a Vector module. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <!-- Strip any inherited Xposed registrant markers (defense in depth). -->
+        <meta-data
+            android:name="xposedmodule"
+            tools:node="remove" />
+        <meta-data
+            android:name="xposeddescription"
+            tools:node="remove" />
+        <meta-data
+            android:name="xposedminversion"
+            tools:node="remove" />
+        <meta-data
+            android:name="xposedscope"
+            tools:node="remove" />
+    </application>
+</manifest>

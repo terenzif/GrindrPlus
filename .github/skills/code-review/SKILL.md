@@ -2,7 +2,7 @@
 name: code-review
 description: >-
   GrindrPlus (terenzif fork) code-review standards for GitHub Copilot pull request
-  reviews. Use for every PR review on this repository — LSPosed/Xposed Kotlin
+  reviews. Use for every PR review on this repository — Vector/Xposed Kotlin
   module, MappingDictionary packs, soft-fail hooks, version gates, and security
   constraints. Prefer medium+ findings that affect init abort, ClassNotFound
   cascades, or mapping pack schema consistency.
@@ -10,7 +10,7 @@ description: >-
 
 # GrindrPlus code review (Copilot)
 
-You are reviewing **terenzif/grindr-plus-plus** (product name Grindr++): an **LSPosed / Xposed** module (Kotlin) that hooks the Grindr Android app. Public docs/README are English; the maintainer may discuss in Italian — keep review comments in **English**.
+You are reviewing **terenzif/grindr-plus-plus** (product name Grindr++): a **Vector / Xposed** module (Kotlin) that hooks the Grindr Android app. Public docs/README are English; the maintainer may discuss in Italian — keep review comments in **English**.
 
 ## What to prioritize (medium+)
 
@@ -29,7 +29,7 @@ Deprioritize style nits, rename bikesheds, and “support every Grindr version i
 ### Mapping packs
 
 - Bundled packs live under `app/src/main/assets/mappings/<versionCode>.json`; remote copies under repo `mapping-packs/`.
-- Runtime loader: `com.grindrplus.core.mapping.MappingDictionary`.
+- Runtime loader: `com.gpp.core.mapping.MappingDictionary`.
 - Preferred init path: **`loadForVersion(modulePath, versionCode, cacheDir)`** — order is **remote → device cache → module APK assets → literals**. Soft-fails on network/parse/I/O (log + continue). `loadFromModuleApk` remains the assets-only step inside that chain.
 - Do **not** require `GrindrPlus.context.assets` for packs — that `Context` is Grindr’s, not the module’s. `load(context, …)` is for manager app / tests only.
 - `Obfuscation` / core / Retrofit resolve through `MappingDictionary.resolve(key, fallback)` with compile-time literal fallbacks.
@@ -41,11 +41,11 @@ Deprioritize style nits, rename bikesheds, and “support every Grindr version i
 - Prefer soft-skip + log over throwing when a mapping is absent, empty, or DEX-missing (document with `hooks.*.status` / `reason` or a code comment).
 - **DEX-absent soft-skips are OK** when intentional (feature gone from that Grindr build, R8-stripped class, scaffolding pack). Do not demand a remapped class for every historical symbol.
 
-### Version gate
+### Version / packs
 
-- Each module build targets **one** Grindr `versionName` / `versionCode` (see `supported_target.json`, `version.json`; Play tip in `latest_play.json`).
-- Do **not** require one APK to support every Grindr release. Multi-version support is via **packs + rebuilds**, not a universal binary.
-- Version mismatch / unsupported client → degraded mode or gate dialog is expected; do not treat “other versions fail” as a defect by itself.
+- Runtime is **pack-driven and version-agnostic**: no BuildConfig / hardcoded “supported” Grindr tip destiny.
+- Multi-version support is via **mapping packs** (`mapping-packs/` + assets). Missing pack → soft warning + degraded hooks; never hard-abort init solely for version.
+- Play tip telemetry may live in `latest_play.json`; it is not a product “supported version” gate.
 
 ### Obfuscation / R8
 

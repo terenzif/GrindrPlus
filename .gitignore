@@ -15,4 +15,21 @@ tmp*
 
 # Antigravity working files
 *.txt
+# Lab evidence (PairIP tombstones / experiment dumps)
+!docs/lab/
+!docs/lab/**/
+!docs/lab/**/*.txt
 __pycache__/
+
+# Brand WIP / attempts (public surface = masters only)
+docs/brand/**/attempts/
+docs/brand/**/wip/
+docs/brand/**/*-attempt*
+
+# Local APK staging — never PR
+release-stage/
+
+# PairIP dump scratch (keep spliced .so + pack.json)
+pairip-decrypt/**/*.rx.bin
+pairip-decrypt/**/*.rx.raw
+.tmp/

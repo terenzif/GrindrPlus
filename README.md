@@ -11,30 +11,30 @@
 <p align="center"><em>take them all</em></p>
 
 <p align="center">
-  Maintained by <a href="https://github.com/terenzif">@terenzif</a> — Xposed / LSPosed module for Grindr.
+  Maintained by <a href="https://github.com/terenzif">@terenzif</a> — Xposed / Vector module for Grindr.
 </p>
 
 <p align="center">
   <a href="https://github.com/terenzif/grindr-plus-plus/actions/workflows/verify.yml"><img src="https://img.shields.io/github/actions/workflow/status/terenzif/grindr-plus-plus/verify.yml?branch=master&logo=github&label=Verify" alt="Verify"></a>
   <a href="https://github.com/terenzif/grindr-plus-plus/actions/workflows/build_apk.yml"><img src="https://img.shields.io/github/actions/workflow/status/terenzif/grindr-plus-plus/build_apk.yml?branch=master&logo=github&label=Build" alt="Build"></a>
-  <a href="https://github.com/terenzif/grindr-plus-plus/releases"><img src="https://img.shields.io/github/v/release/terenzif/grindr-plus-plus?include_prereleases&label=Release" alt="Release"></a>
+  <a href="https://github.com/terenzif/grindr-plus-plus/releases/latest"><img src="https://img.shields.io/github/v/release/terenzif/grindr-plus-plus?label=Release" alt="Release"></a>
 </p>
 
 ## What this is
 
-**Grindr++** is its own product. It rose from the archived GrindrPlus line (ElJaviLuki → R0rt1z2, then this tree) after that project was frozen and after the PairIP / VM phase. The code still lives in the `com.grindrplus` Android package so existing installs keep working. The name, the mark, and the roadmap do not.
+**Grindr++** is the product. **GrindMod** is the Manager app (`com.gpp.morphe` / `com.gpp.alloy`). It rose from the archived GrindrPlus line (ElJaviLuki → R0rt1z2, then this tree) after that project was frozen and after the PairIP / VM phase. Not affiliated with legacy XDA **GrindrMod**.
 
-The phoenix is the product mark: a masked head, ready to take them all.
+The phoenix/mask is the product mark: a masked head, ready to take them all. GrindMod’s launcher adds a small gear badge so it is not confused with Grindr++.
 
-**Current target:** Grindr **26.16.1** (`versionCode` 179451), with per-hook soft-fail and an updated version gate. Historical baseline still documented: **25.20.0**.
+**Ver.5 direction:** version-agnostic module driven by **mapping packs** (schema v2), soft-fail hooks, Settings↔runtime truthfulness, and **Morphe A** rootless install (export Play-installed Grindr → Grindr++ clone → LSPatch). Pack catalog: `mapping-packs/index.json`. Vision: [docs/vision.md](docs/vision.md).
 
-**Mapping packs:** JSON per `versionCode` under `app/src/main/assets/mappings/` (bundled offline) **and** remotely from GitHub `mapping-packs/` so a new Grindr build can get a remapped pack **without** a full module APK rebuild. Loader: `MappingDictionary` — remote → device cache → assets → compile-time literals (all soft-fail). Details: [docs/remote-mapping-packs.md](docs/remote-mapping-packs.md).
+**Mapping packs:** JSON per `versionCode` under `app/src/main/assets/mappings/` (bundled offline) **and** remotely from GitHub `mapping-packs/` so a new Grindr build can get a remapped pack **without** a full module APK rebuild. Loader: `MappingDictionary` — remote → device cache → assets → literals (soft-fail; active pack does not fall back to wrong-version literals). Details: [docs/remote-mapping-packs.md](docs/remote-mapping-packs.md).
 
 This module is **not** affiliated with Grindr LLC. Use at your own risk.
 
 ## State now
 
-- Active module + manager for **26.16.1**, LSPosed first, LSPatch as a secondary path.
+- Dual APK: **Morphe** (GrindMod Manager + Install → Grindr++ clone — not a Vector module) and **Alloy** (GrindMod + Vector; Settings modding toggle).
 - Remote mapping packs so version jumps do not always need a new APK.
 - In-app **News** = wiki CTA + GitHub Releases (no Telegram feed).
 - Soft-fail hooks: missing DEX fingerprints skip instead of crashing the host.
@@ -50,20 +50,29 @@ Free mod, no warranty. We are not responsible for lost chats, bans, or other iss
 - Wiki: [terenzif/grindr-plus-plus/wiki](https://github.com/terenzif/grindr-plus-plus/wiki)
 - CI: [Verify](https://github.com/terenzif/grindr-plus-plus/actions/workflows/verify.yml) · [Build & Release](https://github.com/terenzif/grindr-plus-plus/actions/workflows/build_apk.yml)
 
-Each build supports **one** primary Grindr version (currently **26.16.1**). Extra versions are handled via mapping packs (bundled and/or remote), not a universal binary.
+Compatibility is **pack-driven** per installed Grindr `versionCode` (catalog: `mapping-packs/index.json`).
 
-## Installation (LSPosed, recommended)
+## Installation
 
-**Requirements:** root (Magisk / KernelSU) + working [LSPosed](https://github.com/JingMatrix/LSPosed) (JingMatrix fork recommended on recent Android).
+### Rootless (Ver.5 / Morphe A — recommended product path)
 
-1. Install the module APK from [Releases](https://github.com/terenzif/grindr-plus-plus/releases) (or CI artifacts).
-2. Install Grindr **26.16.1** (Play Store or APKMirror bundle + [SAI](https://github.com/Aefyr/SAI/releases)).
-3. Enable the module in LSPosed and add Grindr to the scope.
+1. Install **stock Grindr** from the Play Store.
+2. Install **`gpp-morphe-*.apk`** (GrindMod) from [Releases](https://github.com/terenzif/grindr-plus-plus/releases).
+3. Open GrindMod → **Install** → **Create Grindr++** (copies the installed Play APK, clones as `com.grindrapp.android.plus`, LSPatch embed).
+4. Open **Grindr++** for the modded app; stock **Grindr** stays for Play updates. Re-run Create/Update after Store updates.
+
+Details: [docs/morphe-a.md](docs/morphe-a.md), [docs/manager-ui-lspatch.md](docs/manager-ui-lspatch.md).
+
+### Root (Vector — Alloy APK)
+
+**Requirements:** Magisk / KernelSU + [JingMatrix/Vector](https://github.com/JingMatrix/Vector) (API 102 / Vector ≥ 2.2).
+
+1. Install **`gpp-alloy-*.apk`** (GrindMod Alloy) from [Releases](https://github.com/terenzif/grindr-plus-plus/releases).
+2. Install stock Grindr (mapping pack required for your `versionCode`).
+3. Enable modding in GrindMod **Settings → Modding active** (root + Vector CLI) *or* enable the module in Vector with Grindr in scope.
 4. Open Grindr and verify.
 
-**Quick check:** long-press the **Browse** tab → status popup; unlimited cascade profiles and no third-party ads.
-
-> **LSPatch tab** (manager bottom nav): embeds the module into Grindr without LSPosed. Grindr is downloaded **in-app via Play** (Aurora OSS `gplayapi` / anonymous dispenser — not the Aurora Store app). Module from Releases; mappings remote/bundled. Custom Files = offline fallback. Known limits: Google login, maps, stability. Preferred path remains LSPosed above. Details: [docs/manager-ui-lspatch.md](docs/manager-ui-lspatch.md).
+**Quick check:** long-press the **Browse** tab → Grindr++ status popup; unlimited cascade profiles and no third-party ads. In Settings → Manage Hooks, skipped/partial hooks show a status note (not silent no-ops).
 
 ## Features (maintained)
 
@@ -103,7 +112,7 @@ Each build supports **one** primary Grindr version (currently **26.16.1**). Extr
   - Unlimited cascade, Explore, filters, no third-party ads, saved phrases, no boost upsell, hide views, incognito
 </details>
 
-Some hooks on 26.16.1 are **skipped** or **partial** when the DEX fingerprint is gone — see soft-fail in `HookManager`.
+Some hooks are **skipped** or **partial** when the DEX fingerprint is gone — see soft-fail in `HookManager`.
 
 ## Known issues (notable)
 
@@ -119,7 +128,7 @@ See [docs/README.md](docs/README.md).
 
 - Mapping packs (bundled): `app/src/main/assets/mappings/<versionCode>.json`
 - Mapping packs (remote publish path): `mapping-packs/<versionCode>.json` — [docs/remote-mapping-packs.md](docs/remote-mapping-packs.md)
-- Loader: `com.grindrplus.core.mapping.MappingDictionary`
+- Loader: `com.gpp.core.mapping.MappingDictionary`
 - Brand assets: [docs/brand/grindr-plus-plus](docs/brand/grindr-plus-plus)
 
 ## Lineage
@@ -129,7 +138,7 @@ Grindr++ is not a continuation-in-name of GrindrPlus. The useful parts of that a
 - Original idea and mod: [ElJaviLuki/GrindrPlus](https://github.com/ElJaviLuki/GrindrPlus)
 - Rewrite through archive: [R0rt1z2/GrindrPlus](https://github.com/R0rt1z2/GrindrPlus) and contributors
 - This product: [terenzif/grindr-plus-plus](https://github.com/terenzif/grindr-plus-plus)
-- LSPosed / LSPatch: [JingMatrix](https://github.com/JingMatrix)
+- Vector / LSPatch: [JingMatrix](https://github.com/JingMatrix) ([Vector](https://github.com/JingMatrix/Vector), [LSPatch](https://github.com/JingMatrix/LSPatch))
 
 ## License
 

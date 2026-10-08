@@ -1,33 +1,20 @@
-# Manager UI — LSPatch tab & remote mappings
+# Manager UI — Install tab (Morphe)
 
-Bottom nav (this fork): **LSPatch · Block Log · Home · News · Settings**.
+Bottom nav (Morphe): **Install · Block Log · Home · News · Settings**. Alloy omits Install.
 
-## What was `airdns`?
+## Primary path (rootless)
 
-Upstream GrindrPlus hosted Grindr + mod APKs on **`gplusapks.airdns.org`** for one-click HTTP downloads. This fork does **not** host Grindr APKs.
+1. User installs **stock Grindr** from Play (`com.grindrapp.android`).
+2. GrindMod Install → **Create / Update Grindr++**.
+3. Pipeline: export installed APK/splits → clone package `com.grindrapp.android.plus` (label **Grindr++**, brand icon) → LSPatch `-l 2` embed → session install.
+4. Stock Play Grindr remains; Grindr++ is the modded clone. After a Play update, tap Update again (mapping packs apply).
 
-## Grindr download engine (in-app)
+Module DEX still comes from GitHub Releases (`manifest.json` mod URL). Grindr CDN URLs are not the happy path.
 
-LSPatch install uses **Aurora OSS `gplayapi`** — the same Play Store protocol Aurora Store uses:
+## Emergency fallback
 
-1. Anonymous auth via Aurora dispenser (`https://auroraoss.com/api/auth`)
-2. App details + purchase/delivery for `com.grindrapp.android`
-3. Download split APKs from Play CDN, zip → existing `ExtractBundleStep` / LSPatch pipeline
-
-Implemented in:
-
-- `manager/play/PlayHttpClient.kt` — real `postAuth` (library default stubs it)
-- `manager/play/PlayStoreSession.kt` — anonymous session
-- `manager/installation/steps/PlayGrindrDownloadStep.kt` — used when `manifest.json` Grindr URL is blank
-
-**Not** launching the Aurora Store app. Custom Files remains an offline fallback.
-
-Module APK still comes from GitHub Releases (`manifest.json` mod URL). Mapping packs stay remote/bundled (`MappingDictionary.loadForVersion`).
-
-## Does LSPatch still work?
-
-Yes: Play (or Custom Files) → extract → patch → install. Remote packs apply after first online Grindr start without re-patching.
+Custom Files (local Grindr bundle zip + mod) remains available under Install advanced section for lab/offline use — not the documented primary UX.
 
 ## News tab
 
-Wiki CTA + GitHub Releases list — see [news.md](news.md). No Telegram feed in the UI.
+Wiki CTA + GitHub Releases — see [news.md](news.md).
