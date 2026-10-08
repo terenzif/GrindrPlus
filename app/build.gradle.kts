@@ -161,8 +161,13 @@ dependencies {
     "alloyCompileOnly"(fileTree("libs") { include("lspatch.jar") })
     "embedCompileOnly"(fileTree("libs") { include("lspatch.jar") })
     // lspatch.jar is a fat jar; drop overlapping Maven jars on Morphe dex merge.
+    // Do not apply to *UnitTest* / *AndroidTest* — Robolectric needs ListenableFuture.
     configurations.configureEach {
-        if (name.startsWith("morphe", ignoreCase = true)) {
+        val n = name
+        if (n.startsWith("morphe", ignoreCase = true) &&
+            !n.contains("UnitTest", ignoreCase = true) &&
+            !n.contains("AndroidTest", ignoreCase = true)
+        ) {
             exclude(group = "org.checkerframework", module = "checker-qual")
             exclude(group = "com.google.code.findbugs", module = "jsr305")
             exclude(group = "org.jetbrains", module = "annotations")
