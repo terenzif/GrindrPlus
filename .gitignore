@@ -15,6 +15,10 @@ tmp*
 
 # Antigravity working files
 *.txt
+# Lab evidence (PairIP tombstones / experiment dumps)
+!docs/lab/
+!docs/lab/**/
+!docs/lab/**/*.txt
 __pycache__/
 
 # Brand WIP / attempts (public surface = masters only)
