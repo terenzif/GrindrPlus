@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- GrindMod Manager: brand mask + gear badge (bottom-right). -->
+<!-- GrindMod: full brand mask + gear badge (slight BR overlap). Safe zone via adaptive crop. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:drawable="@drawable/ic_brand_mask"

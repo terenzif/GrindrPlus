@@ -7,10 +7,9 @@ import com.gpp.utils.Hook
 import com.gpp.utils.HookStage
 import com.gpp.utils.hook
 import com.gpp.utils.hookConstructor
-import de.robv.android.xposed.XposedHelpers.newInstance
-import de.robv.android.xposed.XposedHelpers.setObjectField
+import com.gpp.utils.compat.XposedHelpers.newInstance
+import com.gpp.utils.compat.XposedHelpers.setObjectField
 
-// supported version: 26.16.1 (static JADX — field names use Kotlin properties)
 class DisableBoosting : Hook(
     "Disable boosting",
     "Get rid of all upsells related to boosting"

@@ -17,7 +17,7 @@ import com.gpp.GrindrPlus.httpClient
 import com.gpp.GrindrPlus.isImportingSomething
 import com.gpp.GrindrPlus.shouldTriggerAntiblock
 import com.gpp.core.Constants.NEWLINE
-import de.robv.android.xposed.XposedHelpers.callMethod
+import com.gpp.utils.compat.XposedHelpers.callMethod
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

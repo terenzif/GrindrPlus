@@ -2,8 +2,8 @@ package com.gpp.utils
 
 import com.gpp.GrindrPlus
 import com.gpp.core.mapping.MappingDictionary
-import de.robv.android.xposed.XposedHelpers.callMethod
-import de.robv.android.xposed.XposedHelpers.getObjectField
+import com.gpp.utils.compat.XposedHelpers.callMethod
+import com.gpp.utils.compat.XposedHelpers.getObjectField
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
@@ -70,11 +70,11 @@ object RetrofitUtils {
     }
 
     fun Any.getSuccessValue(): Any {
-        return getObjectField(this, SUCCESS_VALUE_NAME)
+        return getObjectField(this, SUCCESS_VALUE_NAME) as Any
     }
 
     fun Any.getFailValue(): Any {
-        return getObjectField(this, FAIL_VALUE_NAME)
+        return getObjectField(this, FAIL_VALUE_NAME) as Any
     }
 
     fun createSuccess(value: Any): Any {

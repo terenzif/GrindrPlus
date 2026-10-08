@@ -7,7 +7,6 @@ import com.gpp.utils.RetrofitUtils.createServiceProxy
 import com.gpp.utils.RetrofitUtils.findPOSTMethod
 import com.gpp.utils.hook
 
-// supported version: 25.20.0
 class ProfileViews : Hook(
 	"Profile views",
 	"Don't let others know you viewed their profile"

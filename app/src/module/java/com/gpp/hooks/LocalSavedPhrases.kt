@@ -15,7 +15,7 @@ import com.gpp.utils.RetrofitUtils.isDELETE
 import com.gpp.utils.RetrofitUtils.isGET
 import com.gpp.utils.RetrofitUtils.isPOST
 import com.gpp.utils.hook
-import de.robv.android.xposed.XposedHelpers.getObjectField
+import com.gpp.utils.compat.XposedHelpers.getObjectField
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext

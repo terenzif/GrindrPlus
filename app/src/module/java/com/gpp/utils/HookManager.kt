@@ -6,6 +6,7 @@ import com.gpp.core.HookCircuitBreaker
 import com.gpp.core.Logger
 import com.gpp.core.mapping.MappingDictionary
 import com.gpp.core.mapping.MappingHookStatus
+import com.gpp.debug.AgentDebugLog
 import com.gpp.hooks.AllowScreenshots
 import com.gpp.hooks.AntiBlock
 import com.gpp.hooks.AntiDetection
@@ -88,11 +89,19 @@ class HookManager {
             hooks.clear()
             hooks.putAll(hookList.associateBy { it::class })
 
+            var enabled = 0
+            var partial = 0
+            var skipped = 0
+            var disabled = 0
+            var failed = 0
+            val failedNames = mutableListOf<String>()
+
             hooks.values.forEach { hook ->
                 if (!Config.isHookEnabled(hook.hookName)) {
                     Config.setHookRuntimeStatus(hook.hookName, STATUS_DISABLED, null)
                     AnonymousTelemetry.recordHookStatus(hook.hookName, STATUS_DISABLED)
                     Logger.i("Hook ${hook.hookName} is disabled.")
+                    disabled++
                     return@forEach
                 }
 
@@ -106,6 +115,7 @@ class HookManager {
                             Config.setHookRuntimeStatus(hook.hookName, STATUS_SKIPPED, reason)
                             AnonymousTelemetry.recordHookStatus(hook.hookName, STATUS_SKIPPED)
                             Logger.w("Skipping hook ${hook.hookName}: $reason")
+                            skipped++
                             return@forEach
                         }
                     }
@@ -119,6 +129,7 @@ class HookManager {
                     )
                     AnonymousTelemetry.recordHookStatus(hook.hookName, STATUS_SKIPPED)
                     Logger.w("Skipping hook ${hook.hookName}: circuit open")
+                    skipped++
                     return@forEach
                 }
 
@@ -134,11 +145,13 @@ class HookManager {
                             )
                             AnonymousTelemetry.recordHookStatus(hook.hookName, STATUS_PARTIAL)
                             Logger.s("Initialized hook (partial): ${hook.hookName}")
+                            partial++
                         }
                         else -> {
                             Config.setHookRuntimeStatus(hook.hookName, STATUS_ENABLED, null)
                             AnonymousTelemetry.recordHookStatus(hook.hookName, STATUS_ENABLED)
                             Logger.s("Initialized hook: ${hook.hookName}")
+                            enabled++
                         }
                     }
                 } catch (skip: SoftSkipException) {
@@ -149,6 +162,7 @@ class HookManager {
                     )
                     AnonymousTelemetry.recordHookStatus(hook.hookName, STATUS_SKIPPED)
                     Logger.w("Hook ${hook.hookName} soft-skipped: ${skip.message}")
+                    skipped++
                 } catch (t: Throwable) {
                     HookCircuitBreaker.recordFailure(hook.hookName)
                     Config.setHookRuntimeStatus(
@@ -159,18 +173,42 @@ class HookManager {
                     AnonymousTelemetry.recordHookStatus(hook.hookName, STATUS_FAILED)
                     Logger.e("Failed to initialize hook ${hook.hookName}: ${t.message}")
                     Logger.writeThrowable(t)
+                    failed++
+                    failedNames.add(hook.hookName)
                 }
             }
+
+            // #region agent log
+            AgentDebugLog.log(
+                hypothesisId = "H4",
+                location = "HookManager.registerHooks",
+                message = "hook_summary",
+                data = mapOf(
+                    "enabled" to enabled,
+                    "partial" to partial,
+                    "skipped" to skipped,
+                    "disabled" to disabled,
+                    "failed" to failed,
+                    "failedNames" to failedNames.joinToString(","),
+                    "total" to hooks.size,
+                ),
+            )
+            // #endregion
         }
     }
 
     fun reloadHooks() {
         runBlocking(Dispatchers.IO) {
-            hooks.values.forEach { hook -> hook.cleanup() }
-            hooks.clear()
+            cleanupAll()
             registerHooks()
             Logger.s("Reloaded hooks")
         }
+    }
+
+    /** Stop hook-owned work without re-registering (API 102 hot-reload drain). */
+    fun cleanupAll() {
+        hooks.values.forEach { hook -> runCatching { hook.cleanup() } }
+        hooks.clear()
     }
 
     fun init() {

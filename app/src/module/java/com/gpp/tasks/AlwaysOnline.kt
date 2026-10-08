@@ -7,8 +7,8 @@ import com.gpp.core.Utils.coordsToGeoHash
 import com.gpp.core.loge
 import com.gpp.core.logi
 import com.gpp.utils.Task
-import de.robv.android.xposed.XposedHelpers.callMethod
-import de.robv.android.xposed.XposedHelpers.getObjectField
+import com.gpp.utils.compat.XposedHelpers.callMethod
+import com.gpp.utils.compat.XposedHelpers.getObjectField
 
 class AlwaysOnline :
     Task(

@@ -8,12 +8,11 @@ import com.gpp.core.logi
 import com.gpp.utils.Hook
 import com.gpp.utils.HookStage
 import com.gpp.utils.hook
-import de.robv.android.xposed.XposedHelpers.callMethod
-import de.robv.android.xposed.XposedHelpers.callStaticMethod
-import de.robv.android.xposed.XposedHelpers.getObjectField
+import com.gpp.utils.compat.XposedHelpers.callMethod
+import com.gpp.utils.compat.XposedHelpers.callStaticMethod
+import com.gpp.utils.compat.XposedHelpers.getObjectField
 import java.lang.reflect.Proxy
 
-// supported version: 26.16.1
 class UnlimitedProfiles : Hook(
     "Unlimited profiles",
     "Allow unlimited profiles"
@@ -102,11 +101,11 @@ class UnlimitedProfiles : Hook(
         if (onProfileClicked.isNotEmpty()) {
             findClass(onProfileClicked).hook("invokeSuspend", HookStage.BEFORE) { param ->
                 if (Config.get("disable_profile_swipe", false) as Boolean) {
-                    getObjectField(
-                        param.thisObject(),
-                        param.thisObject().javaClass.declaredFields
-                            .firstOrNull { it.type.name.contains("CascadeProfile") }?.name
-                    )?.let { cachedProfile ->
+                    val cascadeField = param.thisObject().javaClass.declaredFields
+                        .firstOrNull { it.type.name.contains("CascadeProfile") }?.name
+                        ?: return@hook
+                    val cachedProfile = getObjectField(param.thisObject(), cascadeField)
+                    if (cachedProfile != null) {
                         runCatching { getObjectField(cachedProfile, "profileId").toString() }
                             .onSuccess { profileId ->
                                 openProfile(profileId)

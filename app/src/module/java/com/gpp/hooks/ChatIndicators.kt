@@ -8,7 +8,6 @@ import com.gpp.utils.RetrofitUtils.RETROFIT_NAME
 import com.gpp.utils.RetrofitUtils.createServiceProxy
 import com.gpp.utils.hook
 
-// supported version: 25.20.0
 class ChatIndicators : Hook(
     "Chat indicators",
     "Don't show chat markers / indicators to others"

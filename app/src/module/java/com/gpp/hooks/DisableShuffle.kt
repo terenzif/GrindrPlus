@@ -6,7 +6,7 @@ import com.gpp.utils.Hook
 import com.gpp.utils.HookStage
 import com.gpp.utils.SoftSkipException
 import com.gpp.utils.hookConstructor
-import de.robv.android.xposed.XposedHelpers.setObjectField
+import com.gpp.utils.compat.XposedHelpers.setObjectField
 
 /**
  * Force-disable shuffle. Cascade V2 (26.16.1) removed ShuffleUiState — soft-skip unless pack remaps.

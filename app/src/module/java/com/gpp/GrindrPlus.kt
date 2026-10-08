@@ -30,6 +30,7 @@ import com.gpp.core.Utils.handleImports
 import com.gpp.core.http.Client
 import com.gpp.core.http.Interceptor
 import com.gpp.core.mapping.MappingDictionary
+import com.gpp.debug.AgentDebugLog
 import com.gpp.persistence.GPDatabase
 import com.gpp.ui.DialogManager
 import com.gpp.utils.HookManager
@@ -38,7 +39,7 @@ import com.gpp.utils.PCHIP
 import com.gpp.utils.TaskManager
 import com.gpp.utils.hookConstructor
 import dalvik.system.DexClassLoader
-import de.robv.android.xposed.XposedHelpers.callMethod
+import com.gpp.utils.compat.XposedHelpers.callMethod
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -121,8 +122,7 @@ object GrindrPlus {
 
     val serverNotifications = EventManager.serverNotifications
 
-    fun init(modulePath: String, application: Application,
-             versionCodes: IntArray, versionNames: Array<String>) {
+    fun init(modulePath: String, application: Application) {
 
         if (isInitialized) {
             Logger.d("GrindrPlus already initialized, skipping", LogSource.MODULE)
@@ -141,13 +141,27 @@ object GrindrPlus {
         val versionCode = installedVersionCode(application)
         val hasPack = loadMappingPack(modulePath, application, versionCode)
 
-        // TARGET_* arrays from XposedLoader are tip/hint only — never abort init on mismatch.
-        DialogManager.checkVersionCodes(context, versionCodes, versionNames)
-        DialogManager.checkPackPresence(hasPack, versionCode.toLong(), versionCodes)
+        // Pack presence only — never abort init for an unknown / new Grindr versionCode.
+        DialogManager.checkPackPresence(hasPack, versionCode.toLong())
 
-        if (DialogManager.shouldShowVersionMismatchDialog || DialogManager.shouldShowNoPackWarning) {
+        // #region agent log
+        AgentDebugLog.log(
+            hypothesisId = "H2",
+            location = "GrindrPlus.init",
+            message = "pack_check",
+            data = mapOf(
+                "versionCode" to versionCode,
+                "hasPack" to hasPack,
+                "noPackWarning" to DialogManager.shouldShowNoPackWarning,
+                "packageName" to application.packageName,
+                "modulePathLen" to modulePath.length,
+            ),
+        )
+        // #endregion
+
+        if (DialogManager.shouldShowNoPackWarning) {
             Logger.w(
-                "Version tip / mapping-pack soft warning — continuing initialization",
+                "No mapping pack soft warning — continuing initialization",
                 LogSource.MODULE
             )
         }
@@ -161,6 +175,15 @@ object GrindrPlus {
                 Logger.e("Connection timeout: ${e.message}", LogSource.MODULE)
                 false
             }
+
+            // #region agent log
+            AgentDebugLog.log(
+                hypothesisId = "H5",
+                location = "GrindrPlus.init",
+                message = "bridge_connect",
+                data = mapOf("connected" to connected),
+            )
+            // #endregion
 
             if (!connected) {
                 Logger.e("Failed to connect to the bridge service", LogSource.MODULE)
@@ -233,14 +256,45 @@ object GrindrPlus {
                 initializeCore()
                 val initTime = System.currentTimeMillis() - startTime
                 Logger.i("Initialization completed in $initTime ms", LogSource.MODULE)
+                // #region agent log
+                AgentDebugLog.log(
+                    hypothesisId = "H3",
+                    location = "GrindrPlus.init",
+                    message = "init_ok",
+                    data = mapOf("initTimeMs" to initTime),
+                )
+                // #endregion
             }
             isInitialized = true
         } catch (t: Throwable) {
             Logger.e("Failed to initialize: ${t.message}", LogSource.MODULE)
             Logger.writeThrowable(t)
+            // #region agent log
+            AgentDebugLog.log(
+                hypothesisId = "H3",
+                location = "GrindrPlus.init",
+                message = "init_failed",
+                data = mapOf("error" to (t.message ?: t.javaClass.simpleName)),
+            )
+            // #endregion
             showToast(Toast.LENGTH_LONG, "Failed to initialize: ${t.message}")
             return
         }
+    }
+
+    /**
+     * Drain module-owned work before API 102 code hot-reload. Does not enable/disable scope
+     * (that is VectorModToggle / CLI).
+     */
+    fun cleanupForHotReload() {
+        runCatching {
+            if (::hookManager.isInitialized) {
+                hookManager.cleanupAll()
+            }
+        }
+        isInitialized = false
+        isMainInitialized = false
+        Logger.i("cleanupForHotReload: ready for new module generation", LogSource.MODULE)
     }
 
     private fun setupServerNotificationHook() {
@@ -290,10 +344,6 @@ object GrindrPlus {
                     DialogManager.shouldShowNoPackWarning -> {
                         DialogManager.showNoPackWarningDialog(activity)
                         DialogManager.shouldShowNoPackWarning = false
-                    }
-                    DialogManager.shouldShowVersionMismatchDialog -> {
-                        DialogManager.showVersionMismatchDialog(activity)
-                        DialogManager.shouldShowVersionMismatchDialog = false
                     }
                 }
 

@@ -6,7 +6,6 @@ import com.gpp.utils.Hook
 import com.gpp.utils.HookStage
 import com.gpp.utils.hook
 
-// supported version: 26.16.1
 class DisableAnalytics : Hook(
     "Disable analytics",
     "Disable Grindr analytics (data collection)"

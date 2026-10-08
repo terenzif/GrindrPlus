@@ -50,6 +50,8 @@ Introduce a `PatchBackend` (name may vary) interface extracted from the patching
 
 **Current pin status:** `scripts/setup_lspatch.gradle.kts` downloads **JingMatrix/LSPatch v0.8** from GitHub Releases and verifies SHA-256 before installing into `app/libs/lspatch.jar` + `app/src/main/assets/lspatch/`.
 
+**API 102 note (ADR 0008):** Embed uses modern `META-INF/xposed/*` registration. JingMatrix LSPatch loads both legacy and modern modules; if Create Grindr++ fails to inject the embed after the API 102 cutover, bump the pin to a Vector/LSPatch release that matches Vector ≥ 2.2 and re-verify SHA-256 here.
+
 | Artifact | Location | Pin |
 | --- | --- | --- |
 | Integrated LSPatch jar / `so*` / dex | `app/libs/lspatch.jar` + `app/src/main/assets/lspatch/` | **v0.8** — URL `…/releases/download/v0.8/lspatch.jar`, upstream SHA-256 `B81094AC3D088849D9781E2678A87562936F8E0D78C4D136A9072DCE40F72208` (see `app/libs/lspatch-v0.8.sha256.txt`) |

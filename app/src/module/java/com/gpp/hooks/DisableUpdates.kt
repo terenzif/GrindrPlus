@@ -10,17 +10,16 @@ import com.gpp.utils.Hook
 import com.gpp.utils.HookStage
 import com.gpp.utils.hook
 import com.gpp.utils.hookConstructor
-import de.robv.android.xposed.XposedHelpers.setObjectField
+import com.gpp.utils.compat.XposedHelpers.setObjectField
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 
-// supported version: 26.16.1
 class DisableUpdates : Hook(
     "Disable updates",
     "Disable forced updates"
 ) {
-    // Play scrape (latest_play.json), NOT supported_target.json — used to spoof "already latest"
+    // Play scrape (latest_play.json) — used to spoof "already latest"
     private val versionInfoEndpoint =
         "https://raw.githubusercontent.com/terenzif/grindr-plus-plus/master/latest_play.json"
     private val appUpdateInfo = "com.google.android.play.core.appupdate.AppUpdateInfo"

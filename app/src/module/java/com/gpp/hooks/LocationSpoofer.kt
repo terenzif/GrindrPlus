@@ -33,9 +33,9 @@ import com.gpp.utils.Hook
 import com.gpp.utils.HookStage
 import com.gpp.utils.hook
 import com.gpp.utils.hookConstructor
-import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.XposedHelpers.callMethod
-import de.robv.android.xposed.XposedHelpers.getObjectField
+import com.gpp.utils.compat.XposedHelpers
+import com.gpp.utils.compat.XposedHelpers.callMethod
+import com.gpp.utils.compat.XposedHelpers.getObjectField
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -616,9 +616,10 @@ class LocationSpoofer : Hook(
             // setPositiveButton listener always closes it
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 coroutineScope.launch {
-                    if (selectedLatLng != null) {
-                        val latitude = getObjectField(selectedLatLng, "latitude") as Double
-                        val longitude = getObjectField(selectedLatLng, "longitude") as Double
+                    val latLng = selectedLatLng
+                    if (latLng != null) {
+                        val latitude = getObjectField(latLng, "latitude") as Double
+                        val longitude = getObjectField(latLng, "longitude") as Double
 
                         val location = TeleportLocationEntity("maps-pick", latitude, longitude)
                         onLocationPicked(location)

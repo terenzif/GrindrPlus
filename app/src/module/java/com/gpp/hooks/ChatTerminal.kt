@@ -8,7 +8,7 @@ import com.gpp.utils.Hook
 import com.gpp.utils.HookStage
 import com.gpp.utils.SoftSkipException
 import com.gpp.utils.hook
-import de.robv.android.xposed.XposedHelpers.getObjectField
+import com.gpp.utils.compat.XposedHelpers.getObjectField
 import org.json.JSONObject
 
 /**

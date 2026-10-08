@@ -210,6 +210,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Timber.plant(DebugTree())
         FileOperationHandler.init(this)
+        com.gpp.manager.vector.VectorFrameworkFacade.start(this)
         registerNotificationReceiver()
         // News polling (was BridgeService schedule; Manager-only so slim embed stays clean)
         activityScope.launch(Dispatchers.IO) {

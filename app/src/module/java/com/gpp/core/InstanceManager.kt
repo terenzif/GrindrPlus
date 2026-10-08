@@ -2,7 +2,7 @@ package com.gpp.core
 
 import com.gpp.utils.HookStage
 import com.gpp.utils.hookConstructor
-import de.robv.android.xposed.XposedHelpers.findClass
+import com.gpp.utils.compat.XposedHelpers.findClass
 import java.util.concurrent.ConcurrentHashMap
 
 class InstanceManager(private val classLoader: ClassLoader) {

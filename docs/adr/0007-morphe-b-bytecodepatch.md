@@ -23,6 +23,8 @@ Pilot: marker class `Lcom/grindrplus/morphe/b/BytecodeApplied;` plus boolean-gat
 
 Next: a verified feature recipe (Chat inbound processor or Favorites Fragment) once a safe boolean/const site is mapped.
 
+**PairIP (Play 26.19+):** Alloy runtime bypass is a dead end (SIGILL in `libsqliteJni` after stubbing PairIP — see [0009](0009-pairip-static-decrypt.md) and [lab notes](../lab/pairip/)). Static decrypt / rewrite of PairIP-protected sites is an additional Morphe B workstream before PairIP Play hosts are “green”.
+
 ## Acceptance
 
 - [x] ≥1 static bytecode path applied in dry-run (fingerprint scan + report asset).

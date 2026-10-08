@@ -1,7 +1,7 @@
 package com.gpp.core
 
 import com.gpp.GrindrPlus
-import de.robv.android.xposed.XposedHelpers
+import com.gpp.utils.compat.XposedHelpers
 import java.lang.reflect.Proxy
 
 object CoroutineHelper {

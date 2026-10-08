@@ -4,7 +4,6 @@ import com.gpp.utils.Hook
 import com.gpp.utils.HookStage
 import com.gpp.utils.hook
 
-// supported version: 25.20.0
 class UnlockExplorer : Hook(
     "Unlock Explorer",
     "Unlock all profiles in Explorer"

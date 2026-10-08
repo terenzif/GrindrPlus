@@ -1,8 +1,11 @@
 package com.gpp.hooks
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.os.Build
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -13,36 +16,176 @@ import com.gpp.core.Config
 import com.gpp.core.loge
 import com.gpp.core.logi
 import com.gpp.core.logw
+import com.gpp.debug.AgentDebugLog
+import com.gpp.ui.Utils.getId
 import com.gpp.utils.Hook
 import com.gpp.utils.HookStage
+import com.gpp.utils.hook
 import com.gpp.utils.hookConstructor
 import java.io.File
+import java.util.WeakHashMap
 
 class StatusDialog : Hook(
     "Status Dialog",
     "Check whether GrindrPlus is alive or not"
 ) {
     private val tabView = "com.google.android.material.tabs.TabLayout\$TabView"
+    private val homeActivity = "com.grindrapp.android.ui.home.HomeActivity"
+    private val attachedHome = WeakHashMap<Activity, Boolean>()
 
     override fun init() {
+        // Legacy Material tabs (account/store/etc.) — first tab long-press.
         findClass(tabView).hookConstructor(HookStage.AFTER) { param ->
             val tabView = param.thisObject() as View
 
             tabView.post {
                 val parent = tabView.parent as? ViewGroup
                 val position = parent?.indexOfChild(tabView) ?: -1
+                // #region agent log
+                AgentDebugLog.log(
+                    hypothesisId = "H25",
+                    location = "StatusDialog.TabView.ctor",
+                    message = "tabview_ctor",
+                    data = mapOf("position" to position, "parent" to (parent?.javaClass?.simpleName ?: "null")),
+                    runId = "e2e-features",
+                )
+                // #endregion
 
                 if (position == 0) {
                     tabView.setOnLongClickListener { v ->
                         showGrindrPlusDialog(v.context)
-                        false
+                        true
                     }
                 }
             }
         }
+
+        // Home V2 is Compose (`home_v2_container`) — TabView never constructed (H25/H26).
+        // Long-press bottom-left band ≈ first nav item.
+        // Note: Hooker also matches inherited Activity.dispatchTouchEvent — filter to Home only.
+        runCatching {
+            val homeClazz = findClass(homeActivity)
+            homeClazz.hook("dispatchTouchEvent", HookStage.BEFORE) { param ->
+                val activity = param.thisObject() as? Activity ?: return@hook
+                if (!homeClazz.isInstance(activity)) return@hook
+                val event = param.arg<MotionEvent>(0)
+                ensureHomeLongPress(activity)
+                homeDetectors[activity]?.onTouchEvent(event)
+            }
+        }.onFailure {
+            logw("StatusDialog HomeActivity hook failed: ${it.message}")
+            // #region agent log
+            AgentDebugLog.log(
+                hypothesisId = "H26",
+                location = "StatusDialog.init",
+                message = "home_hook_failed",
+                data = mapOf("err" to (it.message ?: "?")),
+                runId = "e2e-features",
+            )
+            // #endregion
+        }
+
+        // Material BottomNavigationView fallback (non-Compose layouts).
+        runCatching {
+            findClass("com.google.android.material.bottomnavigation.BottomNavigationView")
+                .hookConstructor(HookStage.AFTER) { param ->
+                    val nav = param.thisObject() as ViewGroup
+                    nav.post {
+                        if (nav.childCount > 0) {
+                            val first = nav.getChildAt(0)
+                            // #region agent log
+                            AgentDebugLog.log(
+                                hypothesisId = "H26",
+                                location = "StatusDialog.BottomNav.ctor",
+                                message = "bottom_nav_attached",
+                                data = mapOf(
+                                    "childCount" to nav.childCount,
+                                    "first" to first.javaClass.simpleName,
+                                ),
+                                runId = "e2e-features",
+                            )
+                            // #endregion
+                            first.setOnLongClickListener { v ->
+                                showGrindrPlusDialog(v.context)
+                                true
+                            }
+                        }
+                    }
+                }
+        }.onFailure {
+            // Optional — class may be tree-shaken if unused.
+        }
+    }
+
+    private val homeDetectors = WeakHashMap<Activity, GestureDetector>()
+
+    private fun ensureHomeLongPress(activity: Activity) {
+        if (attachedHome[activity] == true) return
+        attachedHome[activity] = true
+
+        val density = activity.resources.displayMetrics.density
+        val bottomBandPx = (72f * density)
+        val firstTabWidthFraction = 0.22f
+
+        val detector = GestureDetector(
+            activity,
+            object : GestureDetector.SimpleOnGestureListener() {
+                override fun onDown(e: MotionEvent): Boolean = true
+
+                override fun onLongPress(e: MotionEvent) {
+                    val root = activity.window?.decorView ?: return
+                    val h = root.height.toFloat().coerceAtLeast(1f)
+                    val w = root.width.toFloat().coerceAtLeast(1f)
+                    val inBottom = e.y >= (h - bottomBandPx)
+                    val inFirst = e.x <= (w * firstTabWidthFraction)
+                    // #region agent log
+                    AgentDebugLog.log(
+                        hypothesisId = "H26",
+                        location = "StatusDialog.homeLongPress",
+                        message = "home_long_press",
+                        data = mapOf(
+                            "inBottom" to inBottom,
+                            "inFirst" to inFirst,
+                            "yFrac" to (e.y / h),
+                            "xFrac" to (e.x / w),
+                        ),
+                        runId = "e2e-features",
+                    )
+                    // #endregion
+                    if (inBottom && inFirst) {
+                        showGrindrPlusDialog(activity)
+                    }
+                }
+            },
+        )
+        homeDetectors[activity] = detector
+
+        // #region agent log
+        val homeId = getId("home_v2_container", "id", activity)
+        val homeView = if (homeId != 0) activity.findViewById<View>(homeId) else null
+        AgentDebugLog.log(
+            hypothesisId = "H26",
+            location = "StatusDialog.ensureHomeLongPress",
+            message = "home_detector_ready",
+            data = mapOf(
+                "homeId" to homeId,
+                "homeView" to (homeView?.javaClass?.simpleName ?: "null"),
+            ),
+            runId = "e2e-features",
+        )
+        // #endregion
     }
 
     private fun showGrindrPlusDialog(context: Context) {
+        // #region agent log
+        AgentDebugLog.log(
+            hypothesisId = "H22",
+            location = "StatusDialog.showGrindrPlusDialog",
+            message = "status_dialog_open",
+            data = emptyMap(),
+            runId = "e2e-features",
+        )
+        // #endregion
         GrindrPlus.currentActivity?.runOnUiThread {
             GrindrPlus.executeAsync {
                 try {
@@ -102,7 +245,7 @@ class StatusDialog : Hook(
                         appendLine("• Device: $deviceModel")
                         appendLine("• Android: $androidVersion")
                         appendLine()
-                        appendLine("Long press this tab to show this dialog")
+                        appendLine("Long-press the first bottom tab (home) to show this dialog")
                     }
 
                     GrindrPlus.runOnMainThread {

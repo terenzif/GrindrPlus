@@ -3,7 +3,6 @@ package com.gpp.manager.installation.steps
 import android.content.Context
 import com.aurora.gplayapi.helpers.AppDetailsHelper
 import com.aurora.gplayapi.helpers.PurchaseHelper
-import com.gpp.BuildConfig
 import com.gpp.manager.play.PlayHttpClient
 import com.gpp.manager.play.PlayStoreSession
 import com.gpp.manager.utils.download
@@ -13,6 +12,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import org.json.JSONObject
 
 /**
  * Downloads Grindr split APKs from Google Play using Aurora OSS [gplayapi]
@@ -20,12 +20,12 @@ import java.util.zip.ZipOutputStream
  *
  * Replaces CDN URL downloads when [grindrUrl] is blank — no Aurora Store app, no APK host.
  *
- * Pack-aware: prefer a versionCode that matches a mapping pack / BuildConfig tip when
+ * Pack-aware: prefer the highest versionCode listed in assets `mappings/index.json` when
  * Play delivery allows it (see ADR 0003). Soft-fail back to Play tip on delivery errors.
+ * No BuildConfig / hardcoded Grindr tip destiny.
  */
 class PlayGrindrDownloadStep(
     private val bundleFile: File,
-    private val preferredVersionCode: Long = preferredTargetVersionCode(),
 ) : BaseStep() {
 
     override val name = "Downloading Grindr (Play)"
@@ -35,6 +35,8 @@ class PlayGrindrDownloadStep(
             print("Existing Grindr bundle found, skipping Play download")
             return
         }
+
+        val preferredVersionCode = preferredPackVersionCode(context)
 
         print("Authenticating with Play (anonymous dispenser, Aurora protocol)...")
         val http = PlayHttpClient()
@@ -71,8 +73,8 @@ class PlayGrindrDownloadStep(
             } else {
                 print(
                     "Play tip versionCode=$tipVersionCode differs from preferred " +
-                        "BuildConfig target=$preferredVersionCode — " +
-                        "soft-preferring target for delivery (pack tip alignment)"
+                        "mapping-pack versionCode=$preferredVersionCode — " +
+                        "soft-preferring pack for delivery"
                 )
                 versionCode = preferredVersionCode
             }
@@ -156,9 +158,21 @@ class PlayGrindrDownloadStep(
     }
 
     companion object {
-        fun preferredTargetVersionCode(): Long {
-            val codes = BuildConfig.TARGET_GRINDR_VERSION_CODES
-            return if (codes.isNotEmpty()) codes[0].toLong() else 0L
+        /** Highest versionCode from embedded mapping index; 0 if unavailable. */
+        fun preferredPackVersionCode(context: Context): Long {
+            return try {
+                context.assets.open("mappings/index.json").bufferedReader().use { reader ->
+                    val packs = JSONObject(reader.readText()).getJSONArray("packs")
+                    var max = 0L
+                    for (i in 0 until packs.length()) {
+                        val code = packs.getJSONObject(i).optLong("versionCode", 0L)
+                        if (code > max) max = code
+                    }
+                    max
+                }
+            } catch (_: Exception) {
+                0L
+            }
         }
     }
 }

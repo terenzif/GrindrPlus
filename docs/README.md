@@ -11,8 +11,11 @@
   - [0005 — Dual APK Morphe / Alloy](adr/0005-dual-apk-morphe-alloy.md)
   - [0006 — Alloy DexKit fingerprints](adr/0006-alloy-dexkit-fingerprints.md)
   - [0007 — Morphe B bytecodePatch](adr/0007-morphe-b-bytecodepatch.md)
+  - [0008 — libxposed / Vector API 102](adr/0008-libxposed-api-102.md)
+  - [0009 — PairIP static decrypt (Morphe B)](adr/0009-pairip-static-decrypt.md)
 - [Morphe A](morphe-a.md) — patch orchestrator (`PatchBackend` / LSPatch integrated)
 - [Morphe B](morphe-b.md) — post-green static feature parity
+- [Lab wiki — PairIP 26.19](lab/pairip/) — experiment log, TOMBSTONE, SIGILL dump; Alloy runtime bypass closed (ADR 0009)
 - [Dual APK migration](dual-apk-migration.md) — `com.gpp.morphe` / `com.gpp.alloy`
 - [Ver.5 green checklist](ver5-green-checklist.md)
 - [E2E Settings ↔ runtime runbook](e2e-settings-runtime-runbook.md)

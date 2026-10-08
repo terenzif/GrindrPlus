@@ -10,7 +10,6 @@ import com.gpp.utils.SoftSkipException
 import com.gpp.utils.hook
 import kotlin.time.Duration.Companion.minutes
 
-// supported version: 26.16.1
 class OnlineIndicator : Hook(
     "Online indicator",
     "Customize online indicator duration"

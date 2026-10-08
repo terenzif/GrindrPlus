@@ -29,7 +29,7 @@ jobs:
 
       - name: Run version fetcher script
         run: |
-          # Writes latest_play.json (+ deprecated version.json mirror). Never touches supported_target.json.
+          # Writes latest_play.json (+ deprecated version.json mirror). Never touches mapping-packs/.
           python fetch_version.py --also-version-json
 
       - name: Commit and push if changed

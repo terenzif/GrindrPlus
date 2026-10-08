@@ -1,11 +1,11 @@
 package com.gpp.hooks
 
 import android.content.ContextWrapper
+import com.gpp.GppXposed
 import com.gpp.core.Constants.GRINDR_PACKAGE_NAME
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.XposedHelpers.findAndHookMethod
-import de.robv.android.xposed.callbacks.XC_LoadPackage
+import com.gpp.utils.HookStage
+import com.gpp.utils.compat.XposedHelpers
+import com.gpp.utils.hook
 
 private const val packageSignature = "823f5a17c33b16b4775480b31607e7df35d67af8"
 private const val firebaseInstallationServiceClient =
@@ -16,84 +16,62 @@ private const val configFetchHttpClient =
     "com.google.firebase.remoteconfig.internal.ConfigFetchHttpClient"
 
 @OptIn(ExperimentalStdlibApi::class)
-fun spoofSignatures(param: XC_LoadPackage.LoadPackageParam) {
-
+fun spoofSignatures(classLoader: ClassLoader, packageName: String = GRINDR_PACKAGE_NAME) {
     listOf(
         firebaseInstallationServiceClient,
         configRealtimeHttpClient,
-        configFetchHttpClient
+        configFetchHttpClient,
     ).forEach { className ->
-        findAndHookMethod(
-            className,
-            param.classLoader,
-            "getFingerprintHashForPackage",
-            object : XC_MethodHook() {
-                override fun beforeHookedMethod(param: MethodHookParam<*>) {
-                    param.result = packageSignature
+        runCatching {
+            XposedHelpers.findClass(className, classLoader)
+                .hook("getFingerprintHashForPackage", HookStage.BEFORE) { param ->
+                    param.setResult(packageSignature)
                 }
-            })
+        }
     }
 
-    findAndHookMethod(
-        "ly.img.android.c",
-        param.classLoader,
-        "d", // getPackageName
-        object : XC_MethodHook() {
-            override fun beforeHookedMethod(param: MethodHookParam<*>) {
-                param.result = GRINDR_PACKAGE_NAME
+    runCatching {
+        XposedHelpers.findClass("ly.img.android.c", classLoader)
+            .hook("d", HookStage.BEFORE) { param ->
+                param.setResult(GRINDR_PACKAGE_NAME)
             }
-        })
+    }
 
-    // The Facebook SDK tries to handle the login using the Facebook app in case it is installed.
-    // However, the Facebook app does signature checks with the app that is requesting the authentication,
-    // which ends up making the Facebook server reject with an invalid key hash for the app signature.
-    // Override the Facebook SDK to always handle the login using the web browser, which does not perform
-    // signature checks.
-    //
-    // Always return 0 (no Intent was launched) as the result of trying to authorize with the Facebook app to
-    // make the login fallback to a web browser window.
-    //
-    findAndHookMethod(
-        "com.facebook.login.KatanaProxyLoginMethodHandler",
-        param.classLoader,
-        "tryAuthorize",
-        XposedHelpers.findClass("com.facebook.login.LoginClient\$Request", param.classLoader),
-        object : XC_MethodHook() {
-            override fun afterHookedMethod(param: MethodHookParam<*>) {
-                param.result = 0
-            }
+    runCatching {
+        val requestClass = XposedHelpers.findClass(
+            "com.facebook.login.LoginClient\$Request",
+            classLoader,
+        )
+        val handler = XposedHelpers.findClass(
+            "com.facebook.login.KatanaProxyLoginMethodHandler",
+            classLoader,
+        )
+        val method = XposedHelpers.findMethodExact(handler, "tryAuthorize", requestClass)
+        GppXposed.require().hook(method).setId("gpp:fb.tryAuthorize").intercept { chain ->
+            chain.proceed()
+            0
         }
-    )
+    }
 
-    if (param.packageName != GRINDR_PACKAGE_NAME) {
+    if (packageName != GRINDR_PACKAGE_NAME) {
         fun isFirebaseInstallationServiceClient() = Thread.currentThread().stackTrace.any {
-            it.className.startsWith("com.google.firebase.installations.remote.FirebaseInstallationServiceClient")
+            it.className.startsWith(firebaseInstallationServiceClient)
         }
 
-        findAndHookMethod(
-            ContextWrapper::class.java,
-            "getPackageName",
-            object : XC_MethodHook() {
-                override fun afterHookedMethod(param: MethodHookParam<*>) {
-                    if (isFirebaseInstallationServiceClient()) {
-                        param.result = GRINDR_PACKAGE_NAME
-                    }
-                }
+        ContextWrapper::class.java.hook("getPackageName", HookStage.AFTER) { param ->
+            if (isFirebaseInstallationServiceClient()) {
+                param.setResult(GRINDR_PACKAGE_NAME)
             }
-        )
+        }
 
-        findAndHookMethod(
-            "com.google.firebase.messaging.Metadata",
-            param.classLoader,
-            "getPackageInfo",
-            String::class.java,  // packageName
-            object : XC_MethodHook() {
-                override fun beforeHookedMethod(param: MethodHookParam<*>) {
-                    if ((param.args[0] as String).contains("grindr")) {
-                        param.args[0] = GRINDR_PACKAGE_NAME
+        runCatching {
+            XposedHelpers.findClass("com.google.firebase.messaging.Metadata", classLoader)
+                .hook("getPackageInfo", HookStage.BEFORE) { param ->
+                    val pkg = param.arg<String>(0)
+                    if (pkg.contains("grindr")) {
+                        param.setArg(0, GRINDR_PACKAGE_NAME)
                     }
                 }
-            }
-        )
+        }
     }
 }

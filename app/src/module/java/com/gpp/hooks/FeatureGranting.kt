@@ -11,11 +11,10 @@ import com.gpp.utils.Hook
 import com.gpp.utils.HookStage
 import com.gpp.utils.hook
 import com.gpp.utils.hookConstructor
-import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.XposedHelpers.callMethod
-import de.robv.android.xposed.XposedHelpers.getObjectField
+import com.gpp.utils.compat.XposedHelpers
+import com.gpp.utils.compat.XposedHelpers.callMethod
+import com.gpp.utils.compat.XposedHelpers.getObjectField
 
-// supported version: 26.16.1
 class FeatureGranting : Hook(
     "Feature granting",
     "Grant all Grindr features"

@@ -13,9 +13,8 @@ import com.gpp.ui.Utils.copyToClipboard
 import com.gpp.utils.Hook
 import com.gpp.utils.HookStage
 import com.gpp.utils.hook
-import de.robv.android.xposed.XposedHelpers.getObjectField
+import com.gpp.utils.compat.XposedHelpers.getObjectField
 
-// supported version: 26.16.1 (static JADX — device confirmation required)
 class EnableUnlimited : Hook(
     "Enable unlimited",
     "Enable Grindr Unlimited features"

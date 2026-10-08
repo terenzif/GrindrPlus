@@ -24,10 +24,11 @@ with Studio under `C:\devbin` can point at `C:\devbin\android-studio\jbr` (JDK 2
 ## Grindr apk
 You will need the apk to a) inspect the code and b) test your patches in the app.  
 
-Download the latest **supported** version (found in [supported_target.json](../supported_target.json);
-Play scrape telemetry is in [latest_play.json](../latest_play.json))
-from [apkmirror](https://www.apkmirror.com/apk/grindr-llc/grindr-gay-chat-meet-date/)
-(or whatever source you like). If you download from apkmirror, you will get .apkm file,
+Download a Grindr build that has a mapping pack under [mapping-packs/](../mapping-packs/)
+(or add a new pack for the version you care about). Play scrape telemetry is in
+[latest_play.json](../latest_play.json). Sources such as
+[apkmirror](https://www.apkmirror.com/apk/grindr-llc/grindr-gay-chat-meet-date/)
+work fine. If you download from apkmirror, you will get .apkm file,
 which is just a zip of all the partial .apk files.
 
 For the decompilation, you will need only the base apk from it.

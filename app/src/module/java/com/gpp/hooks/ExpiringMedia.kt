@@ -11,14 +11,13 @@ import com.gpp.utils.HookStage
 import com.gpp.utils.MediaUtils
 import com.gpp.utils.MediaUtils.MediaType
 import com.gpp.utils.hook
-import de.robv.android.xposed.XposedHelpers.getObjectField
+import com.gpp.utils.compat.XposedHelpers.getObjectField
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-// supported version: 26.16.1
 class ExpiringMedia : Hook(
     "Expiring media",
     "Allow unlimited photo/video viewing and save media permanently"
@@ -84,8 +83,9 @@ class ExpiringMedia : Hook(
     }
 
     private fun handleGetUrl(param: HookAdapter<*>, mediaType: MediaType) {
-        val mediaId = getObjectField(param.thisObject(), "mediaId") as Long
-        val originalUrl = getObjectField(param.thisObject(), "url")?.toString()
+        val self = param.thisObject() as Any
+        val mediaId = getObjectField(self, "mediaId") as Long
+        val originalUrl = getObjectField(self, "url")?.toString()
         val mediaTypeStr = if (mediaType == MediaType.IMAGE) "photo" else "video"
 
         filePathCache[mediaId]?.let { cachedPath ->
@@ -146,7 +146,7 @@ class ExpiringMedia : Hook(
             onFailure = { error ->
                 loge("Failed to save $mediaTypeStr: ${error.message}")
 
-                val originalUrl = getObjectField(param.thisObject(), "url")?.toString()
+                val originalUrl = getObjectField(param.thisObject() as Any, "url")?.toString()
                 if (!originalUrl.isNullOrEmpty()) {
                     withContext(Dispatchers.Main) {
                         param.setResult(originalUrl)

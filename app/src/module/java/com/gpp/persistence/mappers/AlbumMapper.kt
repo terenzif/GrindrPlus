@@ -4,7 +4,7 @@ import com.gpp.GrindrPlus
 import com.gpp.core.Logger
 import com.gpp.persistence.model.AlbumContentEntity
 import com.gpp.persistence.model.AlbumEntity
-import de.robv.android.xposed.XposedHelpers.getObjectField
+import com.gpp.utils.compat.XposedHelpers.getObjectField
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

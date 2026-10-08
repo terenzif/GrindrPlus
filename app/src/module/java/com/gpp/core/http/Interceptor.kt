@@ -3,7 +3,6 @@ package com.gpp.core.http
 import com.gpp.core.Logger
 import com.gpp.core.LogSource
 import com.gpp.core.mapping.MappingDictionary
-import de.robv.android.xposed.XposedBridge
 import okhttp3.Interceptor
 import okhttp3.Protocol
 import okhttp3.Request

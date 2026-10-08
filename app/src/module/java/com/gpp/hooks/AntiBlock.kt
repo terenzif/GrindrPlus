@@ -23,7 +23,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
-// supported version: 26.16.1
 class AntiBlock : Hook(
     "Anti Block",
     "Notifies you when someone blocks or unblocks you"

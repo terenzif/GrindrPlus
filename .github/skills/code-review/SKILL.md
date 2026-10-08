@@ -41,11 +41,11 @@ Deprioritize style nits, rename bikesheds, and “support every Grindr version i
 - Prefer soft-skip + log over throwing when a mapping is absent, empty, or DEX-missing (document with `hooks.*.status` / `reason` or a code comment).
 - **DEX-absent soft-skips are OK** when intentional (feature gone from that Grindr build, R8-stripped class, scaffolding pack). Do not demand a remapped class for every historical symbol.
 
-### Version gate
+### Version / packs
 
-- Each module build targets **one** Grindr `versionName` / `versionCode` (see `supported_target.json`, `version.json`; Play tip in `latest_play.json`).
-- Do **not** require one APK to support every Grindr release. Multi-version support is via **packs + rebuilds**, not a universal binary.
-- Version mismatch / unsupported client → degraded mode or gate dialog is expected; do not treat “other versions fail” as a defect by itself.
+- Runtime is **pack-driven and version-agnostic**: no BuildConfig / hardcoded “supported” Grindr tip destiny.
+- Multi-version support is via **mapping packs** (`mapping-packs/` + assets). Missing pack → soft warning + degraded hooks; never hard-abort init solely for version.
+- Play tip telemetry may live in `latest_play.json`; it is not a product “supported version” gate.
 
 ### Obfuscation / R8
 

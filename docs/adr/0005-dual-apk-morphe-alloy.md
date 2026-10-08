@@ -39,7 +39,7 @@ LSPatch `-m` embed payload is build-only for the Morphe pipeline.
 ### 5. Dependency ownership
 
 - `morphe`: LSPatch; Install UX; never a Vector module.
-- `alloy`: sole Vector registrant (API 103+); Install nav omitted; root CLI toggle allowed.
+- `alloy`: sole Vector registrant (libxposed API 102; ADR 0008); Install nav omitted; root CLI toggle allowed.
 - Bridge permission `com.gpp.permission.ACCESS_BRIDGE_SERVICE` stays signature-shared.
 
 ## Consequences

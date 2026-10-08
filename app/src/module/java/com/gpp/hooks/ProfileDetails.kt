@@ -2,6 +2,7 @@ package com.gpp.hooks
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import com.gpp.GrindrPlus
@@ -13,19 +14,20 @@ import com.gpp.core.Utils.calculateBMI
 import com.gpp.core.Utils.h2n
 import com.gpp.core.Utils.w2n
 import com.gpp.core.logw
+import com.gpp.debug.AgentDebugLog
 import com.gpp.ui.Utils.copyToClipboard
 import com.gpp.ui.Utils.formatEpochSeconds
+import com.gpp.ui.Utils.getId
 import com.gpp.utils.Hook
 import com.gpp.utils.HookStage
 import com.gpp.utils.hook
 import com.gpp.utils.hookConstructor
-import de.robv.android.xposed.XposedHelpers.callMethod
-import de.robv.android.xposed.XposedHelpers.getObjectField
-import de.robv.android.xposed.XposedHelpers.setObjectField
+import com.gpp.utils.compat.XposedHelpers.callMethod
+import com.gpp.utils.compat.XposedHelpers.getObjectField
+import com.gpp.utils.compat.XposedHelpers.setObjectField
 import java.util.ArrayList
 import kotlin.math.roundToInt
 
-// supported version: 26.16.1
 class ProfileDetails : Hook(
 	"Profile details",
 	"Add extra fields and details to profiles"
@@ -80,6 +82,15 @@ class ProfileDetails : Hook(
 
         findClass(Obfuscation.G.ProfileDetails.PROFILE_BAR_VIEW).hook("setProfile", HookStage.BEFORE) { param ->
             val profileId = getObjectField(param.arg(0), "profileId") as String
+            // #region agent log
+            AgentDebugLog.log(
+                hypothesisId = "H20",
+                location = "ProfileDetails.setProfile",
+                message = "profile_bar_set",
+                data = mapOf("profileIdLen" to profileId.length),
+                runId = "e2e-features",
+            )
+            // #endregion
             val accountCreationTime =
                 formatEpochSeconds(GrindrPlus.spline.invert(profileId.toDouble()).toLong())
             val distance = callMethod(param.arg(0), "getDistance") ?: "Unknown (hidden)"
@@ -93,16 +104,39 @@ class ProfileDetails : Hook(
             val displayName = callMethod(param.arg(0), "getDisplayName") ?: profileId
             setObjectField(param.arg(0), "displayName", displayName)
 
-            val viewBinding = getObjectField(param.thisObject(), "c")
-            val displayNameTextView = getObjectField(viewBinding, "c") as TextView
-
-            displayNameTextView.setOnLongClickListener {
-                GrindrPlus.showToast(Toast.LENGTH_LONG, "Profile ID: $profileId")
-                copyToClipboard("Profile ID", profileId)
-                true
+            val barView = param.thisObject() as View
+            val nameTargets = resolveProfileNameTargets(barView)
+            // #region agent log
+            AgentDebugLog.log(
+                hypothesisId = "H24",
+                location = "ProfileDetails.setProfile",
+                message = "name_targets",
+                data = mapOf(
+                    "count" to nameTargets.size,
+                    "ids" to nameTargets.map { it.second }.joinToString(","),
+                ),
+                runId = "e2e-features",
+            )
+            // #endregion
+            if (nameTargets.isEmpty()) {
+                logw("ProfileDetails: no profile name/near/lastSeen TextViews found")
+                return@hook
             }
 
-            displayNameTextView.setOnClickListener {
+            val showHiddenDetails = View.OnClickListener { clicked ->
+                // #region agent log
+                AgentDebugLog.log(
+                    hypothesisId = "H20",
+                    location = "ProfileDetails.displayNameClick",
+                    message = "hidden_details_dialog",
+                    data = mapOf(
+                        "profileIdLen" to profileId.length,
+                        "hasCreation" to accountCreationTime.isNotEmpty(),
+                        "via" to ((clicked as? TextView)?.resources?.getResourceEntryName(clicked.id) ?: "?"),
+                    ),
+                    runId = "e2e-features",
+                )
+                // #endregion
                 val properties =
                     mapOf(
                         "Estimated creation" to accountCreationTime,
@@ -136,7 +170,7 @@ class ProfileDetails : Hook(
                 val detailsText = properties.map { (key, value) -> "• $key: $value" }.joinToString("\n")
 
                 val dialog =
-                    AlertDialog.Builder(it.context)
+                    AlertDialog.Builder(clicked.context)
                         .setTitle("Hidden profile details")
                         .setMessage(detailsText)
                         .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
@@ -154,6 +188,15 @@ class ProfileDetails : Hook(
                 }
 
                 dialog.show()
+            }
+
+            nameTargets.forEach { (tv, _) ->
+                tv.setOnLongClickListener {
+                    GrindrPlus.showToast(Toast.LENGTH_LONG, "Profile ID: $profileId")
+                    copyToClipboard("Profile ID", profileId)
+                    true
+                }
+                tv.setOnClickListener(showHiddenDetails)
             }
         }
 
@@ -203,7 +246,7 @@ class ProfileDetails : Hook(
                             return@hook
                         }
                     }
-                    param.setResult(
+                    val annotated =
                         "$weight - ${String.format("%.1f", BMI)} (${
                             mapOf(
                                 "Underweight" to 18.5,
@@ -212,9 +255,60 @@ class ProfileDetails : Hook(
                                 "Obese" to Double.MAX_VALUE
                             ).entries.first { it.value > BMI }.key
                         })"
+                    // #region agent log
+                    AgentDebugLog.log(
+                        hypothesisId = "H21",
+                        location = "ProfileDetails.getWeight",
+                        message = "bmi_annotated",
+                        data = mapOf(
+                            "bmiRounded" to String.format("%.1f", BMI),
+                            "resultLen" to annotated.length,
+                        ),
+                        runId = "e2e-features",
                     )
+                    // #endregion
+                    param.setResult(annotated)
                 }
             }
         }
+    }
+
+    /**
+     * ProfileBarView stores views in an obfuscated `binding` field; resource ids stay stable.
+     * Prefer findViewById over view-binding field walks (H24).
+     */
+    private fun resolveProfileNameTargets(barView: View): List<Pair<TextView, String>> {
+        val ctx = barView.context
+        val names = listOf(
+            "profile_display_name",
+            "profile_near_text",
+            "profile_last_seen_text",
+            "profile_height_weight_tone",
+        )
+        val found = mutableListOf<Pair<TextView, String>>()
+        for (name in names) {
+            val id = getId(name, "id", ctx)
+            if (id == 0) continue
+            val tv = barView.findViewById<TextView>(id) ?: continue
+            found += tv to name
+        }
+        if (found.isNotEmpty()) return found
+
+        // Fallback: inflate-time binding field (confirmed as `binding` on recent packs).
+        runCatching {
+            val binding = getObjectField(barView, "binding") ?: return@runCatching
+            for (field in binding.javaClass.declaredFields) {
+                field.isAccessible = true
+                val value = field.get(binding) as? TextView ?: continue
+                val entry = runCatching { value.resources.getResourceEntryName(value.id) }.getOrNull()
+                    ?: field.name
+                if (entry.contains("display_name") || entry.contains("near_text") ||
+                    entry.contains("last_seen") || entry.contains("height_weight")
+                ) {
+                    found += value to entry
+                }
+            }
+        }
+        return found
     }
 }

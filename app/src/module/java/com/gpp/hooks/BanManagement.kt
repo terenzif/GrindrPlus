@@ -27,11 +27,10 @@ import com.gpp.utils.RetrofitUtils.isResult
 import com.gpp.utils.hook
 import com.gpp.utils.hookConstructor
 import com.gpp.utils.withSuspendResult
-import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.XposedHelpers.getObjectField
+import com.gpp.utils.compat.XposedHelpers
+import com.gpp.utils.compat.XposedHelpers.getObjectField
 import org.json.JSONObject
 
-// supported version: 26.16.1
 class BanManagement : Hook(
     "Ban management",
     "Provides comprehensive ban management tools (detailed ban info, etc.)"

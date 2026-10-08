@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit
  */
 object VectorModToggle {
     private val CLI_CANDIDATES = listOf(
+        "/data/adb/modules/zygisk_vector/cli",
         "/data/adb/lspd/cli",
         "/data/adb/vector/cli",
     )

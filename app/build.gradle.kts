@@ -6,13 +6,12 @@ plugins {
 
 android {
     namespace = "com.gpp"
-    compileSdk = 35
+    // libxposed service/interface 102.0.0 require compileSdk ≥ 37 (ADR 0008).
+    compileSdk = 37
 
     defaultConfig {
-        // Soft tip targets for DialogManager (pack-driven runtime is version-agnostic).
+        // Pack-driven / version-agnostic: no BuildConfig tip destiny for Grindr host versions.
         // Module versionName must NOT embed the Grindr host version (CI/artifacts stay gpp-scoped).
-        val grindrVersionName = listOf("26.19.0", "26.16.1")
-        val grindrVersionCode = listOf(185656, 179451)
         val gitCommitHash = getGitCommitHash() ?: "unknown"
 
         // applicationId set per delivery flavor (ADR 0005)
@@ -26,18 +25,6 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-
-        buildConfigField(
-            "String[]",
-            "TARGET_GRINDR_VERSION_NAMES",
-            grindrVersionName.let { it.joinToString(prefix = "{", separator = ", ", postfix = "}") { version -> "\"$version\"" } }
-        )
-
-        buildConfigField(
-            "int[]",
-            "TARGET_GRINDR_VERSION_CODES",
-            grindrVersionCode.let { it.joinToString(prefix = "{", separator = ", ", postfix = "}") { code -> "$code" } }
-        )
     }
 
     flavorDimensions += "delivery"
@@ -106,13 +93,18 @@ android {
             // Vector module runtime + mapping packs
             java.srcDir("src/module/java")
             kotlin.srcDir("src/module/java")
+            // Alloy-only Manager↔Vector service bridge
+            java.srcDir("src/alloy/java")
+            kotlin.srcDir("src/alloy/java")
             assets.srcDir("src/module/assets")
+            resources.srcDir("src/module/resources")
         }
         getByName("embed") {
             // Slim LSPatch -m payload: module runtime only
             java.srcDir("src/module/java")
             kotlin.srcDir("src/module/java")
             assets.srcDir("src/module/assets")
+            resources.srcDir("src/module/resources")
         }
         // Unit tests cover Morphe B without a product flavor on the test classpath.
         getByName("test") {
@@ -141,8 +133,12 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
     implementation(libs.timber)
-    compileOnly(fileTree("libs") { include("*.jar") })
+    // Legacy LSPosed stubs removed — Alloy/embed use libxposed API 102 (ADR 0008).
+    // Do not compileOnly(fileTree libs/*.jar): that pulled LSPosed-api + fat lspatch into all flavors.
     compileOnly(libs.bcprov.jdk18on)
+    "alloyCompileOnly"(libs.libxposed.api)
+    "embedCompileOnly"(libs.libxposed.api)
+    "alloyImplementation"(libs.libxposed.service)
 
     // Compose compiler plugin is applied project-wide; keep minimal runtime on all flavors.
     val composeBom = platform(libs.compose.bom)
@@ -229,7 +225,7 @@ dependencies {
     testImplementation(libs.androidx.room.testing)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
-    testImplementation(fileTree("libs") { include("*.jar") })
+    testCompileOnly(libs.libxposed.api)
 }
 
 apply(from = rootProject.file("scripts/setup_lspatch.gradle.kts"))

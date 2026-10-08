@@ -30,14 +30,13 @@ import com.gpp.utils.RetrofitUtils.isSuccess
 import com.gpp.utils.hook
 import com.gpp.utils.hookConstructor
 import com.gpp.utils.withSuspendResult
-import de.robv.android.xposed.XposedHelpers.getObjectField
-import de.robv.android.xposed.XposedHelpers.setObjectField
+import com.gpp.utils.compat.XposedHelpers.getObjectField
+import com.gpp.utils.compat.XposedHelpers.setObjectField
 import java.io.Closeable
 import java.io.IOException
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 
-// supported version: 26.16.1
 class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlimited albums") {
     private val albumsService = "com.grindrapp.android.api.albums.AlbumsRestService" // 'v1/albums/red-dot'
     private val albumModel = "com.grindrapp.android.chat.domain.model.Album"

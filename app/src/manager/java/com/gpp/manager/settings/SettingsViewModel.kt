@@ -11,11 +11,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.gpp.BuildConfig
 import com.gpp.core.Config
 import com.gpp.core.DeliveryChannel
+import com.gpp.debug.AgentDebugLog
 import com.gpp.manager.DATA_URL
 import com.gpp.manager.settings.SettingsUtils.testMapsApiKey
 import com.gpp.manager.utils.AppIconManager
+import com.gpp.manager.vector.VectorFrameworkFacade
 import com.gpp.manager.vector.VectorModToggle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -478,7 +481,32 @@ class SettingsViewModel(
                     ),
                 )
 
+                // #region agent log
+                AgentDebugLog.log(
+                    hypothesisId = "H23",
+                    location = "SettingsViewModel.loadSettings",
+                    message = "delivery_channel",
+                    data = mapOf(
+                        "channel" to BuildConfig.DELIVERY_CHANNEL,
+                        "isRootedModule" to DeliveryChannel.current.isRootedModule,
+                        "flavor" to BuildConfig.FLAVOR,
+                        "applicationId" to BuildConfig.APPLICATION_ID,
+                    ),
+                    runId = "e2e-features",
+                )
+                // #endregion
                 if (DeliveryChannel.current.isRootedModule) {
+                    val cliReady = runCatching { VectorModToggle.isCliAvailable() }.getOrDefault(false)
+                    val statusLine = runCatching { VectorFrameworkFacade.statusLine() }.getOrDefault("")
+                    // #region agent log
+                    AgentDebugLog.log(
+                        hypothesisId = "H23",
+                        location = "SettingsViewModel.loadSettings",
+                        message = "vector_group_added",
+                        data = mapOf("cliReady" to cliReady, "statusLen" to statusLine.length),
+                        runId = "e2e-features",
+                    )
+                    // #endregion
                     groups += SettingGroup(
                         id = "alloy_vector",
                         title = "Vector modding",
@@ -489,11 +517,12 @@ class SettingsViewModel(
                                 description = "When on, GrindMod Alloy hooks Grindr (modded). " +
                                     "When off, Grindr runs stock. Uses root + Vector CLI; " +
                                     "restarts Grindr (no device reboot). " +
-                                    if (VectorModToggle.isCliAvailable()) {
-                                        "CLI ready."
+                                    "Not code hot-reload. " +
+                                    if (cliReady) {
+                                        "CLI ready. "
                                     } else {
-                                        "CLI not detected — toggle may fail; use Vector Manager."
-                                    },
+                                        "CLI not detected — toggle may fail; use Vector Manager. "
+                                    } + statusLine,
                                 isChecked = Config.get("vector_modding_enabled", true) as Boolean,
                                 onCheckedChange = { enabled ->
                                     viewModelScope.launch {
@@ -502,6 +531,10 @@ class SettingsViewModel(
                                         }
                                         if (result.ok) {
                                             Config.put("vector_modding_enabled", enabled)
+                                            VectorFrameworkFacade.putRemoteBoolean(
+                                                "vector_modding_enabled",
+                                                enabled,
+                                            )
                                             Toast.makeText(
                                                 context,
                                                 result.message,
@@ -515,6 +548,19 @@ class SettingsViewModel(
                                             ).show()
                                         }
                                         loadSettings()
+                                    }
+                                },
+                            ),
+                            ButtonSetting(
+                                id = "vector_code_hot_reload",
+                                title = "Reload module code",
+                                onClick = {
+                                    VectorFrameworkFacade.requestCodeHotReload { ok, message ->
+                                        Toast.makeText(
+                                            context,
+                                            if (ok) "Hot-reload: $message" else "Hot-reload failed: $message",
+                                            Toast.LENGTH_LONG,
+                                        ).show()
                                     }
                                 },
                             ),

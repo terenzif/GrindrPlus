@@ -90,7 +90,7 @@ Devices with a module that includes remote fetch will pick up the new file on th
 | `kind` | `name` | Notes |
 | --- | --- | --- |
 | `class` | R8 / FQCN | Optional `fingerprint`, legacy `method` string still accepted on load |
-| `method` | Member method name | Optional `note` for owning class |
+| `method` | Member method name | Optional `note` for owning class; optional `invoke` (`special` \| `direct` \| `hooked`) for API 102 invoker (ADR 0008; parsed when first pack needs it) |
 | `field` | Member field name | Optional `note` for owning class |
 
 ## Fingerprint field

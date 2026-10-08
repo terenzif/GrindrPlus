@@ -9,8 +9,8 @@ import com.gpp.core.Config
 import com.gpp.core.Logger
 import com.gpp.core.Utils.coordsToGeoHash
 import com.gpp.persistence.model.TeleportLocationEntity
-import de.robv.android.xposed.XposedHelpers.callMethod
-import de.robv.android.xposed.XposedHelpers.getObjectField
+import com.gpp.utils.compat.XposedHelpers.callMethod
+import com.gpp.utils.compat.XposedHelpers.getObjectField
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -267,7 +267,9 @@ class Location(recipient: String, sender: String) : CommandModule("Location", re
             val grindrLocationProviderInstance =
                 GrindrPlus.instanceManager.getInstance<Any>(GrindrPlus.grindrLocationProvider)
 
-            val location = getObjectField(grindrLocationProviderInstance, "d")
+            val provider = grindrLocationProviderInstance
+                ?: throw IllegalStateException("grindrLocationProvider instance missing")
+            val location = getObjectField(provider, "d")
             val latitude = callMethod(location, "getLatitude") as Double
             val longitude = callMethod(location, "getLongitude") as Double
 

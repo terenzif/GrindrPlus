@@ -18,8 +18,8 @@ import com.gpp.utils.Hook
 import com.gpp.utils.HookStage
 import com.gpp.utils.SoftSkipException
 import com.gpp.utils.hook
-import de.robv.android.xposed.XposedHelpers.callMethod
-import de.robv.android.xposed.XposedHelpers.getObjectField
+import com.gpp.utils.compat.XposedHelpers.callMethod
+import com.gpp.utils.compat.XposedHelpers.getObjectField
 import kotlin.math.roundToInt
 import androidx.core.view.isGone
 
@@ -60,7 +60,7 @@ class Favorites : Hook(
                 callMethod(gridLayoutManager, "setSpanCount", columnsNumber)
                 val adapter = callMethod(recyclerView, "getAdapter")
 
-                adapter::class.java
+                adapter.javaClass
                     .hook("onBindViewHolder", HookStage.AFTER) { param ->
                         val size = GrindrPlus.context
                             .resources.displayMetrics.widthPixels / columnsNumber

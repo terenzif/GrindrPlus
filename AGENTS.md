@@ -17,7 +17,7 @@
 - Official Ver.5 vision and sequencing live in `docs/vision.md` (and ADRs under `docs/adr/`).
 - Morphe A is orchestrator-rootless: export installed host → clone Grindr++ → LSPatch embed. Morphe B is static feature parity after Ver.5 “green” (`docs/adr/0007-morphe-b-bytecodepatch.md`).
 - Dual APK IDs locked in `docs/adr/0005-dual-apk-morphe-alloy.md`; brand masters in `docs/brand/grindr-plus-plus/` (allowlist only).
-- Rooted framework is **Vector** ([JingMatrix/Vector](https://github.com/JingMatrix/Vector)); legacy `isLsPosed` identifiers kept. Module `xposedminversion` targets Vector API **103**.
+- Rooted framework is **Vector** ([JingMatrix/Vector](https://github.com/JingMatrix/Vector)); legacy `isLsPosed` identifiers kept. Alloy/embed target **libxposed / Vector API 102** (ADR 0008). Modding active = Vector CLI; hot-reload = code swap only.
 - Mapping is pack-driven by Grindr `versionCode`; soft-fail on missing packs.
 - Artifact naming uses **gpp** and must not embed the Grindr host version in `versionName`.
 - Settings↔runtime truthfulness is a Ver.5 pillar; anonymous opt-in telemetry via Manager analytics.

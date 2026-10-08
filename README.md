@@ -65,7 +65,7 @@ Details: [docs/morphe-a.md](docs/morphe-a.md), [docs/manager-ui-lspatch.md](docs
 
 ### Root (Vector — Alloy APK)
 
-**Requirements:** Magisk / KernelSU + [JingMatrix/Vector](https://github.com/JingMatrix/Vector) (API 103+).
+**Requirements:** Magisk / KernelSU + [JingMatrix/Vector](https://github.com/JingMatrix/Vector) (API 102 / Vector ≥ 2.2).
 
 1. Install **`gpp-alloy-*.apk`** (GrindMod Alloy) from [Releases](https://github.com/terenzif/grindr-plus-plus/releases).
 2. Install stock Grindr (mapping pack required for your `versionCode`).

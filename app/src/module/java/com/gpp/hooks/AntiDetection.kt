@@ -5,7 +5,6 @@ import com.gpp.utils.HookStage
 import com.gpp.utils.hook
 import com.gpp.utils.hookConstructor
 
-// supported version: 25.20.0
 class AntiDetection : Hook(
     "Anti Detection",
     "Hides root, emulator, and environment detections"
