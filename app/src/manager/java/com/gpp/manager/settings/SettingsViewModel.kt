@@ -11,10 +11,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.gpp.BuildConfig
 import com.gpp.core.Config
 import com.gpp.core.DeliveryChannel
-import com.gpp.debug.AgentDebugLog
 import com.gpp.manager.DATA_URL
 import com.gpp.manager.settings.SettingsUtils.testMapsApiKey
 import com.gpp.manager.utils.AppIconManager
@@ -481,32 +479,9 @@ class SettingsViewModel(
                     ),
                 )
 
-                // #region agent log
-                AgentDebugLog.log(
-                    hypothesisId = "H23",
-                    location = "SettingsViewModel.loadSettings",
-                    message = "delivery_channel",
-                    data = mapOf(
-                        "channel" to BuildConfig.DELIVERY_CHANNEL,
-                        "isRootedModule" to DeliveryChannel.current.isRootedModule,
-                        "flavor" to BuildConfig.FLAVOR,
-                        "applicationId" to BuildConfig.APPLICATION_ID,
-                    ),
-                    runId = "e2e-features",
-                )
-                // #endregion
                 if (DeliveryChannel.current.isRootedModule) {
                     val cliReady = runCatching { VectorModToggle.isCliAvailable() }.getOrDefault(false)
                     val statusLine = runCatching { VectorFrameworkFacade.statusLine() }.getOrDefault("")
-                    // #region agent log
-                    AgentDebugLog.log(
-                        hypothesisId = "H23",
-                        location = "SettingsViewModel.loadSettings",
-                        message = "vector_group_added",
-                        data = mapOf("cliReady" to cliReady, "statusLen" to statusLine.length),
-                        runId = "e2e-features",
-                    )
-                    // #endregion
                     groups += SettingGroup(
                         id = "alloy_vector",
                         title = "Vector modding",
