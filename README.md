@@ -24,7 +24,7 @@
 
 **Grindr++** is the product. **GrindMod** is the Manager app (`com.gpp.morphe` / `com.gpp.alloy`). It rose from the archived GrindrPlus line (ElJaviLuki → R0rt1z2, then this tree) after that project was frozen and after the PairIP / VM phase. Not affiliated with legacy XDA **GrindrMod**.
 
-The phoenix/mask is the product mark. GrindMod’s launcher adds a small gear badge so it is not confused with Grindr++.
+The phoenix/mask is the product mark: a masked head, ready to take them all. GrindMod’s launcher adds a small gear badge so it is not confused with Grindr++.
 
 **Ver.5 direction:** version-agnostic module driven by **mapping packs** (schema v2), soft-fail hooks, Settings↔runtime truthfulness, and **Morphe A** rootless install (export Play-installed Grindr → Grindr++ clone → LSPatch). Pack catalog: `mapping-packs/index.json`. Vision: [docs/vision.md](docs/vision.md).
 
