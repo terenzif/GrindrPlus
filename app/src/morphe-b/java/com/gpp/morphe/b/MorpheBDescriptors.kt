@@ -81,6 +81,14 @@ object MorpheBCatalog {
             delivery = MorpheBDelivery.STATIC_RESOURCE,
             notes = "Writes assets/grindrplus/morphe_b.json into base APK",
         ),
+        MorpheBPatchDescriptor(
+            id = "pairip-static-decrypt",
+            title = "PairIP static decrypt",
+            replacesHookName = null,
+            delivery = MorpheBDelivery.STATIC_RESOURCE,
+            notes = "ADR 0009: splice decrypted natives from pairip-decrypt/<versionCode>/ + " +
+                "stub SignatureCheck/LicenseClient; needs pack or soft-defers",
+        ),
     )
 
     fun byHookName(hookName: String): MorpheBPatchDescriptor? =

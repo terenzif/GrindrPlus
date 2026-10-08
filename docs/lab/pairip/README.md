@@ -4,12 +4,13 @@ Canonical write-up of the Alloy PairIP campaign (successes, failures, confounds)
 
 ## Read order
 
-1. **[TOMBSTONE.md](TOMBSTONE.md)** — path closed; reopen rules  
-2. **[EXPERIMENT_LOG.md](EXPERIMENT_LOG.md)** — full matrix v1–v11, lab hygiene, repro  
-3. **[tombstone_20_sigill_summary.md](tombstone_20_sigill_summary.md)** — condensed crash  
-4. **[tombstone_20_sigill.txt](tombstone_20_sigill.txt)** — raw Android tombstone  
-5. **[ADR 0009](../../adr/0009-pairip-static-decrypt.md)** — product direction (Morphe B)  
-6. **[ADR 0007](../../adr/0007-morphe-b-bytecodepatch.md)** — bytecode rewrite scaffold  
+1. **[TOMBSTONE.md](TOMBSTONE.md)** — Alloy runtime path closed  
+2. **[MORPHE_B_DECRYPT.md](MORPHE_B_DECRYPT.md)** — phase-1 static decrypt (natives + integrity stubs)  
+3. **[EXPERIMENT_LOG.md](EXPERIMENT_LOG.md)** — full matrix v1–v11, lab hygiene, repro  
+4. **[tombstone_20_sigill_summary.md](tombstone_20_sigill_summary.md)** — condensed crash  
+5. **[tombstone_20_sigill.txt](tombstone_20_sigill.txt)** — raw Android tombstone  
+6. **[ADR 0009](../../adr/0009-pairip-static-decrypt.md)** — decision + pack layout  
+7. **[ADR 0007](../../adr/0007-morphe-b-bytecodepatch.md)** — bytecode rewrite scaffold  
 
 ## One-paragraph verdict
 

@@ -30,6 +30,19 @@ class MorpheBPatchEngine(
             }
         }
 
+        // ADR 0009: PairIP native decrypt + integrity neutralize before feature bytecode.
+        try {
+            val pairIp = PairIpStaticDecrypt.apply(inputApks, print)
+            if (pairIp.present && pairIp.packApplied) {
+                applied += "pairip-static-decrypt"
+            } else if (pairIp.present) {
+                deferred += "pairip-static-decrypt"
+            }
+        } catch (t: Throwable) {
+            print("Morphe B PairIP soft-fail: ${t.message}")
+            deferred += "pairip-static-decrypt"
+        }
+
         try {
             bytecodeBackend.applyBytecodePatches(base, print)
         } catch (t: Throwable) {

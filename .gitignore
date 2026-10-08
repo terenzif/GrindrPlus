@@ -28,3 +28,8 @@ docs/brand/**/*-attempt*
 
 # Local APK staging — never PR
 release-stage/
+
+# PairIP dump scratch (keep spliced .so + pack.json)
+pairip-decrypt/**/*.rx.bin
+pairip-decrypt/**/*.rx.raw
+.tmp/

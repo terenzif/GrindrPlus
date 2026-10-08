@@ -146,4 +146,8 @@ When you learn something new, **append a dated section** below rather than rewri
 
 ### Append-only updates
 
-_(none yet)_
+#### 2026-10-08 — Morphe B phase 1
+
+- On-disk `libsqliteJni` `JNI_OnLoad` matches tombstone ciphertext; stock process RX is plaintext AArch64.
+- Landed `PairIpStaticDecrypt` + `scripts/pairip_dump_natives.py` + pack `pairip-decrypt/185656/`.
+- Next proof: Morphe Install embed with pack staged → Grindr++ clone boot on 185656.
